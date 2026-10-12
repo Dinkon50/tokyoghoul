@@ -3,12 +3,14 @@ package com.tokyoghoulrpg.client;
 import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.combat.AbilityType;
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.AbilityC2S;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
@@ -67,7 +69,31 @@ public final class ClientCombatEvents {
             return;
         }
         PlayerData data = PlayerData.get(player);
-        if (data == null || !data.getPlayerClass().hasKagune() || !data.isKaguneActive()) {
+        if (data == null) {
+            return;
+        }
+        // Человек: ПКМ дважды быстро — сильная атака с любым предметом или пустой рукой.
+        // Если смотришь на блок, ПКМ работает как обычно (ставить блоки, открывать двери).
+        if (data.getPlayerClass() == PlayerClass.HUMAN) {
+            if (event.isUseItem()) {
+                boolean fresh = useReleased;
+                useReleased = false;
+                boolean lookingAtBlock = mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK;
+                if (!fresh || lookingAtBlock) {
+                    return;
+                }
+                long now = player.level().getGameTime();
+                if (now - lastFreshUse <= Balance.DOUBLE_TAP_TICKS) {
+                    lastFreshUse = Long.MIN_VALUE / 2;
+                    cancel(event);
+                    send(AbilityType.HUMAN_STRONG_ATTACK);
+                } else {
+                    lastFreshUse = now;
+                }
+            }
+            return;
+        }
+        if (!data.getPlayerClass().hasKagune() || !data.isKaguneActive()) {
             return;
         }
         boolean shift = player.isShiftKeyDown();

@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 
 /** Рисует кагуне за спиной игрока. Подключается к обоим видам скина (обычный и тонкие руки). */
 public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-    // Если кагуне окажется не на месте, подвинь его здесь (в блоках) или поменяй размер.
+    // Тонкая подстройка положения (в блоках: 1 пиксель = 0.0625) и размера, если понадобится.
     private static final float OFFSET_X = 0.0F;
     private static final float OFFSET_Y = 0.0F;
     private static final float OFFSET_Z = 0.0F;
@@ -35,8 +35,10 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
         }
 
         poseStack.pushPose();
-        // Пространство слоя игрока перевёрнуто и опущено. Возвращаем к обычному: начало у ног, ось Y вверх,
-        // как в Blockbench. Тогда модель встаёт туда, где её нарисовали относительно тела.
+        // Привязываем кагуне к телу игрока: так оно наклоняется вместе с телом, когда игрок приседает.
+        getParentModel().body.translateAndRotate(poseStack);
+        // Пространство модели игрока перевёрнуто, а начало у шеи. Возвращаем к пространству Blockbench:
+        // начало у ног, ось Y вверх. Модель кагуне нарисована именно так: основание на спине (z = 2 пикселя).
         poseStack.translate(OFFSET_X, 1.501F + OFFSET_Y, OFFSET_Z);
         poseStack.scale(-SCALE, -SCALE, SCALE);
         renderer.render(poseStack, kagune, buffer, null, null, packedLight);

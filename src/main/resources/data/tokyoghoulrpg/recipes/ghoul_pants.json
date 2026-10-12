@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "LWL",
+    "L L",
+    "L L"
+  ],
+  "key": {
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "W": {
+      "item": "minecraft:black_wool"
+    }
+  },
+  "result": {
+    "item": "tokyoghoulrpg:ghoul_pants",
+    "count": 1
+  }
+}

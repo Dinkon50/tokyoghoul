@@ -10,7 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 
-/** Компактная панель в левом верхнем углу: класс, уровень, здоровье, голод и ярость. */
+/** Компактная панель в левом верхнем углу: класс, уровень, здоровье, голод, у гуля ещё кровь и ярость. */
 public final class HudOverlay {
     private static final int PANEL_X = 6;
     private static final int PANEL_Y = 6;
@@ -39,7 +39,7 @@ public final class HudOverlay {
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
         boolean showRage = data.getPlayerClass().hasKagune();
         boolean rageActive = showRage && data.isRageActive();
-        int rows = showRage ? 3 : 2;
+        int rows = showRage ? 4 : 2;
         int panelH = 18 + rows * 10 + 2 + (rageActive ? 10 : 0);
 
         // Тёмная панель с красной полосой слева
@@ -59,6 +59,19 @@ public final class HudOverlay {
         drawBar(gfx, bx, by, player.getFoodData().getFoodLevel() / 20.0F, 0xFFC9822B, 0xFF33200C);
 
         if (showRage) {
+            // Шкала «Кровь» (жажда крови): пустеет, когда гуль голоден; при малом запасе мигает
+            by += 10;
+            Component label = Component.translatable("hud.tokyoghoulrpg.blood");
+            int labelW = font.width(label) + 4;
+            gfx.drawString(font, label, bx, by - 2, 0xC04050, false);
+            int craving = data.getCraving();
+            int cravingColor = 0xFF8E1426;
+            if (craving <= 25) {
+                float pulse = 0.6F + 0.4F * Mth.sin((now + partialTick) * 0.5F);
+                cravingColor = scale(0xFFE0203A, pulse);
+            }
+            drawBar(gfx, bx + labelW, by, BAR_W - labelW, craving / 100.0F, cravingColor, 0xFF240810);
+
             by += 10;
             if (rageActive) {
                 // Ярость действует: шкала убывает вместе со временем, под ней оставшиеся секунды
@@ -83,9 +96,13 @@ public final class HudOverlay {
     }
 
     private static void drawBar(GuiGraphics gfx, int x, int y, float fraction, int fill, int back) {
+        drawBar(gfx, x, y, BAR_W, fraction, fill, back);
+    }
+
+    private static void drawBar(GuiGraphics gfx, int x, int y, int barW, float fraction, int fill, int back) {
         float clamped = Mth.clamp(fraction, 0.0F, 1.0F);
-        gfx.fill(x, y, x + BAR_W, y + BAR_H, back);
-        int width = Math.round(BAR_W * clamped);
+        gfx.fill(x, y, x + barW, y + BAR_H, back);
+        int width = Math.round(barW * clamped);
         if (width > 0) {
             gfx.fill(x, y, x + width, y + BAR_H, fill);
         }

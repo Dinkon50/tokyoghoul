@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.combat;
 
 import com.tokyoghoulrpg.data.PlayerData;
+import com.tokyoghoulrpg.entity.BossMob;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,10 @@ public final class LockManager {
     }
 
     public static void lock(LivingEntity entity, long untilTick) {
+        // Боссов нельзя обездвижить
+        if (entity instanceof BossMob) {
+            return;
+        }
         Entry old = LOCKED.get(entity.getUUID());
         long end = old == null ? untilTick : Math.max(old.until(), untilTick);
         LOCKED.put(entity.getUUID(), new Entry(entity, end));

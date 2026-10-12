@@ -2,6 +2,9 @@ package com.tokyoghoulrpg;
 
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
+import com.tokyoghoulrpg.registry.ModCreativeTab;
+import com.tokyoghoulrpg.registry.ModEntities;
+import com.tokyoghoulrpg.registry.ModItems;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -16,6 +19,11 @@ public class TokyoGhoulRPG {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(this::registerCapabilities);
         modBus.addListener(this::commonSetup);
+        ModItems.ITEMS.register(modBus);
+        ModEntities.ENTITIES.register(modBus);
+        ModCreativeTab.TABS.register(modBus);
+        modBus.addListener(ModEntities::registerAttributes);
+        modBus.addListener(ModEntities::registerSpawnPlacements);
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {

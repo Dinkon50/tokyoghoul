@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 784512369,
+    "separation": 14,
+    "spacing": 40
+  },
+  "structures": [
+    {
+      "structure": "tokyoghoulrpg:ccg_office",
+      "weight": 1
+    }
+  ]
+}

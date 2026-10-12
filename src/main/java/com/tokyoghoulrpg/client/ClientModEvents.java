@@ -1,8 +1,14 @@
 package com.tokyoghoulrpg.client;
 
 import com.tokyoghoulrpg.TokyoGhoulRPG;
+import com.tokyoghoulrpg.client.hud.BiteVignette;
 import com.tokyoghoulrpg.client.hud.HudOverlay;
 import com.tokyoghoulrpg.client.kagune.KaguneLayer;
+import com.tokyoghoulrpg.entity.CcgAgentNpc;
+import com.tokyoghoulrpg.entity.GhoulNpc;
+import com.tokyoghoulrpg.entity.InformantNpc;
+import com.tokyoghoulrpg.entity.TraderNpc;
+import com.tokyoghoulrpg.registry.ModEntities;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -28,6 +34,23 @@ public final class ClientModEvents {
         event.register(KeyBindings.QUESTS);
     }
 
+    @SubscribeEvent
+    public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntities.GHOUL.get(),
+                context -> new NpcRenderer<>(context, "ghoul", GhoulNpc.VARIANTS));
+        event.registerEntityRenderer(ModEntities.CCG_AGENT.get(),
+                context -> new NpcRenderer<>(context, "ccg_agent", CcgAgentNpc.VARIANTS));
+        event.registerEntityRenderer(ModEntities.TRADER.get(),
+                context -> new NpcRenderer<>(context, "trader", TraderNpc.VARIANTS));
+        event.registerEntityRenderer(ModEntities.INFORMANT.get(),
+                context -> new NpcRenderer<>(context, "informant", InformantNpc.VARIANTS));
+        // боссы: модель игрока в 1.23 раза крупнее (хитбокс 2.4 блока)
+        event.registerEntityRenderer(ModEntities.GHOUL_BOSS.get(),
+                context -> new NpcRenderer<>(context, "ghoul_boss", 1, 1.23F));
+        event.registerEntityRenderer(ModEntities.CCG_BOSS.get(),
+                context -> new NpcRenderer<>(context, "ccg_boss", 1, 1.23F));
+    }
+
     /** Добавляем слой кагуне к отрисовке игроков: и к обычному скину, и к скину с тонкими руками. */
     @SubscribeEvent
     public static void onAddLayers(EntityRenderersEvent.AddLayers event) {
@@ -41,6 +64,8 @@ public final class ClientModEvents {
 
     @SubscribeEvent
     public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
+        // Красные края после укуса рисуются под всем интерфейсом, панель и хотбар остаются поверх
+        event.registerBelowAll("bite_vignette", BiteVignette::render);
         event.registerAboveAll("hud", HudOverlay::render);
     }
 }

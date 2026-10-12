@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "LLL",
+    "LBL"
+  ],
+  "key": {
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    }
+  },
+  "result": {
+    "item": "tokyoghoulrpg:mask_fang",
+    "count": 1
+  }
+}

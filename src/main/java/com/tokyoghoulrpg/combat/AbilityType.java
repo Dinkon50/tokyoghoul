@@ -10,7 +10,9 @@ public enum AbilityType {
     BASIC_ATTACK("basic_attack", true),
     STRONG_ATTACK("strong_attack", true),
     GRAPPLE_SELF("grapple_self", true),
-    PULL_TARGET("pull_target", true);
+    PULL_TARGET("pull_target", true),
+    /** Сильная атака человека: ПКМ дважды с любым предметом или пустой рукой. */
+    HUMAN_STRONG_ATTACK("human_strong_attack", false);
 
     private final String id;
     private final boolean needsKagune;

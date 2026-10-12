@@ -27,6 +27,27 @@ public final class AttrUtil {
         instance.addTransientModifier(new AttributeModifier(id, name, amount, operation));
     }
 
+    /**
+     * Постоянный модификатор: сохраняется в мире вместе с игроком. Нужен для здоровья гуля:
+     * при входе в мир Minecraft загружает здоровье после характеристик, и с временным модификатором
+     * здоровье гуля обрезалось бы до 20.
+     */
+    public static void setPermanent(LivingEntity entity, Attribute attribute, UUID id, String name, double amount,
+                                    AttributeModifier.Operation operation) {
+        AttributeInstance instance = entity.getAttribute(attribute);
+        if (instance == null) {
+            return;
+        }
+        AttributeModifier existing = instance.getModifier(id);
+        if (existing != null) {
+            if (Math.abs(existing.getAmount() - amount) < 1.0E-4) {
+                return;
+            }
+            instance.removeModifier(id);
+        }
+        instance.addPermanentModifier(new AttributeModifier(id, name, amount, operation));
+    }
+
     public static void remove(LivingEntity entity, Attribute attribute, UUID id) {
         AttributeInstance instance = entity.getAttribute(attribute);
         if (instance != null && instance.getModifier(id) != null) {

@@ -12,11 +12,12 @@ public final class SkillManager {
 
     public static void unlock(ServerPlayer player, String id) {
         PlayerData data = PlayerData.get(player);
-        if (data == null || !data.getPlayerClass().hasKagune()) {
+        if (data == null) {
             return;
         }
         SkillTree.Skill skill = SkillTree.find(id);
-        if (skill == null || data.hasSkill(id)) {
+        // Навык должен быть из дерева именно этого класса
+        if (skill == null || data.hasSkill(id) || !SkillTree.isAvailable(data.getPlayerClass(), skill.branch())) {
             return;
         }
         if (skill.requires() != null && !data.hasSkill(skill.requires())) {
@@ -29,11 +30,13 @@ public final class SkillManager {
 
         data.setSkillPoints(data.getSkillPoints() - skill.cost());
         data.addSkill(id);
-        // Ярость: уровень равен номеру последнего открытого улучшения
-        data.setRageLevel(Math.max(data.getRageLevel(), skill.tier()));
+        if (skill.branch() == SkillTree.Branch.RAGE) {
+            // Ярость: уровень равен номеру последнего открытого улучшения
+            data.setRageLevel(Math.max(data.getRageLevel(), skill.tier()));
+        }
 
         NetworkHandler.syncTo(player);
         player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.skill_unlocked",
-                Component.translatable("skill.tokyoghoulrpg.rage", SkillTree.roman(skill.tier()))), true);
+                skill.branch().skillName(skill.tier())), true);
     }
 }

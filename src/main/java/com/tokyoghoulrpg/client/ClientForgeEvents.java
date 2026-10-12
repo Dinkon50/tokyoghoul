@@ -2,16 +2,16 @@ package com.tokyoghoulrpg.client;
 
 import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.client.kagune.KaguneClientState;
+import com.tokyoghoulrpg.client.screen.QuestScreen;
 import com.tokyoghoulrpg.client.screen.SkillTreeScreen;
-import com.tokyoghoulrpg.client.screen.StubScreen;
 import com.tokyoghoulrpg.combat.AbilityType;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.AbilityC2S;
+import com.tokyoghoulrpg.network.packet.BarrageC2S;
 import com.tokyoghoulrpg.network.packet.BlockC2S;
 import com.tokyoghoulrpg.network.packet.ToggleKaguneC2S;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -24,6 +24,8 @@ import net.minecraftforge.fml.common.Mod;
 public final class ClientForgeEvents {
     /** Последнее состояние клавиши блока, которое мы отправили серверу. */
     private static boolean blockHeld = false;
+    /** Последнее состояние клавиши баррага, которое мы отправили серверу. */
+    private static boolean barrageHeld = false;
 
     private ClientForgeEvents() {
     }
@@ -36,6 +38,7 @@ public final class ClientForgeEvents {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
             blockHeld = false;
+            barrageHeld = false;
             return;
         }
 
@@ -52,9 +55,6 @@ public final class ClientForgeEvents {
         while (KeyBindings.DASH.consumeClick()) {
             sendAbility(mc, AbilityType.DASH);
         }
-        while (KeyBindings.BARRAGE.consumeClick()) {
-            sendAbility(mc, AbilityType.BARRAGE);
-        }
         while (KeyBindings.RAGE.consumeClick()) {
             sendAbility(mc, AbilityType.RAGE);
         }
@@ -65,9 +65,7 @@ public final class ClientForgeEvents {
         }
         while (KeyBindings.QUESTS.consumeClick()) {
             if (mc.screen == null) {
-                mc.setScreen(new StubScreen(
-                        Component.translatable("screen.tokyoghoulrpg.quests.title"),
-                        Component.translatable("screen.tokyoghoulrpg.stub")));
+                mc.setScreen(new QuestScreen());
             }
         }
 
@@ -79,6 +77,16 @@ public final class ClientForgeEvents {
         if (down != blockHeld) {
             blockHeld = down;
             NetworkHandler.CHANNEL.sendToServer(new BlockC2S(down));
+        }
+
+        // Барраж держится, пока зажата K: зажал - серия идёт, отпустил - закончилась
+        while (KeyBindings.BARRAGE.consumeClick()) {
+            // нажатия считаем по состоянию клавиши ниже
+        }
+        boolean barrageDown = KeyBindings.BARRAGE.isDown() && mc.screen == null;
+        if (barrageDown != barrageHeld) {
+            barrageHeld = barrageDown;
+            NetworkHandler.CHANNEL.sendToServer(new BarrageC2S(barrageDown));
         }
     }
 
@@ -110,5 +118,6 @@ public final class ClientForgeEvents {
         ClientHooks.reset();
         KaguneClientState.clear();
         blockHeld = false;
+        barrageHeld = false;
     }
 }

@@ -4,6 +4,7 @@ import com.tokyoghoulrpg.data.KaguneVariant;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.SelectClassC2S;
+import com.tokyoghoulrpg.network.packet.SelectVariantC2S;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -18,9 +19,18 @@ public class ClassSelectionScreen extends Screen {
 
     /** Выбранный класс, если у него есть второй шаг (вариант кагуне). */
     private PlayerClass selected = null;
+    /** Класс уже есть (например, стал полугулем после инъекции): выбираем только вариант кагуне. */
+    private final boolean variantOnly;
 
     public ClassSelectionScreen() {
         super(Component.translatable("screen.tokyoghoulrpg.class_select.title"));
+        this.variantOnly = false;
+    }
+
+    public ClassSelectionScreen(PlayerClass currentClass) {
+        super(Component.translatable("screen.tokyoghoulrpg.variant_select.title"));
+        this.selected = currentClass;
+        this.variantOnly = true;
     }
 
     @Override
@@ -51,12 +61,14 @@ public class ClassSelectionScreen extends Screen {
                         .build());
                 y += 26;
             }
-            addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.back"), button -> {
-                        selected = null;
-                        buildButtons();
-                    })
-                    .bounds(centerX - 90, y + 8, 180, 20)
-                    .build());
+            if (!variantOnly) {
+                addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.back"), button -> {
+                            selected = null;
+                            buildButtons();
+                        })
+                        .bounds(centerX - 90, y + 8, 180, 20)
+                        .build());
+            }
         }
     }
 
@@ -70,7 +82,11 @@ public class ClassSelectionScreen extends Screen {
     }
 
     private void choose(PlayerClass cls, KaguneVariant variant) {
-        NetworkHandler.CHANNEL.sendToServer(new SelectClassC2S(cls, variant));
+        if (variantOnly) {
+            NetworkHandler.CHANNEL.sendToServer(new SelectVariantC2S(variant));
+        } else {
+            NetworkHandler.CHANNEL.sendToServer(new SelectClassC2S(cls, variant));
+        }
         onClose();
     }
 

@@ -1,5 +1,7 @@
 package com.tokyoghoulrpg.network.packet;
 
+import com.tokyoghoulrpg.combat.AbilityManager;
+import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.data.KaguneVariant;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
@@ -29,6 +31,14 @@ public class SelectClassC2S {
         return new SelectClassC2S(buf.readEnum(PlayerClass.class), buf.readEnum(KaguneVariant.class));
     }
 
+    /** Стартовые очки крови: один раз на персонажа, любому классу. */
+    public static void giveStartBlood(PlayerData data) {
+        if (!data.isStartBloodGiven()) {
+            data.setStartBloodGiven(true);
+            data.addBloodPoints(Balance.BLOOD_START);
+        }
+    }
+
     public static void handle(SelectClassC2S msg, Supplier<NetworkEvent.Context> ctx) {
         NetworkEvent.Context context = ctx.get();
         context.enqueueWork(() -> {
@@ -52,6 +62,9 @@ public class SelectClassC2S {
                 data.setKaguneVariant(variant);
                 data.setKaguneActive(false);
                 data.setRage(0);
+                giveStartBlood(data);
+                // Гуль и полугуль сразу получают двойное здоровье, заполненное до конца
+                AbilityManager.applyClassStats(player, data, true);
                 NetworkHandler.syncTo(player);
                 player.sendSystemMessage(Component.translatable(
                         "message.tokyoghoulrpg.class_chosen",

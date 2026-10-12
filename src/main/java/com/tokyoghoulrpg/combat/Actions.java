@@ -1,10 +1,13 @@
 package com.tokyoghoulrpg.combat;
 
+import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Set;
+import com.tokyoghoulrpg.quest.Quest;
+import com.tokyoghoulrpg.quest.QuestManager;
+import com.tokyoghoulrpg.skill.SkillEffects;
+import com.tokyoghoulrpg.skill.SkillTree;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -16,10 +19,11 @@ public final class Actions {
     /** Резкий рывок вперёд: несколько тиков фиксированной скорости. */
     public static final class Dash implements ActiveAction {
         private final Vec3 direction;
-        private int ticksLeft = Balance.DASH_TICKS;
+        private int ticksLeft;
 
-        public Dash(Vec3 direction) {
+        public Dash(Vec3 direction, int ticks) {
             this.direction = direction;
+            this.ticksLeft = ticks;
         }
 
         @Override
@@ -66,8 +70,22 @@ public final class Actions {
         }
 
         private void strike(ServerPlayer player) {
+            // Ветка «Кровотечение»: попавшие удары кагуне вызывают кровотечение
+            int bleedSeconds = SkillEffects.bleedSeconds(
+                    SkillEffects.level(PlayerData.get(player), SkillTree.Branch.BLEED));
+            boolean strong = type == AttackType.STRONG;
+            // свист кагуне при каждом взмахе, сильный удар ниже и тяжелее
+            Effects.sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, strong ? 1.0F : 0.7F, strong ? 0.6F : 1.25F);
             for (LivingEntity target : Targeting.inFront(player, reach, halfWidth)) {
-                CombatContext.hit(player, target, damage, type);
+                if (CombatContext.hit(player, target, damage, type)) {
+                    Effects.blood(target, strong ? 18 : 8);
+                    if (strong) {
+                        Effects.sound(target, SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.7F);
+                    }
+                    if (bleedSeconds > 0) {
+                        BleedManager.apply(target, bleedSeconds);
+                    }
+                }
             }
         }
 
@@ -81,58 +99,56 @@ public final class Actions {
         private final long start;
         private final int[] hitTicks;
         private final int duration;
+        private final float damagePerHit;
+        private final double width;
         private int next = 0;
-        private final Set<LivingEntity> victims = Collections.newSetFromMap(new IdentityHashMap<>());
 
-        public Barrage(long start, int[] hitTicks, int duration) {
+        public Barrage(long start, int[] hitTicks, int duration, float damagePerHit, double width) {
             this.start = start;
             this.hitTicks = hitTicks;
             this.duration = duration;
+            this.damagePerHit = damagePerHit;
+            this.width = width;
         }
 
         @Override
         public boolean tick(ServerPlayer player, long now) {
-            // Оглушили или убили: серия прерывается, жертвы освобождаются
+            // Оглушили или убили: серия прерывается
             if (!player.isAlive() || LockManager.isLocked(player)) {
-                release();
                 NetworkHandler.playAnimation(player, "");
                 return true;
             }
             long elapsed = now - start;
             while (next < hitTicks.length && elapsed >= hitTicks[next]) {
-                strike(player);
+                strike(player, now);
                 next++;
             }
-            if (elapsed >= duration) {
-                release();
-                return true;
-            }
-            return false;
+            return elapsed >= duration;
         }
 
-        private void strike(ServerPlayer player) {
-            long end = start + duration;
-            for (LivingEntity target : Targeting.inFront(player, Balance.BARRAGE_LENGTH, Balance.BARRAGE_WIDTH / 2.0)) {
-                boolean hurt = CombatContext.hit(player, target, Balance.BARRAGE_DAMAGE_PER_HIT, AttackType.BARRAGE);
-                // Попавший под барраж не может двигаться до конца серии.
-                // Если он сам в баррагe (встречный барраж), его не обездвиживаем.
+        /**
+         * Каждый удар бьёт всех в области перед игроком. Кто получил урон, стоит на месте
+         * BARRAGE_HIT_STUN тиков: следующий удар продлевает это. Кто урона не получил
+         * (держит блок, вышел из области), может двигаться.
+         * Встречный барраж: тот, кто сам в баррагe, урон получает, но не обездвиживается.
+         */
+        private void strike(ServerPlayer player, long now) {
+            Effects.sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 0.45F, 1.3F + player.getRandom().nextFloat() * 0.3F);
+            for (LivingEntity target : Targeting.inFront(player, Balance.BARRAGE_LENGTH, width / 2.0)) {
+                boolean hurt = CombatContext.hit(player, target, damagePerHit, AttackType.BARRAGE);
+                if (hurt) {
+                    Effects.blood(target, 4);
+                    QuestManager.progress(player, Quest.Trigger.BARRAGE_HIT, 1);
+                }
                 if (hurt && !AbilityManager.isBarraging(target)) {
-                    LockManager.lock(target, end);
-                    victims.add(target);
+                    LockManager.lock(target, now + Balance.BARRAGE_HIT_STUN);
                 }
             }
         }
 
-        private void release() {
-            for (LivingEntity victim : victims) {
-                LockManager.unlock(victim);
-            }
-            victims.clear();
-        }
-
         @Override
         public void cancel(ServerPlayer player) {
-            release();
+            // Обездвиживание жертв короткое и снимется само через несколько тиков
         }
     }
 
@@ -217,6 +233,8 @@ public final class Actions {
             if (!latched && elapsed >= latch && elapsed < release) {
                 latched = true;
                 LockManager.lock(target, start + release);
+                Effects.sound(target, SoundEvents.SLIME_SQUISH, 0.9F, 0.7F);
+                Effects.blood(target, 6);
             }
             if (latched && elapsed >= pullStart && elapsed < pullEnd) {
                 Vec3 delta = player.position().subtract(target.position());

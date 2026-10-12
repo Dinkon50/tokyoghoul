@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IWI",
+    "W W",
+    "W W"
+  ],
+  "key": {
+    "W": {
+      "item": "minecraft:black_wool"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "tokyoghoulrpg:ccg_pants",
+    "count": 1
+  }
+}

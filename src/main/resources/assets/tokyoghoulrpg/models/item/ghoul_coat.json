@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "tokyoghoulrpg:item/ghoul_coat"
+  }
+}

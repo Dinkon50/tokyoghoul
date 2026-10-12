@@ -1,8 +1,6 @@
 package com.tokyoghoulrpg.client.kagune;
 
-import software.bernie.geckolib.renderer.GeoObjectRenderer;
-
-public class KaguneRenderer extends GeoObjectRenderer<KaguneAnimatable> {
+public class KaguneRenderer extends BackRenderer<KaguneAnimatable> {
     public KaguneRenderer() {
         super(new KaguneModel());
     }
