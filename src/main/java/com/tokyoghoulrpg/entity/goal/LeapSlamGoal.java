@@ -2,6 +2,7 @@ package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.combat.Effects;
+import com.tokyoghoulrpg.difficulty.DifficultyScaling;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
 import java.util.function.Predicate;
@@ -96,6 +97,6 @@ public class LeapSlamGoal extends Goal {
 
     @Override
     public void stop() {
-        readyAt = mob.level().getGameTime() + Balance.BOSS_LEAP_COOLDOWN;
+        readyAt = mob.level().getGameTime() + DifficultyScaling.bossCooldown(mob, Balance.BOSS_LEAP_COOLDOWN);
     }
 }

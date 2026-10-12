@@ -1,5 +1,7 @@
 package com.tokyoghoulrpg.entity;
 
+import java.util.UUID;
+import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.registry.ModItems;
@@ -60,12 +62,18 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("SkinVariant", getSkinVariant());
+        tag.putBoolean("Raider", raider);
+        if (raidTarget != null) {
+            tag.putUUID("RaidTarget", raidTarget);
+        }
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.entityData.set(VARIANT, Mth.clamp(tag.getInt("SkinVariant"), 0, VARIANTS - 1));
+        this.raider = tag.getBoolean("Raider");
+        this.raidTarget = tag.hasUUID("RaidTarget") ? tag.getUUID("RaidTarget") : null;
     }
 
     public CcgAgentNpc(EntityType<? extends PathfinderMob> type, Level level) {
@@ -82,13 +90,40 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
                 .add(Attributes.ARMOR, 2.0);
     }
 
-    /** Гуль-игрок. Полугуль, человек и агент сюда не попадают. */
+    /**
+     * На кого из игроков агенты нападают сами: на гулей (полугулей не трогают). С репутацией у CCG
+     * от 50 не трогают никого, а при -30 и ниже охотятся на любого игрока, даже на человека.
+     */
     public static boolean isGhoulPlayer(LivingEntity entity) {
-        if (entity instanceof Player player) {
-            PlayerData data = PlayerData.get(player);
-            return data != null && data.getPlayerClass() == PlayerClass.GHOUL;
+        if (!(entity instanceof Player player)) {
+            return false;
         }
-        return false;
+        PlayerData data = PlayerData.get(player);
+        if (data == null || !data.hasChosenClass()) {
+            return false;
+        }
+        int rep = data.getRepCcg();
+        if (rep >= Balance.REP_FRIENDLY) {
+            return false;
+        }
+        if (rep <= Balance.REP_HOSTILE) {
+            return true;
+        }
+        return data.getPlayerClass() == PlayerClass.GHOUL;
+    }
+
+    /** Агент из рейда: охотится на своего игрока и исчезает, когда тот далеко. */
+    private boolean raider = false;
+    private UUID raidTarget = null;
+
+    public void startRaid(Player target) {
+        this.raider = true;
+        this.raidTarget = target.getUUID();
+        this.setTarget(target);
+    }
+
+    private boolean isRaidTarget(LivingEntity entity) {
+        return raider && raidTarget != null && entity.getUUID().equals(raidTarget);
     }
 
     @Override
@@ -99,6 +134,9 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
+        // Рейд: свою цель находят даже за стенами
+        this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, 5, false, false,
+                this::isRaidTarget));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this).setAlertOthers(CcgAgentNpc.class));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, GhoulNpc.class, true));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
@@ -120,10 +158,10 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
         return result;
     }
 
-    /** Агенты не исчезают, когда игрок уходит далеко. */
+    /** Агенты не исчезают, когда игрок уходит далеко. Кроме отрядов из рейда: те уходят. */
     @Override
     public boolean removeWhenFarAway(double distance) {
-        return false;
+        return raider;
     }
 
     @Override

@@ -92,6 +92,66 @@ public final class Balance {
     public static final int[] COSTS_3 = {1, 2, 3};                  // ветки из 3 уровней: 6 очков
     public static final int[] COSTS_2 = {2, 3};                     // ветки из 2 уровней: 5 очков
     public static final int[] COSTS_1 = {3};                        // ветки из 1 навыка: 3 очка
+
+    // Сложность мира (выбирается при создании мира, её можно менять в настройках) [СПЕКА, числа ВРЕМЕННО]
+    // Лёгкая (и мирная): всё как раньше.
+    public static final double NORMAL_NPC_HEALTH = 1.25;            // нормальная: NPC мода +25% здоровья...
+    public static final double NORMAL_NPC_DAMAGE = 1.15;            // ...и +15% урона
+    public static final double HARD_HEALTH = 1.75;                  // сложная: все враждебные мобы +75% здоровья,
+    public static final double HARD_DAMAGE = 1.5;                   // +50% урона,
+    public static final double HARD_SPEED = 1.15;                   // +15% скорости,
+    public static final double HARD_FOLLOW = 1.5;                   // замечают в 1,5 раза дальше (и дальше зовут подмогу),
+    public static final double HARD_KNOCKBACK_RESIST = 0.2;         // хуже отлетают от ударов,
+    public static final double HARD_BOSS_COOLDOWN = 0.7;            // боссы чаще делают особые атаки
+    public static final double HARD_SKILL_COST_FACTOR = 1.5;        // навыки в 1,5 раза дороже (округление вверх)
+    // Игроки на сервере (нормальная и сложная): каждый игрок сверх первого, но не больше пяти игроков всего
+    public static final int PLAYER_SCALING_CAP = 5;
+    public static final double PER_PLAYER_HEALTH = 0.15;            // +15% здоровья враждебным мобам за игрока
+    public static final double PER_PLAYER_DAMAGE = 0.05;            // +5% их урона за игрока
+
+    // Еда гуля [ВРЕМЕННО]
+    public static final int FLESH_CRAVING = 35;                     // плоть: +35 к шкале «Кровь»
+    public static final int FLESH_HUMAN_NAUSEA = 200;               // человека от плоти мутит 10 с
+    public static final int VOMIT_FOOD_LOSS = 2;                    // гуль съел обычную еду: -1 окорочок сверх съеденного
+    public static final int VOMIT_NAUSEA = 200;                     // тошнота 10 с
+    public static final int VOMIT_HUNGER = 300;                     // Голод II 15 с
+    public static final int FLESH_DROP_MIN = 1;                     // из убитого гулем человека выпадает 1-2 плоти
+    public static final int FLESH_DROP_MAX = 2;
+
+    // Рейды CCG [ВРЕМЕННО]
+    public static final int RAID_CHECK_TICKS = 100;                 // проверка раз в 5 с
+    public static final int RAID_INTERVAL = 24000;                  // обычно раз в 20 минут (игровые сутки)...
+    public static final double RAID_INTERVAL_MIN_FACTOR = 0.5;      // ...а при репутации CCG -100 вдвое чаще
+    public static final int RAID_SQUAD_MIN = 2;                     // отряд: 2 агента, при репутации -100 до 4,
+    public static final int RAID_SQUAD_MAX = 4;                     // на сложной игре ещё +1
+    public static final double RAID_DIST_MIN = 18.0;                // появляются в 18-26 блоках от игрока
+    public static final double RAID_DIST_MAX = 26.0;
+    public static final int RAID_WANTED_REP = -50;                  // людей с репутацией CCG -50 и ниже тоже ищут
+
+    // Репутация [ВРЕМЕННО]: от -100 до 100
+    public static final int REP_KILL_NPC_FRIEND = 2;                // убил гуля: CCG +2, гули -3 (и наоборот)
+    public static final int REP_KILL_NPC_ENEMY = 3;
+    public static final int REP_KILL_BOSS_FRIEND = 15;              // убил босса: +15 одной стороне, -20 другой
+    public static final int REP_KILL_BOSS_ENEMY = 20;
+    public static final int REP_CONTRACT = 5;                       // контракт на охоту: +5 заказчику
+    public static final int REP_CONTRACT_OTHER = 2;                 // другие контракты: +2 своей стороне
+    public static final int REP_FRIENDLY = 50;                      // от 50: сторона тебя не трогает
+    public static final int REP_HOSTILE = -30;                      // до -30: сторона нападает, даже если ты «свой»
+    public static final int REP_INFORMANT_DISTRUST = -50;           // своя сторона -50 и ниже: информатор не даёт работу
+    public static final double REP_PRICE_DISCOUNT = 0.2;            // цены в лавке: до -20% при +100 своей стороны...
+    public static final double REP_PRICE_MARKUP = 0.25;             // ...и до +25% при -100
+    public static final double REP_REWARD_BONUS = 0.5;              // награды контрактов: от x0,5 до x1,5
+
+    // Двойной прыжок и падение [СПЕКА, числа ВРЕМЕННО]
+    public static final double DOUBLE_JUMP_VELOCITY = 0.5;          // второй прыжок чуть выше обычного (0,42)
+    public static final float FALL_DAMAGE_BASE = 0.8F;              // всем: урон от падения -20%
+    public static final double SOFT_LANDING_PER_LEVEL = 0.15;       // «Мягкое приземление»: ещё -15% за уровень
+
+    // Секретный навык «Кровавое зеркало» [СПЕКА]
+    public static final int[] MIRROR_COST = {30};                   // стоит 30 очков навыков
+    public static final double MIRROR_HEALTH = 0.5;                 // работает, когда здоровья меньше 50%
+    public static final double MIRROR_FULL_CHANCE = 0.5;            // шанс 50%: урон не проходит и весь отражается
+    public static final double MIRROR_SHARE = 0.5;                  // иначе урон проходит, а бьющий получает 50% этого урона
     // Укус, за уровень
     public static final float SKILL_BITE_HEAL = 1.0F;               // +0,5 сердца лечения
     public static final int SKILL_BITE_RAGE = 5;                    // +5 очков ярости

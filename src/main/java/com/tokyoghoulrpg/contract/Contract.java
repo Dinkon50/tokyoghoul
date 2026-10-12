@@ -1,6 +1,8 @@
 package com.tokyoghoulrpg.contract;
 
 import com.tokyoghoulrpg.data.PlayerClass;
+import com.tokyoghoulrpg.data.PlayerData;
+import com.tokyoghoulrpg.rep.Reputation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -69,6 +71,11 @@ public enum Contract {
 
     public int blood() {
         return blood;
+    }
+
+    /** Кровь за контракт с учётом репутации у своей стороны (x0,5 ... x1,5). */
+    public int bloodFor(PlayerData data) {
+        return data == null ? blood : (int) Math.round(blood * Reputation.rewardFactor(data));
     }
 
     public int points() {

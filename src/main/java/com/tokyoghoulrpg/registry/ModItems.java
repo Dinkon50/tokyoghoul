@@ -2,10 +2,14 @@ package com.tokyoghoulrpg.registry;
 
 import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.data.ClassChange;
+import com.tokyoghoulrpg.item.CoffeeItem;
 import com.tokyoghoulrpg.item.InjectionItem;
 import com.tokyoghoulrpg.item.MaskItem;
 import com.tokyoghoulrpg.item.ModArmorMaterials;
 import java.util.List;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -25,6 +29,15 @@ public final class ModItems {
             () -> new InjectionItem(ClassChange.Injection.GHOUL, new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> CCG_INJECTION = ITEMS.register("ccg_injection",
             () -> new InjectionItem(ClassChange.Injection.CCG, new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON)));
+
+    // Еда гуля
+    public static final RegistryObject<Item> FLESH = ITEMS.register("flesh",
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
+                    .nutrition(8).saturationMod(0.8F).meat().build())));
+    public static final RegistryObject<Item> COFFEE = ITEMS.register("coffee",
+            () -> new CoffeeItem(new Item.Properties().stacksTo(16).food(new FoodProperties.Builder()
+                    .nutrition(2).saturationMod(0.4F).alwaysEat()
+                    .effect(() -> new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 0), 1.0F).build())));
 
     // Маски
     public static final RegistryObject<Item> MASK_FANG = mask("mask_fang");

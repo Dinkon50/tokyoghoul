@@ -5,6 +5,7 @@ import com.tokyoghoulrpg.contract.ContractManager;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.ContractActionC2S;
+import com.tokyoghoulrpg.rep.Reputation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -89,6 +90,9 @@ public class ContractScreen extends Screen {
                 gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.contract.deliver_hint"),
                         left + 10, y + 40, 0x9A9A9A, false);
             }
+        } else if (data != null && !Reputation.informantTrusts(data)) {
+            gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.contract.distrust"),
+                    this.width / 2, y + 20, 0xC04050);
         } else if (doneToday || offer == null) {
             gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.contract.tomorrow"),
                     this.width / 2, y + 20, 0x9A9A9A);
@@ -97,7 +101,7 @@ public class ContractScreen extends Screen {
             gfx.drawString(this.font, offer.title(), left + 10, y + 12, 0xFFFFFF, false);
             reward(gfx, offer, left + 10, y + 26);
         }
-        take.active = active == null && !doneToday && offer != null;
+        take.active = active == null && !doneToday && offer != null && data != null && Reputation.informantTrusts(data);
         turnIn.active = active != null;
         abandon.active = active != null;
         super.render(gfx, mouseX, mouseY, partialTick);
@@ -105,8 +109,8 @@ public class ContractScreen extends Screen {
 
     private void reward(GuiGraphics gfx, Contract contract, int x, int y) {
         Component text = contract.points() > 0
-                ? Component.translatable("screen.tokyoghoulrpg.contract.reward_points", contract.blood(), contract.points())
-                : Component.translatable("screen.tokyoghoulrpg.contract.reward", contract.blood());
+                ? Component.translatable("screen.tokyoghoulrpg.contract.reward_points", contract.bloodFor(data()), contract.points())
+                : Component.translatable("screen.tokyoghoulrpg.contract.reward", contract.bloodFor(data()));
         gfx.drawString(this.font, text, x, y, 0xFF5A78, false);
     }
 

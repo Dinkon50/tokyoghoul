@@ -8,6 +8,7 @@ import com.tokyoghoulrpg.entity.GhoulNpc;
 import com.tokyoghoulrpg.entity.InformantNpc;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.quest.Quest;
+import com.tokyoghoulrpg.raid.CcgRaids;
 import com.tokyoghoulrpg.quest.QuestManager;
 import com.tokyoghoulrpg.skill.SkillEffects;
 import com.tokyoghoulrpg.skill.SkillTree;
@@ -477,6 +478,11 @@ public final class AbilityManager {
         }
         rewardLevels(player, data);
         applyClassStats(player, data, false);
+        CcgRaids.tick(player, data);
+        // Двойной прыжок снова доступен на земле, в воде и на лестнице
+        if (player.onGround() || player.isInWater() || player.onClimbable()) {
+            data.combat().doubleJumpUsed = false;
+        }
         QuestManager.tick(player);
         if (!data.getPlayerClass().hasKagune()) {
             // У человека и агента CCG из способностей только рывок

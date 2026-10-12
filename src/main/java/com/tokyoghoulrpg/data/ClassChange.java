@@ -1,5 +1,6 @@
 package com.tokyoghoulrpg.data;
 
+import com.tokyoghoulrpg.event.ModCommands;
 import com.tokyoghoulrpg.combat.AbilityManager;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.quest.Quest;
@@ -94,7 +95,7 @@ public final class ClassChange {
         for (String id : new ArrayList<>(data.getSkills())) {
             SkillTree.Skill skill = SkillTree.find(id);
             if (skill == null || !SkillTree.isAvailable(target, skill.branch())) {
-                refund += skill == null ? 0 : skill.cost();
+                refund += skill == null ? 0 : data.paidFor(id, skill.cost());
                 data.removeSkill(id);
             }
         }
@@ -118,9 +119,11 @@ public final class ClassChange {
         AbilityManager.applyClassStats(player, data, false);
         NetworkHandler.syncTo(player);
 
-        player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.class_changed",
-                Component.translatable(target.translationKey())));
-        if (refund > 0) {
+        if (!ModCommands.isSilent()) {
+            player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.class_changed",
+                    Component.translatable(target.translationKey())));
+        }
+        if (refund > 0 && !ModCommands.isSilent()) {
             player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.skills_refunded", refund));
         }
         if (chooseVariant) {

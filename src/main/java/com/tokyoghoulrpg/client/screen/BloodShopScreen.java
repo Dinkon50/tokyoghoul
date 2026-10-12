@@ -59,6 +59,11 @@ public class BloodShopScreen extends Screen {
                 .build());
     }
 
+    private static PlayerData mcData() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player == null ? null : PlayerData.get(mc.player);
+    }
+
     private int blood() {
         Minecraft mc = Minecraft.getInstance();
         PlayerData data = mc.player == null ? null : PlayerData.get(mc.player);
@@ -88,8 +93,9 @@ public class BloodShopScreen extends Screen {
             }
             gfx.renderItem(stack, left + 10, y + 4);
             gfx.drawString(this.font, stack.getHoverName(), left + 32, y + 3, 0xE6E6E6, false);
-            boolean affordable = blood >= entry.price();
-            gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.shop.price", entry.price()),
+            int price = BloodShop.priceFor(entry, mcData());
+            boolean affordable = blood >= price;
+            gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.shop.price", price),
                     left + 32, y + 13, affordable ? 0xFF5A78 : 0x777777, false);
             buyButtons.get(i).active = affordable;
             y += ROW_H;

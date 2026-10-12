@@ -1,5 +1,6 @@
 package com.tokyoghoulrpg.entity;
 
+import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.registry.ModItems;
@@ -100,17 +101,27 @@ public class GhoulNpc extends Monster implements SkinVariant {
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, TraderNpc.class, true));
     }
 
-    /** Человек для гуля: игрок-человек или агент CCG. Гулей и полугулей сам не трогает. */
+    /**
+     * На кого из игроков гули нападают сами: на людей и агентов CCG. С репутацией у гулей от 50
+     * не трогают никого, а при репутации -30 и ниже нападают и на гулей с полугулями.
+     */
     public static boolean isHumanPlayer(LivingEntity entity) {
-        if (entity instanceof Player player) {
-            PlayerData data = PlayerData.get(player);
-            if (data == null) {
-                return false;
-            }
-            PlayerClass cls = data.getPlayerClass();
-            return cls == PlayerClass.HUMAN || cls == PlayerClass.CCG_AGENT;
+        if (!(entity instanceof Player player)) {
+            return false;
         }
-        return false;
+        PlayerData data = PlayerData.get(player);
+        if (data == null || !data.hasChosenClass()) {
+            return false;
+        }
+        int rep = data.getRepGhouls();
+        if (rep >= Balance.REP_FRIENDLY) {
+            return false;
+        }
+        if (rep <= Balance.REP_HOSTILE) {
+            return true;
+        }
+        PlayerClass cls = data.getPlayerClass();
+        return cls == PlayerClass.HUMAN || cls == PlayerClass.CCG_AGENT;
     }
 
     @Override

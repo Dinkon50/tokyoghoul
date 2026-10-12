@@ -125,7 +125,7 @@ public class TraderNpc extends AbstractVillager implements SkinVariant {
     }
 
     /**
-     * Торговля за изумруды: маски и одежда, покупка гнилой плоти и костей. Инъекции продаются
+     * Торговля за изумруды: маски и одежда, плоть и кофе для гулей, покупка гнилой плоти и костей. Инъекции продаются
      * только за очки крови (лавка, shop/BloodShop). Цены временные. Последние три числа:
      * сколько раз можно купить до пополнения, опыт, множитель цены.
      */
@@ -139,6 +139,8 @@ public class TraderNpc extends AbstractVillager implements SkinVariant {
         offers.add(sell(6, new ItemStack(ModItems.GHOUL_COAT.get())));
         offers.add(sell(5, new ItemStack(ModItems.GHOUL_PANTS.get())));
         offers.add(sell(3, new ItemStack(ModItems.GHOUL_BOOTS.get())));
+        offers.add(sell(3, new ItemStack(ModItems.FLESH.get(), 2)));        // еда гуля
+        offers.add(sell(2, new ItemStack(ModItems.COFFEE.get())));
         offers.add(new MerchantOffer(new ItemStack(Items.ROTTEN_FLESH, 24), new ItemStack(Items.EMERALD), 16, 1, 0.05F));
         offers.add(new MerchantOffer(new ItemStack(Items.BONE, 16), new ItemStack(Items.EMERALD), 16, 1, 0.05F));
     }

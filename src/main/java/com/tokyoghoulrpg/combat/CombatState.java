@@ -25,6 +25,10 @@ public class CombatState {
     public float lastExhaustion;
     /** Значение шкалы «Кровь», которое уже знает клиент. */
     public int syncedCraving = -1;
+    /** «Кровавое зеркало»: полное отражение не выпало, при получении урона отразить половину. */
+    public boolean mirrorPartial;
+    /** Двойной прыжок уже использован в этом прыжке (сбрасывается на земле). */
+    public boolean doubleJumpUsed;
     public final List<ActiveAction> actions = new ArrayList<>();
 
     public boolean isDashing() {
@@ -63,6 +67,8 @@ public class CombatState {
         comboIndex = 0;
         lastExhaustion = 0.0F;
         syncedCraving = -1;
+        mirrorPartial = false;
+        doubleJumpUsed = false;
         actions.clear();
     }
 }

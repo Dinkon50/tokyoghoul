@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Difficulty;
 
 /**
  * Дерево навыков гуля и полугуля. Ветки разложены по четырём вкладкам, уровни в каждой ветке
@@ -73,7 +74,12 @@ public final class SkillTree {
         ATTACK_SPEED("attack_speed", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xC9822B),
         MINING("mining", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x9A9A9A),
         WEAPON_DAMAGE("weapon_damage", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xE0503A),
-        HUMAN_DASH("human_dash", Tab.HUMAN, 2, Balance.COSTS_2, 1, 0x9ED0E6);
+        HUMAN_DASH("human_dash", Tab.HUMAN, 2, Balance.COSTS_2, 1, 0x9ED0E6),
+        // У всех: гуль и полугуль — вкладка «Выживание», человек — вкладка «Человек»
+        SOFT_LANDING("soft_landing", Tab.SURVIVAL, 3, Balance.COSTS_3, 1, 0x7FB8D8, Tab.HUMAN),
+        // Секретный навык: у гуля и полугуля во вкладке «Выживание», у человека во вкладке «Человек».
+        // Пока не открыт, в меню вместо названия и описания знаки вопроса.
+        MIRROR("mirror", Tab.SURVIVAL, 1, Balance.MIRROR_COST, 1, 0x9A1030, Tab.HUMAN);
 
         private final String id;
         private final Tab tab;
@@ -81,14 +87,26 @@ public final class SkillTree {
         private final int[] costs;
         private final int firstShownTier;
         private final int color;
+        private final List<Tab> extraTabs;
 
-        Branch(String id, Tab tab, int levels, int[] costs, int firstShownTier, int color) {
+        Branch(String id, Tab tab, int levels, int[] costs, int firstShownTier, int color, Tab... extraTabs) {
             this.id = id;
             this.tab = tab;
             this.levels = levels;
             this.costs = costs;
             this.firstShownTier = firstShownTier;
             this.color = color;
+            this.extraTabs = List.of(extraTabs);
+        }
+
+        /** Есть ли ветка на этой вкладке (секретная ветка есть сразу на нескольких). */
+        public boolean inTab(Tab other) {
+            return tab == other || extraTabs.contains(other);
+        }
+
+        /** Секретная ветка: до открытия показывается знаками вопроса. */
+        public boolean isSecret() {
+            return this == MIRROR;
         }
 
         public String id() {
@@ -169,6 +187,9 @@ public final class SkillTree {
                 case WEAPON_DAMAGE -> Component.translatable(key, percent(SkillEffects.humanWeaponDamage(level)));
                 case HUMAN_DASH -> Component.translatable(key, SkillEffects.otherDashCharges(level),
                         seconds(SkillEffects.otherDashCooldown(level)));
+                case SOFT_LANDING -> Component.translatable(key, percent(1.0 - SkillEffects.fallFactor(level)));
+                case MIRROR -> Component.translatable(key, percent(Balance.MIRROR_HEALTH),
+                        percent(Balance.MIRROR_FULL_CHANCE), percent(Balance.MIRROR_SHARE));
             };
         }
     }
@@ -205,13 +226,18 @@ public final class SkillTree {
     }
 
     public static boolean isAvailable(PlayerClass playerClass, Branch branch) {
-        return branch.tab().isFor(playerClass);
+        for (Tab tab : Tab.values()) {
+            if (branch.inTab(tab) && tab.isFor(playerClass)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static List<Branch> branches(Tab tab) {
         List<Branch> list = new ArrayList<>();
         for (Branch branch : Branch.values()) {
-            if (branch.tab() == tab) {
+            if (branch.inTab(tab)) {
                 list.add(branch);
             }
         }
@@ -237,15 +263,23 @@ public final class SkillTree {
         return null;
     }
 
-    /** Полная стоимость дерева класса. */
-    public static int totalCost(PlayerClass playerClass) {
+    /** Полная стоимость дерева класса на этой сложности. */
+    public static int totalCost(PlayerClass playerClass, Difficulty difficulty) {
         int sum = 0;
         for (Skill skill : ALL) {
             if (isAvailable(playerClass, skill.branch())) {
-                sum += skill.cost();
+                sum += cost(skill, difficulty);
             }
         }
         return sum;
+    }
+
+    /** Цена навыка на этой сложности: на сложной в 1,5 раза дороже (с округлением вверх). */
+    public static int cost(Skill skill, Difficulty difficulty) {
+        if (difficulty == Difficulty.HARD) {
+            return (int) Math.ceil(skill.cost() * Balance.HARD_SKILL_COST_FACTOR);
+        }
+        return skill.cost();
     }
 
     private static String percent(double value) {

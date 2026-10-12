@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Difficulty;
 
 /**
  * Дерево навыков (клавиша B). У гуля и полугуля четыре вкладки (Основа, Способности, Выживание,
@@ -22,7 +23,7 @@ public class SkillTreeScreen extends Screen {
     private static final int LABEL_W = 104;
     private static final int ROW_STEP = 24;
     private static final int TAB_H = 14;
-    private static final int MAX_ROWS = 6;
+    private static final int MAX_ROWS = 8;
     private static final int TOTAL_H = 26 + TAB_H + 10 + ROW_STEP * (MAX_ROWS - 1) + NODE + 8 + 36;
 
     /** Последняя открытая вкладка, чтобы при повторном открытии меню вернуться на неё. */
@@ -108,7 +109,7 @@ public class SkillTreeScreen extends Screen {
         if (skill.requires() != null && !data.hasSkill(skill.requires())) {
             return State.LOCKED;
         }
-        if (data.getSkillPoints() < skill.cost()) {
+        if (data.getSkillPoints() < cost(skill)) {
             return State.NO_POINTS;
         }
         return State.AVAILABLE;
@@ -158,11 +159,16 @@ public class SkillTreeScreen extends Screen {
         if (data != null) {
             Component points = Component.translatable("screen.tokyoghoulrpg.skill_tree.points", data.getSkillPoints());
             Component blood = Component.translatable("screen.tokyoghoulrpg.skill_tree.blood", data.getBloodPoints());
+            Component rep = Component.translatable("screen.tokyoghoulrpg.skill_tree.rep",
+                    signed(data.getRepCcg()), signed(data.getRepGhouls()));
             int gap = 16;
-            int total = this.font.width(points) + gap + this.font.width(blood);
+            int total = this.font.width(points) + gap + this.font.width(blood) + gap + this.font.width(rep);
             int x = this.width / 2 - total / 2;
             gfx.drawString(this.font, points, x, top + 12, 0xE6E6E6, false);
-            gfx.drawString(this.font, blood, x + this.font.width(points) + gap, top + 12, 0xFF5A78, false);
+            x += this.font.width(points) + gap;
+            gfx.drawString(this.font, blood, x, top + 12, 0xFF5A78, false);
+            x += this.font.width(blood) + gap;
+            gfx.drawString(this.font, rep, x, top + 12, 0x9AB0C9, false);
         }
         if (data == null || tabs().isEmpty()) {
             gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.skill_tree.later"),
@@ -209,7 +215,9 @@ public class SkillTreeScreen extends Screen {
     private void drawBranch(GuiGraphics gfx, PlayerData data, SkillTree.Branch branch, int y, int mouseX, int mouseY) {
         List<SkillTree.Skill> skills = SkillTree.branch(branch);
         gfx.fill(left(), y + 3, left() + 2, y + NODE - 3, 0xFF000000 | branch.color());
-        gfx.drawString(this.font, branch.title(), left() + 6, y + NODE / 2 - 4, 0xD0D0D0, false);
+        boolean hidden = isHidden(data, branch);
+        gfx.drawString(this.font, hidden ? Component.literal("???") : branch.title(), left() + 6, y + NODE / 2 - 4,
+                hidden ? 0x9A1030 : 0xD0D0D0, false);
 
         for (int i = 0; i < skills.size(); i++) {
             SkillTree.Skill skill = skills.get(i);
@@ -233,7 +241,7 @@ public class SkillTreeScreen extends Screen {
             }
             gfx.fill(x, y, x + NODE, y + NODE, border);
             gfx.fill(x + 2, y + 2, x + NODE - 2, y + NODE - 2, inner);
-            gfx.drawCenteredString(this.font, branch.shownTier(skill.tier()), x + NODE / 2, y + NODE / 2 - 4,
+            gfx.drawCenteredString(this.font, hidden ? "?" : branch.shownTier(skill.tier()), x + NODE / 2, y + NODE / 2 - 4,
                     state == State.LOCKED ? 0x777777 : 0xFFFFFF);
         }
     }
@@ -241,12 +249,47 @@ public class SkillTreeScreen extends Screen {
     private void drawInfo(GuiGraphics gfx, PlayerData data, SkillTree.Skill skill, int y) {
         int centerX = this.width / 2;
         State state = stateOf(data, skill);
-        gfx.drawCenteredString(this.font, skill.branch().skillName(skill.tier()), centerX, y, 0xE6E6E6);
-        gfx.drawCenteredString(this.font, skill.branch().effect(skill.tier()), centerX, y + 12, 0xC9C9C9);
-        Component costLine = Component.translatable("screen.tokyoghoulrpg.skill_tree.cost", skill.cost())
+        boolean hidden = isHidden(data, skill.branch());
+        gfx.drawCenteredString(this.font, hidden ? Component.literal("???") : skill.branch().skillName(skill.tier()),
+                centerX, y, 0xE6E6E6);
+        gfx.drawCenteredString(this.font, hidden ? Component.literal("? ? ?") : skill.branch().effect(skill.tier()),
+                centerX, y + 12, 0xC9C9C9);
+        Component costLine = Component.translatable(hardMode() ? "screen.tokyoghoulrpg.skill_tree.cost_hard"
+                        : "screen.tokyoghoulrpg.skill_tree.cost", cost(skill))
                 .append("   ")
                 .append(Component.translatable(state.key));
         gfx.drawCenteredString(this.font, costLine, centerX, y + 24, state.color);
+    }
+
+    private static String signed(int value) {
+        return value > 0 ? "+" + value : String.valueOf(value);
+    }
+
+    /** Сложность мира приходит клиенту от сервера: на сложной навыки дороже. */
+    private static Difficulty difficulty() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level == null ? Difficulty.NORMAL : mc.level.getDifficulty();
+    }
+
+    private static boolean hardMode() {
+        return difficulty() == Difficulty.HARD;
+    }
+
+    private static int cost(SkillTree.Skill skill) {
+        return SkillTree.cost(skill, difficulty());
+    }
+
+    /** Секретная ветка скрыта знаками вопроса, пока её навык не открыт. */
+    private static boolean isHidden(PlayerData data, SkillTree.Branch branch) {
+        if (!branch.isSecret()) {
+            return false;
+        }
+        for (SkillTree.Skill skill : SkillTree.branch(branch)) {
+            if (data.hasSkill(skill.id())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static int dim(int rgb) {

@@ -1,5 +1,7 @@
 package com.tokyoghoulrpg.shop;
 
+import com.tokyoghoulrpg.data.PlayerData;
+import com.tokyoghoulrpg.rep.Reputation;
 import com.tokyoghoulrpg.registry.ModItems;
 import java.util.List;
 import java.util.function.Supplier;
@@ -24,6 +26,11 @@ public final class BloodShop {
             new Entry(ModItems.CCG_INJECTION, 1000));
 
     private BloodShop() {
+    }
+
+    /** Цена для игрока: зависит от репутации у своей стороны (от -20% до +25%). */
+    public static int priceFor(Entry entry, PlayerData data) {
+        return data == null ? entry.price() : Reputation.price(data, entry.price());
     }
 
     public static Entry get(int index) {

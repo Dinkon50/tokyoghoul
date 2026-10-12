@@ -2,6 +2,7 @@ package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.combat.Effects;
+import com.tokyoghoulrpg.difficulty.DifficultyScaling;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -101,7 +102,7 @@ public class ChargeStrikeGoal extends Goal {
 
     @Override
     public void stop() {
-        readyAt = mob.level().getGameTime() + Balance.BOSS_CHARGE_COOLDOWN;
+        readyAt = mob.level().getGameTime() + DifficultyScaling.bossCooldown(mob, Balance.BOSS_CHARGE_COOLDOWN);
         mob.setDeltaMovement(mob.getDeltaMovement().multiply(0.2, 1.0, 0.2));
     }
 }

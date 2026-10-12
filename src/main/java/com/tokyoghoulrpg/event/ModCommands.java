@@ -10,6 +10,7 @@ import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.combat.AbilityManager;
 import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.data.ClassChange;
+import com.tokyoghoulrpg.difficulty.DifficultyScaling;
 import com.tokyoghoulrpg.data.KaguneVariant;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
@@ -17,6 +18,7 @@ import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.SelectClassC2S;
 import com.tokyoghoulrpg.quest.Quest;
 import com.tokyoghoulrpg.quest.QuestManager;
+import com.tokyoghoulrpg.raid.CcgRaids;
 import com.tokyoghoulrpg.skill.SkillTree;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +41,7 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = TokyoGhoulRPG.MOD_ID)
 public final class ModCommands {
     private static final int OP = 2;
+    private static boolean SILENT = false;
 
     /** Что сделать с числом: добавить, задать или отнять. */
     private enum Op {
@@ -64,17 +67,17 @@ public final class ModCommands {
                 .executes(ModCommands::help)
                 .then(Commands.literal("help").executes(ModCommands::help))
                 .then(Commands.literal("info")
-                        .executes(ctx -> run(ctx, ctx.getSource().getPlayerOrException(), ModCommands::info))
+                        .executes(ctx -> showInfo(ctx, ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .requires(src -> src.hasPermission(OP))
-                                .executes(ctx -> run(ctx, EntityArgument.getPlayer(ctx, "player"), ModCommands::info))))
+                                .executes(ctx -> showInfo(ctx, EntityArgument.getPlayer(ctx, "player")))))
                 .then(amount("points", 100000, (op, n) -> (player, data) -> {
                     data.setSkillPoints(apply(op, data.getSkillPoints(), n));
-                    return Component.translatable("command.tokyoghoulrpg.points", player.getDisplayName(), data.getSkillPoints());
+                    return null;
                 }))
                 .then(amount("blood", 10000000, (op, n) -> (player, data) -> {
                     data.setBloodPoints(apply(op, data.getBloodPoints(), n));
-                    return Component.translatable("command.tokyoghoulrpg.blood", player.getDisplayName(), data.getBloodPoints());
+                    return null;
                 }))
                 .then(Commands.literal("rage").requires(src -> src.hasPermission(OP))
                         .then(withTarget(Commands.argument("value", IntegerArgumentType.integer(0, PlayerData.RAGE_MAX)),
@@ -82,7 +85,7 @@ public final class ModCommands {
                                     int value = IntegerArgumentType.getInteger(ctx, "value");
                                     return (player, data) -> {
                                         data.setRage(value);
-                                        return Component.translatable("command.tokyoghoulrpg.rage", player.getDisplayName(), value);
+                                        return null;
                                     };
                                 })))
                 .then(Commands.literal("ragelevel").requires(src -> src.hasPermission(OP))
@@ -91,7 +94,7 @@ public final class ModCommands {
                                     int level = IntegerArgumentType.getInteger(ctx, "level");
                                     return (player, data) -> {
                                         data.setRageLevel(level);
-                                        return Component.translatable("command.tokyoghoulrpg.ragelevel", player.getDisplayName(), level);
+                                        return null;
                                     };
                                 })))
                 .then(Commands.literal("class").requires(src -> src.hasPermission(OP))
@@ -120,26 +123,49 @@ public final class ModCommands {
                                     int value = IntegerArgumentType.getInteger(ctx, "value");
                                     return (player, data) -> {
                                         data.setCraving(value);
-                                        return Component.translatable("command.tokyoghoulrpg.craving", player.getDisplayName(), value);
+                                        return null;
                                     };
                                 })))
                 .then(Commands.literal("contract").requires(src -> src.hasPermission(OP))
                         .then(withTarget(Commands.literal("reset"), ctx -> (player, data) -> {
                             data.setContract(null, 0);
                             data.setContractDoneDay(-1L);
-                            return Component.translatable("command.tokyoghoulrpg.contract_reset", player.getDisplayName());
+                            return null;
                         })))
+                .then(Commands.literal("rep").requires(src -> src.hasPermission(OP))
+                        .then(Commands.literal("ccg")
+                                .then(withTarget(Commands.argument("value", IntegerArgumentType.integer(-100, 100)),
+                                        ctx -> {
+                                            int value = IntegerArgumentType.getInteger(ctx, "value");
+                                            return (player, data) -> {
+                                                data.setRepCcg(value);
+                                                return null;
+                                            };
+                                        })))
+                        .then(Commands.literal("ghouls")
+                                .then(withTarget(Commands.argument("value", IntegerArgumentType.integer(-100, 100)),
+                                        ctx -> {
+                                            int value = IntegerArgumentType.getInteger(ctx, "value");
+                                            return (player, data) -> {
+                                                data.setRepGhouls(value);
+                                                return null;
+                                            };
+                                        }))))
+                .then(withTarget(Commands.literal("raid").requires(src -> src.hasPermission(OP)), ctx -> (player, data) -> {
+                    // отряд приходит сразу, даже если игрока сейчас не ищут; следующий рейд по обычному расписанию
+                    return CcgRaids.start(player) ? null : Component.translatable("command.tokyoghoulrpg.raid.no_place");
+                }))
                 .then(Commands.literal("cooldowns").requires(src -> src.hasPermission(OP))
                         .then(withTarget(Commands.literal("reset"), ctx -> (player, data) -> {
                             AbilityManager.resetCooldowns(player);
-                            return Component.translatable("command.tokyoghoulrpg.cooldowns", player.getDisplayName());
+                            return null;
                         })))
                 .then(withTarget(Commands.literal("reset").requires(src -> src.hasPermission(OP)), ctx -> (player, data) -> {
                     AbilityManager.resetAll(player);
                     data.reset();
                     AbilityManager.applyClassStats(player, data, false);
                     NetworkHandler.openClassSelection(player);
-                    return Component.translatable("command.tokyoghoulrpg.reset", player.getDisplayName());
+                    return null;
                 })));
     }
 
@@ -185,12 +211,37 @@ public final class ModCommands {
         if (data == null) {
             return 0;
         }
-        Component message = action.run(player, data);
+        // Команды работают молча: в чат ничего не пишется. Сообщение возвращают только ошибки
+        // (неизвестный класс, нет задания и т. п.), их видит только тот, кто ввёл команду.
+        Component error;
+        SILENT = true;
+        try {
+            error = action.run(player, data);
+        } finally {
+            SILENT = false;
+        }
         NetworkHandler.syncTo(player);
-        if (message != null) {
-            ctx.getSource().sendSuccess(() -> message, true);
+        if (error != null) {
+            ctx.getSource().sendFailure(error);
+            return 0;
         }
         return 1;
+    }
+
+    /** /tgrpg info: единственная команда (кроме help), которая что-то показывает, потому что это её смысл. */
+    private static int showInfo(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        PlayerData data = PlayerData.get(player);
+        if (data == null) {
+            return 0;
+        }
+        Component text = info(player, data);
+        ctx.getSource().sendSuccess(() -> text, false);
+        return 1;
+    }
+
+    /** Пока выполняется команда мода: сообщения о наградах и смене класса не пишутся в чат. */
+    public static boolean isSilent() {
+        return SILENT;
     }
 
     private static List<String> classIds() {
@@ -205,7 +256,7 @@ public final class ModCommands {
     // ------------------------------------------------------------------
 
     private static int help(CommandContext<CommandSourceStack> ctx) {
-        for (int i = 0; i <= 16; i++) {
+        for (int i = 0; i <= 18; i++) {
             final int line = i;
             ctx.getSource().sendSuccess(() -> Component.translatable("command.tokyoghoulrpg.help." + line), false);
         }
@@ -228,8 +279,13 @@ public final class ModCommands {
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.rage",
                         data.getRage(), PlayerData.RAGE_MAX, data.getRageLevel()))
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.skills",
-                        data.getSkills().size(), SkillTree.totalCost(data.getPlayerClass())))
-                .append("\n").append(questLine);
+                        data.getSkills().size(), SkillTree.totalCost(data.getPlayerClass(), player.level().getDifficulty())))
+                .append("\n").append(questLine)
+                .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.rep",
+                        data.getRepCcg(), data.getRepGhouls()))
+                .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.difficulty",
+                        player.level().getDifficulty().getDisplayName(),
+                        DifficultyScaling.describe(player.level())));
     }
 
     private static Component setClass(ServerPlayer player, PlayerData data, PlayerClass target) {
@@ -251,8 +307,7 @@ public final class ModCommands {
             // Как инъекция: навыки чужого дерева возвращаются очками, задания своей цепочки сохраняются
             ClassChange.change(player, data, target);
         }
-        return Component.translatable("command.tokyoghoulrpg.class", player.getDisplayName(),
-                Component.translatable(target.translationKey()));
+        return null;
     }
 
     private static Component setVariant(PlayerData data, ServerPlayer player, KaguneVariant variant) {
@@ -260,8 +315,7 @@ public final class ModCommands {
             return Component.translatable("command.tokyoghoulrpg.variant.no");
         }
         data.setKaguneVariant(variant);
-        return Component.translatable("command.tokyoghoulrpg.variant", player.getDisplayName(),
-                Component.translatable(variant.translationKey()));
+        return null;
     }
 
     /** Снять все навыки и вернуть потраченные очки. */
@@ -270,13 +324,13 @@ public final class ModCommands {
         for (String id : List.copyOf(data.getSkills())) {
             SkillTree.Skill skill = SkillTree.find(id);
             if (skill != null) {
-                refund += skill.cost();
+                refund += data.paidFor(id, skill.cost());
             }
             data.removeSkill(id);
         }
         data.addSkillPoints(refund);
         data.setRageLevel(0);
-        return Component.translatable("command.tokyoghoulrpg.skills.reset", player.getDisplayName(), refund);
+        return null;
     }
 
     /** Открыть бесплатно все навыки дерева своего класса. */
@@ -286,7 +340,7 @@ public final class ModCommands {
             for (SkillTree.Branch branch : SkillTree.branches(tab)) {
                 for (SkillTree.Skill skill : SkillTree.branch(branch)) {
                     if (!data.hasSkill(skill.id())) {
-                        data.addSkill(skill.id());
+                        data.addSkill(skill.id(), 0);   // бесплатно: при сбросе очки не вернутся
                         opened++;
                     }
                     if (branch == SkillTree.Branch.RAGE) {
@@ -295,18 +349,16 @@ public final class ModCommands {
                 }
             }
         }
-        return Component.translatable("command.tokyoghoulrpg.skills.unlockall", player.getDisplayName(), opened);
+        return null;
     }
 
     private static Component completeQuest(ServerPlayer player, PlayerData data) {
-        return QuestManager.completeCurrent(player)
-                ? Component.translatable("command.tokyoghoulrpg.quests.complete", player.getDisplayName())
-                : Component.translatable("command.tokyoghoulrpg.quests.none");
+        return QuestManager.completeCurrent(player) ? null : Component.translatable("command.tokyoghoulrpg.quests.none");
     }
 
     private static Component resetQuests(ServerPlayer player, PlayerData data) {
         data.setQuestIndex(0);
         data.setQuestProgress(0);
-        return Component.translatable("command.tokyoghoulrpg.quests.reset", player.getDisplayName());
+        return null;
     }
 }

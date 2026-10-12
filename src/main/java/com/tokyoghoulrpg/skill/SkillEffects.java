@@ -5,6 +5,11 @@ import com.tokyoghoulrpg.data.PlayerData;
 
 /** Формулы всех бонусов дерева навыков. Работают только у гуля и полугуля. */
 public final class SkillEffects {
+    /** Множитель урона от падения: всем -20%, «Мягкое приземление» ещё -15% за уровень. */
+    public static float fallFactor(int softLandingLevel) {
+        return (float) (Balance.FALL_DAMAGE_BASE * (1.0 - Balance.SOFT_LANDING_PER_LEVEL * softLandingLevel));
+    }
+
     private SkillEffects() {
     }
 

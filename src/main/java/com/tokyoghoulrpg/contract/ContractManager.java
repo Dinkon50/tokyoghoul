@@ -1,6 +1,8 @@
 package com.tokyoghoulrpg.contract;
 
+import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.combat.Effects;
+import com.tokyoghoulrpg.rep.Reputation;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.entity.BossMob;
 import com.tokyoghoulrpg.entity.CcgAgentNpc;
@@ -68,6 +70,10 @@ public final class ContractManager {
         if (data.getContractId() != null || data.getContractDoneDay() == today) {
             return;
         }
+        if (!Reputation.informantTrusts(data)) {
+            player.displayClientMessage(Component.translatable("screen.tokyoghoulrpg.contract.distrust"), true);
+            return;
+        }
         Contract offer = todayOffer(player, data);
         if (offer != null) {
             data.setContract(offer.id(), 0);
@@ -92,12 +98,23 @@ public final class ContractManager {
             player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.contract_not_done"), true);
             return;
         }
-        data.addBloodPoints(contract.blood());
+        int blood = contract.bloodFor(data);
+        data.addBloodPoints(blood);
         data.addSkillPoints(contract.points());
         data.setContract(null, 0);
         data.setContractDoneDay(day(player));
         player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.contract_done",
-                contract.title(), contract.blood(), contract.points()));
+                contract.title(), blood, contract.points()));
+        // Охота на одну сторону радует другую; остальная работа — немного плюс своей стороне
+        switch (contract.kind()) {
+            case KILL_GHOUL -> Reputation.change(player, Balance.REP_CONTRACT, 0);
+            case KILL_CCG -> Reputation.change(player, 0, Balance.REP_CONTRACT);
+            default -> {
+                boolean ghoulSide = data.getPlayerClass().hasKagune();
+                Reputation.change(player, ghoulSide ? 0 : Balance.REP_CONTRACT_OTHER,
+                        ghoulSide ? Balance.REP_CONTRACT_OTHER : 0);
+            }
+        }
         Effects.sound(player, SoundEvents.PLAYER_LEVELUP, 0.6F, 1.2F);
         QuestManager.progress(player, Quest.Trigger.CONTRACT, 1);
     }

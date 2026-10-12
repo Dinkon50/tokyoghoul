@@ -9,6 +9,7 @@ import com.tokyoghoulrpg.network.packet.BarrageC2S;
 import com.tokyoghoulrpg.network.packet.BiteFlashS2C;
 import com.tokyoghoulrpg.network.packet.BlockC2S;
 import com.tokyoghoulrpg.network.packet.ContractActionC2S;
+import com.tokyoghoulrpg.network.packet.DoubleJumpC2S;
 import com.tokyoghoulrpg.network.packet.KaguneAnimS2C;
 import com.tokyoghoulrpg.network.packet.KaguneStateS2C;
 import com.tokyoghoulrpg.network.packet.OpenBloodShopS2C;
@@ -28,7 +29,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "9";
+    private static final String PROTOCOL = "10";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -75,6 +76,8 @@ public final class NetworkHandler {
                 OpenContractsS2C::encode, OpenContractsS2C::decode, OpenContractsS2C::handle);
         CHANNEL.registerMessage(id++, ContractActionC2S.class,
                 ContractActionC2S::encode, ContractActionC2S::decode, ContractActionC2S::handle);
+        CHANNEL.registerMessage(id++, DoubleJumpC2S.class,
+                DoubleJumpC2S::encode, DoubleJumpC2S::decode, DoubleJumpC2S::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */

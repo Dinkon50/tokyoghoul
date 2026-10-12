@@ -30,18 +30,19 @@ public final class ShopServer {
         if (entry == null || data == null || nearbyTrader(player, entityId) == null) {
             return;
         }
-        if (data.getBloodPoints() < entry.price()) {
+        int price = BloodShop.priceFor(entry, data);
+        if (data.getBloodPoints() < price) {
             player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.blood_not_enough"), true);
             return;
         }
-        data.addBloodPoints(-entry.price());
+        data.addBloodPoints(-price);
         ItemStack stack = entry.stack();
         Component name = stack.getHoverName();
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
         }
         NetworkHandler.syncTo(player);
-        player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.blood_bought", name, entry.price()), true);
+        player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.blood_bought", name, price), true);
     }
 
     public static void openEmeraldTrade(ServerPlayer player, int entityId) {

@@ -43,10 +43,17 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     private long contractDoneDay = -1L;
     /** Шкала крови гуля: 100 — полная, убывает при критическом голоде. */
     private int craving = 100;
+    /** Репутация у CCG и у гулей: от -100 до 100. */
+    private int repCcg = 0;
+    private int repGhouls = 0;
+    /** Когда (время мира) CCG придут с рейдом. 0 — ещё не назначено. */
+    private long nextRaid = 0L;
     /** Номер текущего задания в цепочке и прогресс по нему. */
     private int questIndex = 0;
     private int questProgress = 0;
     private final Set<String> skills = new LinkedHashSet<>();
+    /** Сколько очков заплачено за навык (на сложной игре навыки дороже). Нужно, чтобы вернуть ровно столько. */
+    private final Map<String, Integer> skillPaid = new HashMap<>();
     /** Прогресс заданий других цепочек: ключ — цепочка, значение — {номер задания, прогресс}. */
     private final Map<String, int[]> savedQuests = new HashMap<>();
 
@@ -175,6 +182,30 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         this.craving = Mth.clamp(craving, 0, 100);
     }
 
+    public int getRepCcg() {
+        return repCcg;
+    }
+
+    public void setRepCcg(int value) {
+        this.repCcg = Mth.clamp(value, -100, 100);
+    }
+
+    public int getRepGhouls() {
+        return repGhouls;
+    }
+
+    public void setRepGhouls(int value) {
+        this.repGhouls = Mth.clamp(value, -100, 100);
+    }
+
+    public long getNextRaid() {
+        return nextRaid;
+    }
+
+    public void setNextRaid(long time) {
+        this.nextRaid = time;
+    }
+
     public int getQuestIndex() {
         return questIndex;
     }
@@ -211,6 +242,17 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         skills.add(id);
     }
 
+    /** Открыть навык, запомнив, сколько за него заплачено. */
+    public void addSkill(String id, int paid) {
+        skills.add(id);
+        skillPaid.put(id, Math.max(0, paid));
+    }
+
+    /** Сколько вернуть за навык. Для навыков из старых версий мода — fallback (обычная цена). */
+    public int paidFor(String id, int fallback) {
+        return skillPaid.getOrDefault(id, fallback);
+    }
+
     /** Уровень ветки навыков: номер последнего открытого навыка вида «ветка_номер». */
     public int skillLevel(String branch) {
         int level = 0;
@@ -222,6 +264,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public void removeSkill(String id) {
         skills.remove(id);
+        skillPaid.remove(id);
     }
 
     /** Запомнить прогресс текущей цепочки заданий перед сменой класса. */
@@ -299,10 +342,14 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         contractProgress = 0;
         contractDoneDay = -1L;
         craving = 100;
+        repCcg = 0;
+        repGhouls = 0;
+        nextRaid = 0L;
         questIndex = 0;
         questProgress = 0;
         savedQuests.clear();
         skills.clear();
+        skillPaid.clear();
         rageActive = false;
         rageStartTick = 0L;
         rageEndTick = 0L;
@@ -333,6 +380,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putInt("contract_progress", contractProgress);
         tag.putLong("contract_done_day", contractDoneDay);
         tag.putInt("craving", craving);
+        tag.putInt("rep_ccg", repCcg);
+        tag.putInt("rep_ghouls", repGhouls);
+        tag.putLong("next_raid", nextRaid);
         tag.putInt("quest_index", questIndex);
         tag.putInt("quest_progress", questProgress);
         CompoundTag saved = new CompoundTag();
@@ -345,6 +395,11 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
             skillList.add(StringTag.valueOf(skill));
         }
         tag.put("skills", skillList);
+        CompoundTag paid = new CompoundTag();
+        for (Map.Entry<String, Integer> entry : skillPaid.entrySet()) {
+            paid.putInt(entry.getKey(), entry.getValue());
+        }
+        tag.put("skill_paid", paid);
         return tag;
     }
 
@@ -375,6 +430,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         contractProgress = tag.getInt("contract_progress");
         contractDoneDay = tag.contains("contract_done_day") ? tag.getLong("contract_done_day") : -1L;
         setCraving(tag.contains("craving") ? tag.getInt("craving") : 100);
+        setRepCcg(tag.getInt("rep_ccg"));
+        setRepGhouls(tag.getInt("rep_ghouls"));
+        nextRaid = tag.getLong("next_raid");
         setQuestIndex(tag.getInt("quest_index"));
         setQuestProgress(tag.getInt("quest_progress"));
         savedQuests.clear();
@@ -389,6 +447,13 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         ListTag skillList = tag.getList("skills", Tag.TAG_STRING);
         for (int i = 0; i < skillList.size(); i++) {
             skills.add(skillList.getString(i));
+        }
+        skillPaid.clear();
+        CompoundTag paid = tag.getCompound("skill_paid");
+        for (String key : paid.getAllKeys()) {
+            if (skills.contains(key)) {
+                skillPaid.put(key, paid.getInt(key));
+            }
         }
         rageActive = tag.getBoolean("rage_active");
         rageStartTick = tag.getLong("rage_start");

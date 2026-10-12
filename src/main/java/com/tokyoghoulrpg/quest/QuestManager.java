@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.quest;
 
 import com.tokyoghoulrpg.data.PlayerData;
+import com.tokyoghoulrpg.event.ModCommands;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -74,8 +75,10 @@ public final class QuestManager {
             data.addSkillPoints(quest.reward());
             data.addBloodPoints(quest.bloodReward());
             data.setQuestIndex(data.getQuestIndex() + 1);
-            player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.quest_done",
-                    quest.title(), quest.reward(), quest.bloodReward()));
+            if (!ModCommands.isSilent()) {
+                player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.quest_done",
+                        quest.title(), quest.reward(), quest.bloodReward()));
+            }
             quest = Quest.byIndex(data.getPlayerClass(), data.getQuestIndex());
             // Следующее задание «по факту» может быть уже выполнено
             data.setQuestProgress(quest != null && quest.trigger().absolute()

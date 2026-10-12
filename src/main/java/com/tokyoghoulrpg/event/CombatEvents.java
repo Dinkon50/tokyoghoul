@@ -7,9 +7,12 @@ import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.combat.BleedManager;
 import com.tokyoghoulrpg.combat.CombatContext;
 import com.tokyoghoulrpg.combat.Effects;
+import com.tokyoghoulrpg.combat.GhoulDiet;
+import com.tokyoghoulrpg.registry.ModItems;
 import com.tokyoghoulrpg.combat.LockManager;
 import com.tokyoghoulrpg.combat.RageStats;
 import com.tokyoghoulrpg.contract.ContractManager;
+import com.tokyoghoulrpg.rep.Reputation;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.entity.BossMob;
 import com.tokyoghoulrpg.entity.CcgAgentNpc;
@@ -27,12 +30,18 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -47,6 +56,8 @@ import net.minecraftforge.fml.common.Mod;
 public final class CombatEvents {
     /** Идёт урон, прошедший сквозь блок: блок его не останавливает. */
     private static boolean piercing = false;
+    /** Идёт отражённый урон «Кровавого зеркала»: его самого не отражаем. */
+    private static boolean reflecting = false;
 
     private CombatEvents() {
     }
@@ -139,6 +150,62 @@ public final class CombatEvents {
     }
 
     /**
+     * Секретный навык «Кровавое зеркало», часть 1. Здоровья меньше 50% и тебя бьют:
+     * с шансом 50% удар не проходит вовсе, а весь его урон получает тот, кто бил.
+     * Если шанс не выпал, урон проходит, и тогда работает часть 2 (onLivingHurt).
+     */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onMirrorAttack(LivingAttackEvent event) {
+        if (reflecting || !(event.getEntity() instanceof ServerPlayer victim)
+                || victim.isCreative() || victim.isSpectator()) {
+            return;
+        }
+        // Неуязвимость после прошлого удара: этот удар игра всё равно не засчитает, не отражаем
+        if (victim.invulnerableTime > 10) {
+            return;
+        }
+        LivingEntity attacker = mirrorAttacker(victim, event.getSource());
+        if (attacker == null) {
+            return;
+        }
+        PlayerData data = PlayerData.get(victim);
+        data.combat().mirrorPartial = false;
+        if (victim.getRandom().nextDouble() < Balance.MIRROR_FULL_CHANCE) {
+            event.setCanceled(true);
+            reflect(victim, attacker, event.getAmount());
+        } else {
+            data.combat().mirrorPartial = true;
+        }
+    }
+
+    /** Кто ударил игрока со «Кровавым зеркалом», если навык сейчас должен сработать. Иначе null. */
+    private static LivingEntity mirrorAttacker(ServerPlayer victim, DamageSource source) {
+        if (!(source.getEntity() instanceof LivingEntity attacker) || attacker == victim || !attacker.isAlive()) {
+            return null;
+        }
+        if (SkillEffects.level(PlayerData.get(victim), SkillTree.Branch.MIRROR) <= 0) {
+            return null;
+        }
+        return victim.getHealth() < victim.getMaxHealth() * Balance.MIRROR_HEALTH ? attacker : null;
+    }
+
+    /** Отражённый урон приходит бьющему как от шипов. Отражение не отражается обратно. */
+    private static void reflect(ServerPlayer victim, LivingEntity attacker, float amount) {
+        if (amount <= 0.0F) {
+            return;
+        }
+        reflecting = true;
+        try {
+            attacker.invulnerableTime = 0;
+            attacker.hurt(victim.damageSources().thorns(victim), amount);
+        } finally {
+            reflecting = false;
+        }
+        Effects.sound(attacker, SoundEvents.THORNS_HIT, 1.0F, 0.8F);
+        Effects.particles(attacker, Effects.RAGE, 12, 0.3, 0.05);
+    }
+
+    /**
      * Ярость и ветки «Урон» и «Защита» из дерева навыков усиливают наносимый урон и уменьшают получаемый.
      * Встречный барраж режет урон. Все множители перемножаются.
      */
@@ -179,6 +246,19 @@ public final class CombatEvents {
             amount *= (float) (1.0 - SkillEffects.humanToughness(SkillEffects.level(data, SkillTree.Branch.TOUGHNESS)));
         }
         event.setAmount(amount);
+
+        // «Кровавое зеркало», часть 2: шанс полного отражения не выпал, урон проходит,
+        // а бьющий получает половину этого урона
+        if (victim instanceof ServerPlayer mirrorOwner && !reflecting) {
+            PlayerData mirrorData = PlayerData.get(mirrorOwner);
+            if (mirrorData != null && mirrorData.combat().mirrorPartial) {
+                mirrorData.combat().mirrorPartial = false;
+                LivingEntity striker = mirrorAttacker(mirrorOwner, event.getSource());
+                if (striker != null) {
+                    reflect(mirrorOwner, striker, (float) (amount * Balance.MIRROR_SHARE));
+                }
+            }
+        }
 
         // Ветка «Вампиризм»: часть нанесённого урона возвращается здоровьем
         if (attacker instanceof ServerPlayer vampire && attacker != victim) {
@@ -226,6 +306,7 @@ public final class CombatEvents {
                 rewardKill(killerPlayer, data, event.getEntity());
             }
             ContractManager.onKill(killerPlayer, event.getEntity());
+            Reputation.onKill(killerPlayer, event.getEntity());
         }
         if (event.getEntity() instanceof ServerPlayer dead) {
             AbilityManager.cancelAll(dead);
@@ -275,6 +356,43 @@ public final class CombatEvents {
             if (event.getState().is(Tags.Blocks.ORES)) {
                 QuestManager.progress(player, Quest.Trigger.MINE_ORE, 1);
             }
+        }
+    }
+
+    /** Еда гуля: проверяем всё съеденное игроком. */
+    @SubscribeEvent
+    public static void onFinishEating(LivingEntityUseItemEvent.Finish event) {
+        if (event.getEntity() instanceof ServerPlayer player && event.getItem().isEdible()) {
+            GhoulDiet.onEaten(player, event.getItem());
+        }
+    }
+
+    /** Из человека, которого убил гуль или полугуль, выпадает плоть. */
+    @SubscribeEvent
+    public static void onDrops(LivingDropsEvent event) {
+        LivingEntity victim = event.getEntity();
+        if (victim.level().isClientSide() || !GhoulDiet.dropsFlesh(victim)
+                || !(event.getSource().getEntity() instanceof ServerPlayer killer) || killer == victim) {
+            return;
+        }
+        PlayerData data = PlayerData.get(killer);
+        if (data == null || !data.getPlayerClass().hasKagune()) {
+            return;
+        }
+        int count = Balance.FLESH_DROP_MIN
+                + victim.getRandom().nextInt(Balance.FLESH_DROP_MAX - Balance.FLESH_DROP_MIN + 1);
+        ItemEntity drop = new ItemEntity(victim.level(), victim.getX(), victim.getY() + 0.5, victim.getZ(),
+                new ItemStack(ModItems.FLESH.get(), count));
+        drop.setDefaultPickUpDelay();
+        event.getDrops().add(drop);
+    }
+
+    /** Урон от падения у всех игроков меньше; ветка «Мягкое приземление» уменьшает его ещё. */
+    @SubscribeEvent
+    public static void onFall(LivingFallEvent event) {
+        if (event.getEntity() instanceof Player player && !player.level().isClientSide()) {
+            int level = SkillEffects.level(PlayerData.get(player), SkillTree.Branch.SOFT_LANDING);
+            event.setDamageMultiplier(event.getDamageMultiplier() * SkillEffects.fallFactor(level));
         }
     }
 
