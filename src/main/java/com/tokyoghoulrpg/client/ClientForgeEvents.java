@@ -2,6 +2,7 @@ package com.tokyoghoulrpg.client;
 
 import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.client.kagune.KaguneClientState;
+import com.tokyoghoulrpg.client.screen.SkillTreeScreen;
 import com.tokyoghoulrpg.client.screen.StubScreen;
 import com.tokyoghoulrpg.combat.AbilityType;
 import com.tokyoghoulrpg.data.PlayerData;
@@ -59,9 +60,7 @@ public final class ClientForgeEvents {
         }
         while (KeyBindings.SKILL_TREE.consumeClick()) {
             if (mc.screen == null) {
-                mc.setScreen(new StubScreen(
-                        Component.translatable("screen.tokyoghoulrpg.skill_tree.title"),
-                        Component.translatable("screen.tokyoghoulrpg.stub")));
+                mc.setScreen(new SkillTreeScreen());
             }
         }
         while (KeyBindings.QUESTS.consumeClick()) {

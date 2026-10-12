@@ -1,0 +1,18 @@
+# Gradle и сборка
+.gradle/
+build/
+out/
+bin/
+run/
+run-data/
+
+# Редакторы
+.idea/
+*.iml
+*.ipr
+*.iws
+.eclipse/
+.settings/
+.classpath
+.project
+eclipse/

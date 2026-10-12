@@ -78,6 +78,7 @@ public final class CommonEvents {
      * /tgrpg reset            сбросить выбор класса
      * /tgrpg rage <0-100>     задать очки ярости
      * /tgrpg ragelevel <0-5>  задать уровень прокачки ярости
+     * /tgrpg points <0-1000>  задать очки навыков
      */
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
@@ -114,6 +115,17 @@ public final class CommonEvents {
                                             NetworkHandler.syncTo(player);
                                             context.getSource().sendSuccess(
                                                     () -> Component.translatable("message.tokyoghoulrpg.ragelevel_set", level), false);
+                                            return 1;
+                                        })))
+                        .then(Commands.literal("points")
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(0, 1000))
+                                        .executes(context -> {
+                                            ServerPlayer player = context.getSource().getPlayerOrException();
+                                            int amount = IntegerArgumentType.getInteger(context, "amount");
+                                            player.getCapability(PlayerData.CAP).ifPresent(data -> data.setSkillPoints(amount));
+                                            NetworkHandler.syncTo(player);
+                                            context.getSource().sendSuccess(
+                                                    () -> Component.translatable("message.tokyoghoulrpg.points_set", amount), false);
                                             return 1;
                                         }))));
     }

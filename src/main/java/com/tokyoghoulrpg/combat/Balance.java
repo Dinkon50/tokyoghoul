@@ -68,6 +68,10 @@ public final class Balance {
     public static final double RAGE_REDUCTION_MIN = 0.10;           // [СПЕКА] -10% получаемого урона
     public static final double RAGE_REDUCTION_MAX = 0.40;           // [СПЕКА] -40% получаемого урона
 
+    // ---------- Дерево навыков ----------
+    public static final int[] RAGE_UPGRADE_COSTS = {1, 1, 2, 2, 3}; // [ВРЕМЕННО] стоимость улучшений ярости I-V
+    public static final int SKILL_POINTS_PER_KILL = 1;              // [ВРЕМЕННО] очки навыков за убийство
+
     // ---------- Голод ----------
     public static final float HUNGER_DRAIN_FACTOR = 0.6F;           // [ВРЕМЕННО] у гулей голод тратится в 0,6 раза от обычного
 }

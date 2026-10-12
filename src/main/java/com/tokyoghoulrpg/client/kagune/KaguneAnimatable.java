@@ -29,6 +29,13 @@ public class KaguneAnimatable implements GeoAnimatable {
     private static final Map<String, RawAnimation> ONE_SHOTS = new HashMap<>();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final KaguneVeinsAnimatable veins = new KaguneVeinsAnimatable(this);
+    private final Seen mainSeen = new Seen();
+
+    /** Какой по счёту запуск разовой анимации уже обработал контроллер. */
+    public static final class Seen {
+        private int serial = 0;
+    }
 
     private boolean initialized = false;
     private boolean active = false;
@@ -38,12 +45,28 @@ public class KaguneAnimatable implements GeoAnimatable {
     /** Текущая разовая анимация (появление, удар, барраж и так далее) и тик её окончания. */
     private String oneShot = null;
     private long oneShotEnd = 0L;
-    private boolean restart = false;
+    /** Растёт при каждом новом запуске разовой анимации: так вены знают, что её надо проиграть заново. */
+    private int restartSerial = 0;
+    /** Когда началась ярость (игровой тик). Нужно, чтобы вены вспыхнули в начале. */
+    private long rageStart = 0L;
     /** Пока идёт убирание, модель ещё видна. */
     private long visibleUntil = 0L;
 
     public KaguneVariant getVariant() {
         return variant;
+    }
+
+    public KaguneVeinsAnimatable getVeins() {
+        return veins;
+    }
+
+    public boolean isRage() {
+        return rage;
+    }
+
+    /** Сколько тиков идёт ярость. */
+    public long rageAge() {
+        return Math.max(0L, gameTime() - rageStart);
     }
 
     /** Нужно ли рисовать кагуне прямо сейчас. */
@@ -54,6 +77,10 @@ public class KaguneAnimatable implements GeoAnimatable {
     /** Новое состояние с сервера. Первое сообщение не проигрывает появление: кагуне просто уже включено. */
     public void updateState(boolean newActive, KaguneVariant newVariant, boolean newRage, long now) {
         variant = newVariant;
+        if (newRage && !rage) {
+            // Если ярость уже шла, когда мы увидели игрока, вспышку вен не показываем
+            rageStart = initialized ? now : now - 1000L;
+        }
         rage = newRage;
         if (!initialized) {
             initialized = true;
@@ -82,7 +109,7 @@ public class KaguneAnimatable implements GeoAnimatable {
         oneShot = animation;
         oneShotEnd = now + durationTicks(animation);
         // Та же анимация подряд должна проиграться заново
-        restart = true;
+        restartSerial++;
     }
 
     private static int durationTicks(String animation) {
@@ -108,14 +135,18 @@ public class KaguneAnimatable implements GeoAnimatable {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "main", 3, this::predicate));
+        controllers.add(new AnimationController<>(this, "main", 3, state -> drive(state, mainSeen)));
     }
 
-    private PlayState predicate(AnimationState<KaguneAnimatable> state) {
+    /**
+     * Выбирает анимацию по состоянию кагуне. Её же вызывает контроллер вен, поэтому обе модели
+     * играют одну и ту же анимацию в одно и то же время.
+     */
+    PlayState drive(AnimationState<?> state, Seen seen) {
         long now = gameTime();
-        if (restart) {
+        if (seen.serial != restartSerial) {
+            seen.serial = restartSerial;
             state.getController().forceAnimationReset();
-            restart = false;
         }
         if (oneShot != null && now < oneShotEnd) {
             return state.setAndContinue(oneShotAnimation(oneShot));

@@ -10,6 +10,7 @@ import com.tokyoghoulrpg.network.packet.OpenClassSelectionS2C;
 import com.tokyoghoulrpg.network.packet.SelectClassC2S;
 import com.tokyoghoulrpg.network.packet.SyncDataS2C;
 import com.tokyoghoulrpg.network.packet.ToggleKaguneC2S;
+import com.tokyoghoulrpg.network.packet.UnlockSkillC2S;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkRegistry;
@@ -17,7 +18,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "3";
+    private static final String PROTOCOL = "4";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -46,6 +47,8 @@ public final class NetworkHandler {
                 KaguneStateS2C::encode, KaguneStateS2C::decode, KaguneStateS2C::handle);
         CHANNEL.registerMessage(id++, KaguneAnimS2C.class,
                 KaguneAnimS2C::encode, KaguneAnimS2C::decode, KaguneAnimS2C::handle);
+        CHANNEL.registerMessage(id++, UnlockSkillC2S.class,
+                UnlockSkillC2S::encode, UnlockSkillC2S::decode, UnlockSkillC2S::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */

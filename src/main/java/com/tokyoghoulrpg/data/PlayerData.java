@@ -1,7 +1,13 @@
 package com.tokyoghoulrpg.data;
 
 import com.tokyoghoulrpg.combat.CombatState;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.capabilities.Capability;
@@ -22,6 +28,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     private boolean kaguneActive = false;
     private int rage = 0;
     private int rageLevel = 0;
+    private int skillPoints = 0;
+    private final Set<String> skills = new LinkedHashSet<>();
 
     // Не сохраняется, но передаётся клиенту. Время в тиках мира.
     private boolean rageActive = false;
@@ -91,6 +99,30 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         this.rageLevel = Mth.clamp(rageLevel, 0, com.tokyoghoulrpg.combat.Balance.RAGE_LEVEL_MAX);
     }
 
+    public int getSkillPoints() {
+        return skillPoints;
+    }
+
+    public void setSkillPoints(int skillPoints) {
+        this.skillPoints = Math.max(0, skillPoints);
+    }
+
+    public void addSkillPoints(int points) {
+        setSkillPoints(skillPoints + points);
+    }
+
+    public boolean hasSkill(String id) {
+        return skills.contains(id);
+    }
+
+    public void addSkill(String id) {
+        skills.add(id);
+    }
+
+    public Set<String> getSkills() {
+        return Collections.unmodifiableSet(skills);
+    }
+
     public boolean isRageActive() {
         return rageActive;
     }
@@ -140,6 +172,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         kaguneActive = false;
         rage = 0;
         rageLevel = 0;
+        skillPoints = 0;
+        skills.clear();
         rageActive = false;
         rageStartTick = 0L;
         rageEndTick = 0L;
@@ -162,6 +196,12 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putBoolean("kagune_active", kaguneActive);
         tag.putInt("rage", rage);
         tag.putInt("rage_level", rageLevel);
+        tag.putInt("skill_points", skillPoints);
+        ListTag skillList = new ListTag();
+        for (String skill : skills) {
+            skillList.add(StringTag.valueOf(skill));
+        }
+        tag.put("skills", skillList);
         return tag;
     }
 
@@ -183,6 +223,12 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         kaguneActive = tag.getBoolean("kagune_active");
         setRage(tag.getInt("rage"));
         setRageLevel(tag.getInt("rage_level"));
+        setSkillPoints(tag.getInt("skill_points"));
+        skills.clear();
+        ListTag skillList = tag.getList("skills", Tag.TAG_STRING);
+        for (int i = 0; i < skillList.size(); i++) {
+            skills.add(skillList.getString(i));
+        }
         rageActive = tag.getBoolean("rage_active");
         rageStartTick = tag.getLong("rage_start");
         rageEndTick = tag.getLong("rage_end");

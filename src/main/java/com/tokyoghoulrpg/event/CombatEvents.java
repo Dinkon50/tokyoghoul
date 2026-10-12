@@ -129,7 +129,9 @@ public final class CombatEvents {
         Entity killer = event.getSource().getEntity();
         if (killer instanceof ServerPlayer killerPlayer && killerPlayer != event.getEntity()) {
             PlayerData data = PlayerData.get(killerPlayer);
-            if (data != null && data.getPlayerClass().hasKagune() && data.addRage(Balance.RAGE_PER_KILL)) {
+            if (data != null && data.getPlayerClass().hasKagune()) {
+                data.addRage(Balance.RAGE_PER_KILL);
+                data.addSkillPoints(Balance.SKILL_POINTS_PER_KILL);
                 NetworkHandler.syncTo(killerPlayer);
             }
         }

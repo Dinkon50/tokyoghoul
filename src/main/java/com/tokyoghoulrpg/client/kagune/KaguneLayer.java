@@ -16,6 +16,7 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
     private static final float SCALE = 1.0F;
 
     private final KaguneRenderer renderer = new KaguneRenderer();
+    private final KaguneVeinsRenderer veinsRenderer = new KaguneVeinsRenderer();
 
     public KaguneLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
@@ -39,6 +40,8 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
         poseStack.translate(OFFSET_X, 1.501F + OFFSET_Y, OFFSET_Z);
         poseStack.scale(-SCALE, -SCALE, SCALE);
         renderer.render(poseStack, kagune, buffer, null, null, packedLight);
+        // Вены рисуем всегда, пока видно кагуне: так их анимация не отстаёт. Без ярости текстура прозрачная.
+        veinsRenderer.render(poseStack, kagune.getVeins(), buffer, null, null, packedLight);
         poseStack.popPose();
     }
 }

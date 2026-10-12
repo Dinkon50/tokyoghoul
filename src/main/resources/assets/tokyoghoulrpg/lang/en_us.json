@@ -53,5 +53,19 @@
   "message.tokyoghoulrpg.rage_off": "Ярость закончилась",
   "message.tokyoghoulrpg.rage_set": "Очки ярости: %s",
   "message.tokyoghoulrpg.ragelevel_set": "Уровень ярости: %s",
-  "hud.tokyoghoulrpg.rage_active": "Ярость: %s с"
+  "hud.tokyoghoulrpg.rage_active": "Ярость: %s с",
+  "skill.tokyoghoulrpg.rage": "Ярость %s",
+  "skill.tokyoghoulrpg.rage.effect": "Длительность %s, урон %s, скорость %s, получаемый урон %s",
+  "screen.tokyoghoulrpg.skill_tree.points": "Очки навыков: %s",
+  "screen.tokyoghoulrpg.skill_tree.branch_rage": "Ветка: Ярость",
+  "screen.tokyoghoulrpg.skill_tree.later": "Для твоего класса дерево навыков появится позже",
+  "screen.tokyoghoulrpg.skill_tree.cost": "Стоимость: %s",
+  "screen.tokyoghoulrpg.skill_tree.state_unlocked": "Открыто",
+  "screen.tokyoghoulrpg.skill_tree.state_available": "Можно открыть",
+  "screen.tokyoghoulrpg.skill_tree.state_no_points": "Не хватает очков навыков",
+  "screen.tokyoghoulrpg.skill_tree.state_locked": "Сначала открой предыдущий навык",
+  "screen.tokyoghoulrpg.skill_tree.hint": "Нажми на навык, чтобы открыть его",
+  "message.tokyoghoulrpg.skill_unlocked": "Навык открыт: %s",
+  "message.tokyoghoulrpg.skill_no_points": "Не хватает очков навыков",
+  "message.tokyoghoulrpg.points_set": "Очки навыков: %s"
 }
