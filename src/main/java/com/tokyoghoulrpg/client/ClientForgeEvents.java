@@ -2,7 +2,10 @@ package com.tokyoghoulrpg.client;
 
 import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.client.kagune.KaguneClientState;
+import com.tokyoghoulrpg.client.screen.ClanScreen;
 import com.tokyoghoulrpg.client.screen.QuestScreen;
+import com.tokyoghoulrpg.clan.ClanManager;
+import com.tokyoghoulrpg.network.packet.ClanActionC2S;
 import com.tokyoghoulrpg.client.screen.SkillTreeScreen;
 import com.tokyoghoulrpg.combat.AbilityType;
 import com.tokyoghoulrpg.data.PlayerData;
@@ -66,6 +69,12 @@ public final class ClientForgeEvents {
         while (KeyBindings.QUESTS.consumeClick()) {
             if (mc.screen == null) {
                 mc.setScreen(new QuestScreen());
+            }
+        }
+        while (KeyBindings.CLAN.consumeClick()) {
+            if (mc.screen == null) {
+                mc.setScreen(new ClanScreen());
+                NetworkHandler.CHANNEL.sendToServer(new ClanActionC2S(ClanManager.OPEN, "", null, 0));
             }
         }
 

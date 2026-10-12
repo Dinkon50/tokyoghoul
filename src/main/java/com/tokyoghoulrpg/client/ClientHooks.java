@@ -1,6 +1,8 @@
 package com.tokyoghoulrpg.client;
 
 import com.tokyoghoulrpg.client.screen.BloodShopScreen;
+import com.tokyoghoulrpg.client.screen.ClanScreen;
+import com.tokyoghoulrpg.network.packet.ClanStateS2C;
 import com.tokyoghoulrpg.client.screen.ClassSelectionScreen;
 import com.tokyoghoulrpg.client.screen.ContractScreen;
 import com.tokyoghoulrpg.data.PlayerData;
@@ -34,6 +36,11 @@ public final class ClientHooks {
         if (mc.level != null) {
             mc.setScreen(new BloodShopScreen(traderId));
         }
+    }
+
+    /** Пришло состояние клана: обновить меню клана. */
+    public static void clanState(ClanStateS2C state) {
+        ClanScreen.accept(state);
     }
 
     /** Окно информатора. */

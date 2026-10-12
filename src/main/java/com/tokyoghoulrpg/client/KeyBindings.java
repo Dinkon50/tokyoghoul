@@ -15,6 +15,7 @@ public final class KeyBindings {
     public static final KeyMapping RAGE = key("rage", GLFW.GLFW_KEY_J);
     public static final KeyMapping SKILL_TREE = key("skill_tree", GLFW.GLFW_KEY_B);
     public static final KeyMapping QUESTS = key("quests", GLFW.GLFW_KEY_N);
+    public static final KeyMapping CLAN = key("clan", GLFW.GLFW_KEY_Y);
 
     private KeyBindings() {
     }

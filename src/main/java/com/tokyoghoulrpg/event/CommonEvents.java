@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.event;
 
 import com.tokyoghoulrpg.TokyoGhoulRPG;
+import com.tokyoghoulrpg.clan.ClanManager;
 import com.tokyoghoulrpg.combat.AbilityManager;
 import com.tokyoghoulrpg.data.KaguneVariant;
 import com.tokyoghoulrpg.data.PlayerData;
@@ -57,6 +58,7 @@ public final class CommonEvents {
                 }
             });
             NetworkHandler.syncTo(player);
+            ClanManager.onLogin(player);
             player.getCapability(PlayerData.CAP).ifPresent(data -> {
                 if (!data.hasChosenClass()) {
                     NetworkHandler.openClassSelection(player);

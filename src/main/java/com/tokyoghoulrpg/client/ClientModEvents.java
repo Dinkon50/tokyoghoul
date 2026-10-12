@@ -32,6 +32,7 @@ public final class ClientModEvents {
         event.register(KeyBindings.RAGE);
         event.register(KeyBindings.SKILL_TREE);
         event.register(KeyBindings.QUESTS);
+        event.register(KeyBindings.CLAN);
     }
 
     @SubscribeEvent
