@@ -37,12 +37,14 @@ public class QuinqueItem extends SwordItem {
         }
     }
 
-    /** 3D-модель в руке рисует отдельный рендерер (только на клиенте). */
+    /**
+     * 3D-модель в руке рисует отдельный рендерер (только на клиенте).
+     * Forge вызывает этот метод прямо из конструктора Item, когда поле type ещё не записано,
+     * поэтому здесь нельзя обращаться к полям квинке. Рендерер подключается всем квинке,
+     * а используется только у тех, чья модель предмета builtin/entity (у учебной обычная иконка).
+     */
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        if (!type.has3dModel()) {
-            return;
-        }
         consumer.accept(new IClientItemExtensions() {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {

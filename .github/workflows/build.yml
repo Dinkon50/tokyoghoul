@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Нужно, чтобы выложить готовый .jar на страницу Releases
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,8 +30,25 @@ jobs:
       - name: Собрать мод
         run: gradle build --no-daemon
 
+      - name: Узнать версию мода
+        id: ver
+        run: echo "version=$(grep '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      # Artifacts: GitHub всегда скачивает это как .zip. Его нужно распаковать, внутри лежит .jar.
       - name: Сохранить готовый мод
         uses: actions/upload-artifact@v4
         with:
           name: tokyoghoulrpg-mod
           path: build/libs/*.jar
+
+      # Releases: тот же .jar, но скачивается сразу как .jar, без архива.
+      # Если этот шаг не получится, сборка всё равно зелёная, а мод есть в Artifacts.
+      - name: Выложить .jar в Releases
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}-build${{ github.run_number }}
+          name: Tokyo Ghoul RPG ${{ steps.ver.outputs.version }} (сборка ${{ github.run_number }})
+          body: "Положи tokyoghoulrpg-${{ steps.ver.outputs.version }}.jar в папку mods вместе с GeckoLib 4.4.9 или новее (Forge 1.20.1). Сам файл не переименовывай и не распаковывай."
+          files: build/libs/*.jar
