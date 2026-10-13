@@ -142,10 +142,81 @@ public final class Balance {
     public static final double REP_PRICE_MARKUP = 0.25;             // ...и до +25% при -100
     public static final double REP_REWARD_BONUS = 0.5;              // награды контрактов: от x0,5 до x1,5
 
+    // Копание кагуне: ЛКМ по блоку с выпущенным кагуне [ВРЕМЕННО]
+    public static final float KAGUNE_MINING_SPEED = 2.0F;           // в 2 раза быстрее
+
     // Двойной прыжок и падение [СПЕКА, числа ВРЕМЕННО]
     public static final double DOUBLE_JUMP_VELOCITY = 0.5;          // второй прыжок чуть выше обычного (0,42)
+    public static final int DOUBLE_JUMP_MIN_AIR_TICKS = 2;          // не раньше чем через 2 тика после отрыва от земли
+    public static final double DOUBLE_JUMP_APEX_SPEED = 0.12;       // срабатывает у верхней точки первого прыжка
+    public static final double DOUBLE_JUMP_BOOST = 0.3;             // толчок в сторону движения
     public static final float FALL_DAMAGE_BASE = 0.8F;              // всем: урон от падения -20%
     public static final double SOFT_LANDING_PER_LEVEL = 0.15;       // «Мягкое приземление»: ещё -15% за уровень
+
+    // Дерево агента CCG, вкладка «Охота на гулей» [ВРЕМЕННО]
+    public static final double GHOUL_BANE_PER_LEVEL = 0.08;         // «Знание гулей»: +8% урона по гулям за уровень (V: +40%)
+    public static final double KAGUNE_GUARD_PER_LEVEL = 0.06;       // «Защита от кагуне»: -6% урона от гулей (III: -18%)
+    public static final int RC_SUPPRESS_BASE = 40;                  // «Подавитель RC»: гуль после удара не лечится 2 с...
+    public static final int RC_SUPPRESS_PER_LEVEL = 20;             // ...+1 с за уровень (III: 4 с)
+    public static final float FIELD_MEDIC_PER_LEVEL = 1.0F;         // «Полевая аптечка»: +0,5 сердца за уровень...
+    public static final int FIELD_MEDIC_INTERVAL = 6 * 20;          // ...раз в 6 с
+    public static final double RANK_BLOOD_PER_LEVEL = 0.1;          // «Звание»: +10% очков крови за убийства и контракты
+
+    // Квинке агента CCG [ВРЕМЕННО, пока нет моделей и анимаций]. Урон считается от урона квинке в руке.
+    public static final int QUINQUE_HIT_DELAY = 3;                  // удар приходится через 3 тика после нажатия
+    public static final int QUINQUE_ATTACK_BUSY = 8;                // следующий удар серии через 0,4 с
+    public static final int QUINQUE_FINISHER_BUSY = 14;             // после третьего удара пауза 0,7 с
+    public static final float QUINQUE_FINISHER_MULT = 1.5F;         // третий удар серии x1,5
+    public static final int QUINQUE_COMBO_RESET = 30;               // серия сбрасывается через 1,5 с без ударов
+    public static final double QUINQUE_REACH = 3.5;                 // достаёт на 3,5 блока
+    public static final double QUINQUE_HALF_WIDTH = 1.0;
+    public static final float QUINQUE_STRONG_MULT = 2.5F;           // ПКМ дважды: x2,5, пробивает блок
+    public static final int QUINQUE_STRONG_DELAY = 6;               // замах 0,3 с
+    public static final int QUINQUE_STRONG_COOLDOWN = 2 * 20;       // откат 2 с, не меньше
+    public static final int QUINQUE_FLURRY_HITS = 10;               // K: 10 ударов...
+    public static final int QUINQUE_FLURRY_INTERVAL = 3;            // ...каждые 3 тика (1,5 с)
+    public static final float QUINQUE_FLURRY_MULT = 0.35F;          // каждый удар 35% урона квинке
+    public static final double QUINQUE_FLURRY_WIDTH = 2.5;
+    public static final int QUINQUE_FLURRY_COOLDOWN = 8 * 20;       // откат 8 с после конца серии
+    public static final int QUINQUE_PARRY_WINDOW = 10;              // L: парирование, если блок поставлен за 0,5 с до удара
+    public static final int QUINQUE_PARRY_STUN = 30;                // атакующий оглушён на 1,5 с
+    public static final double QUINQUE_BLOCK_SLOW = 1.8;            // в блоке ходьба в 1,8 раза медленнее
+    public static final int QUINQUE_LUNGE_TICKS = 5;                // Shift + ЛКМ: выпад 5 тиков...
+    public static final double QUINQUE_LUNGE_SPEED = 1.2;           // ...примерно на 6 блоков
+    public static final float QUINQUE_LUNGE_MULT = 1.2F;            // укол x1,2
+    public static final int QUINQUE_LUNGE_COOLDOWN = 4 * 20;        // откат 4 с
+    // Дерево агента CCG: «Освобождение» (уровни 0-5, как ярость) и прокачка квинке [ВРЕМЕННО]
+    public static final double RELEASE_SECONDS_MIN = 15.0;          // без прокачки 15 с, на V — 30 с
+    public static final double RELEASE_SECONDS_MAX = 30.0;
+    public static final double RELEASE_DAMAGE_MIN = 0.30;           // +30% урона → +50%
+    public static final double RELEASE_DAMAGE_MAX = 0.50;
+    public static final double RELEASE_REDUCTION_MIN = 0.20;        // -20% получаемого урона → -35%
+    public static final double RELEASE_REDUCTION_MAX = 0.35;
+    public static final double RELEASE_SPEED_MIN = 0.15;            // +15% скорости → +25%
+    public static final double RELEASE_SPEED_MAX = 0.25;
+    public static final double RELEASE_GAIN_PER_LEVEL = 0.25;       // «Накопление освобождения»: +25% за уровень
+    public static final double Q_COMBO_DAMAGE_PER_LEVEL = 0.10;     // «Серия»: +10% урона обычных ударов
+    public static final float Q_FINISHER_PER_LEVEL = 0.25F;         // ...и третий удар сильнее (+0,25 к множителю)
+    public static final double Q_STRONG_DAMAGE_PER_LEVEL = 0.15;    // «Сильный удар»: +15% урона
+    public static final double Q_STRONG_REACH_PER_LEVEL = 0.3;      // ...и +0,3 блока досягаемости (откат всегда 2 с)
+    public static final int Q_FLURRY_HITS_PER_LEVEL = 2;            // «Шквал»: +2 удара
+    public static final int Q_FLURRY_COOLDOWN_PER_LEVEL = 26;       // ...и откат на 1,3 с меньше (8 → 4,1 с)
+    public static final double Q_PARRY_WINDOW_PER_LEVEL = 0.25;     // «Блок квинке»: окно идеального блока +25%
+    public static final int Q_PARRY_STUN_PER_LEVEL = 10;            // ...оглушение после парирования +0,5 с
+    public static final double Q_BLOCK_SLOW_PER_LEVEL = 0.25;       // ...в блоке ходишь быстрее
+    public static final double Q_LUNGE_DAMAGE_PER_LEVEL = 0.20;     // «Выпад»: +20% урона, дальше на ~1 блок
+    public static final int Q_LUNGE_COOLDOWN_PER_LEVEL = 10;        // ...и откат на 0,5 с меньше (4 → 2,5 с)
+    public static final double Q_REACH_PER_LEVEL = 0.5;             // «Длина квинке»: +0,5 блока ко всем ударам
+    public static final double NARUKAMI_BOLT_RANGE = 16.0;
+    // Финальное задание агента: Старший следователь отдаёт квинке [ТВОЁ]
+    public static final double FINAL_NARUKAMI_CHANCE = 0.8;         // 80% Narukami, 20% IXA
+    public static final int FINAL_BLOOD_MIN = 500;                  // награда: 500-1000 очков крови
+    public static final int FINAL_BLOOD_MAX = 1000;           // Narukami: разряд летит на 16 блоков
+    public static final int QUINQUE_RELEASE_GAIN = 5;               // J: +5 к шкале за каждое попадание по гулю (20 ударов)
+    public static final int QUINQUE_RELEASE_TICKS = 15 * 20;        // усиление на 15 с
+    public static final double QUINQUE_RELEASE_DAMAGE = 0.3;        // +30% урона
+    public static final double QUINQUE_RELEASE_REDUCTION = 0.2;     // -20% получаемого урона
+    public static final double QUINQUE_RELEASE_SPEED = 0.15;        // +15% скорости
 
     // Секретный навык «Кровавое зеркало» [СПЕКА]
     public static final int[] MIRROR_COST = {30};                   // стоит 30 очков навыков

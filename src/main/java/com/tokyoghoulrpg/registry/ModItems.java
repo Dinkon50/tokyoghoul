@@ -4,6 +4,8 @@ import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.data.ClassChange;
 import com.tokyoghoulrpg.item.CoffeeItem;
 import com.tokyoghoulrpg.item.InjectionItem;
+import com.tokyoghoulrpg.item.QuinqueItem;
+import com.tokyoghoulrpg.item.QuinqueType;
 import com.tokyoghoulrpg.item.MaskItem;
 import com.tokyoghoulrpg.item.ModArmorMaterials;
 import java.util.List;
@@ -39,6 +41,14 @@ public final class ModItems {
                     .nutrition(2).saturationMod(0.4F).alwaysEat()
                     .effect(() -> new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 0), 1.0F).build())));
 
+    // Квинке: учебная и твои четыре с 3D-моделями
+    public static final RegistryObject<Item> TRAINING_QUINQUE = ITEMS.register("training_quinque",
+            () -> new QuinqueItem(QuinqueType.TRAINING, new Item.Properties()));
+    public static final RegistryObject<Item> QUINQUE_KURA = quinque(QuinqueType.KURA);
+    public static final RegistryObject<Item> QUINQUE_IXA = quinque(QuinqueType.IXA);
+    public static final RegistryObject<Item> QUINQUE_NARUKAMI = quinque(QuinqueType.NARUKAMI);
+    public static final RegistryObject<Item> QUINQUE_JASON = quinque(QuinqueType.JASON);
+
     // Маски
     public static final RegistryObject<Item> MASK_FANG = mask("mask_fang");
     public static final RegistryObject<Item> MASK_BONE = mask("mask_bone");
@@ -72,6 +82,11 @@ public final class ModItems {
     public static final List<RegistryObject<Item>> MASKS = List.of(MASK_FANG, MASK_BONE, MASK_CROW, MASK_ONI);
 
     private ModItems() {
+    }
+
+    private static RegistryObject<Item> quinque(QuinqueType type) {
+        return ITEMS.register("quinque_" + type.id(),
+                () -> new QuinqueItem(type, new Item.Properties().rarity(Rarity.RARE).fireResistant()));
     }
 
     private static RegistryObject<Item> mask(String name) {

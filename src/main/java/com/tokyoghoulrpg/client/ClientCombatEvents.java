@@ -3,6 +3,7 @@ package com.tokyoghoulrpg.client;
 import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.combat.AbilityType;
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.QuinqueAbilities;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
@@ -55,8 +56,8 @@ public final class ClientCombatEvents {
             player.setSprinting(false);
         }
         // Пока кагуне включено, удержание ЛКМ не ломает блоки: ЛКМ отдана под атаки
-        if (data.getPlayerClass().hasKagune() && data.isKaguneActive()
-                && mc.options.keyAttack.isDown() && mc.gameMode != null) {
+        // С квинке в руке ЛКМ отдана под удары и не ломает блоки. С кагуне ЛКМ по блоку копает им (своя анимация).
+        if (QuinqueAbilities.active(player, data) && mc.options.keyAttack.isDown() && mc.gameMode != null) {
             mc.gameMode.stopDestroyBlock();
         }
     }
@@ -70,6 +71,29 @@ public final class ClientCombatEvents {
         }
         PlayerData data = PlayerData.get(player);
         if (data == null) {
+            return;
+        }
+        // Агент CCG с квинке: ЛКМ — удары, Shift + ЛКМ — выпад, ПКМ дважды — сильный удар
+        if (QuinqueAbilities.active(player, data)) {
+            if (event.isAttack()) {
+                cancel(event);
+                send(player.isShiftKeyDown() ? AbilityType.QUINQUE_LUNGE : AbilityType.QUINQUE_ATTACK);
+            } else if (event.isUseItem()) {
+                boolean fresh = useReleased;
+                useReleased = false;
+                boolean lookingAtBlock = mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK;
+                if (!fresh || lookingAtBlock) {
+                    return;
+                }
+                long now = player.level().getGameTime();
+                if (now - lastFreshUse <= Balance.DOUBLE_TAP_TICKS) {
+                    lastFreshUse = Long.MIN_VALUE / 2;
+                    cancel(event);
+                    send(AbilityType.QUINQUE_STRONG);
+                } else {
+                    lastFreshUse = now;
+                }
+            }
             return;
         }
         // Человек: ПКМ дважды быстро — сильная атака с любым предметом или пустой рукой.
@@ -99,6 +123,10 @@ public final class ClientCombatEvents {
         boolean shift = player.isShiftKeyDown();
 
         if (event.isAttack()) {
+            // ЛКМ по блоку — кагуне копает, а не бьёт
+            if (!shift && mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK) {
+                return;
+            }
             cancel(event);
             send(shift ? AbilityType.PULL_TARGET : AbilityType.BASIC_ATTACK);
         } else if (event.isUseItem()) {

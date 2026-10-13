@@ -40,18 +40,33 @@ public enum Quest {
     H_VETERAN("h_veteran", Chain.HUMAN, Trigger.KILL_MONSTER, 30, 3),
     H_ASCEND("h_ascend", Chain.HUMAN, Trigger.LEVEL, 20, 3),
     H_INFORMANT_JOB("h_informant_job", Chain.HUMAN, Trigger.CONTRACT, 1, 2),
-    H_BOSS_HUNT("h_boss_hunt", Chain.HUMAN, Trigger.KILL_BOSS, 1, 3);
+    H_BOSS_HUNT("h_boss_hunt", Chain.HUMAN, Trigger.KILL_BOSS, 1, 3),
+
+    // Агент CCG (числа временные). Последнее задание — особое: смотри QuinqueReward.
+    C_FIRST_HUNT("c_first_hunt", Chain.CCG, Trigger.KILL_GHOUL, 1, 1),
+    C_TRAINING("c_training", Chain.CCG, Trigger.SKILLS_OPENED, 2, 2),
+    C_PATROL("c_patrol", Chain.CCG, Trigger.KILL_MONSTER, 10, 1),
+    C_GHOUL_HUNTER("c_ghoul_hunter", Chain.CCG, Trigger.KILL_GHOUL, 5, 2),
+    C_RELEASE("c_release", Chain.CCG, Trigger.RELEASE, 1, 2),
+    C_INFORMANT("c_informant", Chain.CCG, Trigger.CONTRACT, 1, 2),
+    C_PARRY("c_parry", Chain.CCG, Trigger.PARRY, 3, 2),
+    C_VETERAN("c_veteran", Chain.CCG, Trigger.KILL_GHOUL, 15, 3),
+    C_EXPERIENCE("c_experience", Chain.CCG, Trigger.LEVEL, 20, 3),
+    C_DEVOURER("c_devourer", Chain.CCG, Trigger.KILL_GHOUL_BOSS, 1, 3),
+    C_FINAL("c_final", Chain.CCG, Trigger.QUINQUE_REWARD, 2, 15);
 
     /** Чья цепочка. */
     public enum Chain {
         GHOUL,
-        HUMAN;
+        HUMAN,
+        CCG;
 
         /** Цепочка класса или null, если у класса заданий пока нет. */
         public static Chain of(PlayerClass playerClass) {
             return switch (playerClass) {
                 case GHOUL, HALF_GHOUL -> GHOUL;
                 case HUMAN -> HUMAN;
+                case CCG_AGENT -> CCG;
                 default -> null;
             };
         }
@@ -79,6 +94,16 @@ public enum Quest {
         KILL_BOSS(false),
         /** Сдан контракт информатора. */
         CONTRACT(false),
+        /** Убит гуль: NPC-гуль, Пожиратель, игрок-гуль или полугуль. */
+        KILL_GHOUL(false),
+        /** Убит Пожиратель. */
+        KILL_GHOUL_BOSS(false),
+        /** Включено «Освобождение квинке». */
+        RELEASE(false),
+        /** Идеальный блок (парирование). */
+        PARRY(false),
+        /** Финал агента: получены обе квинке за Старшего следователя (считается особо, см. QuinqueReward). */
+        QUINQUE_REWARD(false),
         /** Сколько всего навыков открыто: считается по факту, а не с начала задания. */
         SKILLS_OPENED(true),
         /** Уровень Minecraft: считается по факту. */
@@ -119,6 +144,14 @@ public enum Quest {
 
     public int reward() {
         return reward;
+    }
+
+    /** Очки крови за задание. У финального задания агента — случайно от 500 до 1000. */
+    public int bloodReward(net.minecraft.util.RandomSource random) {
+        if (this == C_FINAL) {
+            return Balance.FINAL_BLOOD_MIN + random.nextInt(Balance.FINAL_BLOOD_MAX - Balance.FINAL_BLOOD_MIN + 1);
+        }
+        return bloodReward();
     }
 
     /** Очки крови за задание: от 10 до 20, чем больше очков навыков за задание, тем больше крови. */

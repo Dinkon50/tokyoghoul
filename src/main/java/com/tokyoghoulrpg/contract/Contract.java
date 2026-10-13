@@ -3,6 +3,8 @@ package com.tokyoghoulrpg.contract;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.rep.Reputation;
+import com.tokyoghoulrpg.skill.SkillEffects;
+import com.tokyoghoulrpg.skill.SkillTree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -75,7 +77,11 @@ public enum Contract {
 
     /** Кровь за контракт с учётом репутации у своей стороны (x0,5 ... x1,5). */
     public int bloodFor(PlayerData data) {
-        return data == null ? blood : (int) Math.round(blood * Reputation.rewardFactor(data));
+        if (data == null) {
+            return blood;
+        }
+        double rank = 1.0 + SkillEffects.rankBloodBonus(SkillEffects.level(data, SkillTree.Branch.RANK));
+        return (int) Math.round(blood * Reputation.rewardFactor(data) * rank);
     }
 
     public int points() {

@@ -8,6 +8,9 @@ import com.tokyoghoulrpg.combat.BleedManager;
 import com.tokyoghoulrpg.combat.CombatContext;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.combat.GhoulDiet;
+import com.tokyoghoulrpg.combat.QuinqueAbilities;
+import com.tokyoghoulrpg.data.PlayerClass;
+import com.tokyoghoulrpg.combat.RcSuppress;
 import com.tokyoghoulrpg.registry.ModItems;
 import com.tokyoghoulrpg.combat.LockManager;
 import com.tokyoghoulrpg.combat.RageStats;
@@ -17,6 +20,9 @@ import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.entity.BossMob;
 import com.tokyoghoulrpg.entity.CcgAgentNpc;
 import com.tokyoghoulrpg.entity.GhoulNpc;
+import com.tokyoghoulrpg.entity.GhoulBoss;
+import com.tokyoghoulrpg.entity.CcgBoss;
+import com.tokyoghoulrpg.quest.QuinqueReward;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.quest.Quest;
 import com.tokyoghoulrpg.quest.QuestManager;
@@ -42,6 +48,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.event.entity.living.LivingHealEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -83,6 +90,7 @@ public final class CombatEvents {
     public static void onServerStopped(ServerStoppedEvent event) {
         LockManager.clear();
         BleedManager.clear();
+        RcSuppress.clear();
     }
 
     @SubscribeEvent
@@ -122,6 +130,13 @@ public final class CombatEvents {
         }
         if (piercing) {
             // Это часть урона, которая проходит сквозь блок (ветка «Пробивание»)
+            return;
+        }
+        // Идеальный блок: сильный удар, пришедший сразу после того, как поставлен блок, парируется —
+        // урона нет, блок цел, атакующий оглушён. От обычных ударов парирования нет: их блок просто гасит.
+        if (CombatContext.type() == AttackType.STRONG && source.getEntity() instanceof LivingEntity striker
+                && QuinqueAbilities.tryParry(blocker, data, striker)) {
+            event.setCanceled(true);
             return;
         }
         boolean breaks = CombatContext.type() == AttackType.STRONG || isRaging(source.getEntity());
@@ -221,11 +236,24 @@ public final class CombatEvents {
         if (attacker instanceof ServerPlayer attackingPlayer) {
             PlayerData data = PlayerData.get(attackingPlayer);
             if (data != null && data.isRageActive()) {
-                amount *= (float) (1.0 + RageStats.damageBonus(data.getRageLevel()));
+                // у агента CCG это «Освобождение квинке», у гуля — ярость
+                amount *= (float) (1.0 + (data.getPlayerClass() == PlayerClass.CCG_AGENT
+                        ? QuinqueAbilities.releaseDamageBonus(data) : RageStats.damageBonus(data.getRageLevel())));
             }
             amount *= (float) (1.0 + SkillEffects.damageBonus(SkillEffects.level(data, SkillTree.Branch.DAMAGE)));
             // Человек: ветка «Урон оружием». Работает и для ближнего боя, и для стрел и трезубцев:
             // у выпущенного снаряда источник урона — сам игрок.
+            // Агент CCG: «Знание гулей» и «Подавитель RC»
+            if (RcSuppress.isGhoul(victim)) {
+                if (data != null) {
+                    QuinqueAbilities.onHitGhoul(attackingPlayer, data);
+                }
+                amount *= (float) (1.0 + SkillEffects.ghoulBane(SkillEffects.level(data, SkillTree.Branch.GHOUL_BANE)));
+                int suppress = SkillEffects.rcSuppressTicks(SkillEffects.level(data, SkillTree.Branch.RC_SUPPRESS));
+                if (suppress > 0) {
+                    RcSuppress.apply(victim, suppress);
+                }
+            }
             if (isWeaponHit(event.getSource(), attackingPlayer)) {
                 amount *= (float) (1.0 + SkillEffects.humanWeaponDamage(
                         SkillEffects.level(data, SkillTree.Branch.WEAPON_DAMAGE)));
@@ -239,9 +267,14 @@ public final class CombatEvents {
         if (victim instanceof ServerPlayer defendingPlayer) {
             PlayerData data = PlayerData.get(defendingPlayer);
             if (data != null && data.isRageActive()) {
-                amount *= (float) (1.0 - RageStats.damageReduction(data.getRageLevel()));
+                amount *= (float) (1.0 - (data.getPlayerClass() == PlayerClass.CCG_AGENT
+                        ? QuinqueAbilities.releaseReduction(data) : RageStats.damageReduction(data.getRageLevel())));
             }
             amount *= (float) (1.0 - SkillEffects.damageReduction(SkillEffects.level(data, SkillTree.Branch.DEFENSE)));
+            // Агент CCG: «Защита от кагуне» от любых гулей
+            if (attacker instanceof LivingEntity livingAttacker && RcSuppress.isGhoul(livingAttacker)) {
+                amount *= (float) (1.0 - SkillEffects.kaguneGuard(SkillEffects.level(data, SkillTree.Branch.KAGUNE_GUARD)));
+            }
             // Человек: ветка «Стойкость»
             amount *= (float) (1.0 - SkillEffects.humanToughness(SkillEffects.level(data, SkillTree.Branch.TOUGHNESS)));
         }
@@ -306,6 +339,16 @@ public final class CombatEvents {
                 rewardKill(killerPlayer, data, event.getEntity());
             }
             ContractManager.onKill(killerPlayer, event.getEntity());
+            // Задания агента CCG: гули, Пожиратель, финальный Старший следователь
+            if (RcSuppress.isGhoul(event.getEntity())) {
+                QuestManager.progress(killerPlayer, Quest.Trigger.KILL_GHOUL, 1);
+            }
+            if (event.getEntity() instanceof GhoulBoss) {
+                QuestManager.progress(killerPlayer, Quest.Trigger.KILL_GHOUL_BOSS, 1);
+            }
+            if (event.getEntity() instanceof CcgBoss) {
+                QuinqueReward.onCcgBossKilled(killerPlayer);
+            }
             Reputation.onKill(killerPlayer, event.getEntity());
         }
         if (event.getEntity() instanceof ServerPlayer dead) {
@@ -319,18 +362,20 @@ public final class CombatEvents {
      * Животные, торговцы и информаторы ничего не дают.
      */
     private static void rewardKill(ServerPlayer killer, PlayerData data, LivingEntity victim) {
+        double rank = 1.0 + SkillEffects.rankBloodBonus(SkillEffects.level(data, SkillTree.Branch.RANK));
+        int bossBlood = (int) Math.round(Balance.BLOOD_KILL_BOSS * rank);
+        int npcBlood = (int) Math.round(Balance.BLOOD_KILL_NPC * rank);
         if (victim instanceof BossMob) {
-            data.addBloodPoints(Balance.BLOOD_KILL_BOSS);
+            data.addBloodPoints(bossBlood);
             data.addSkillPoints(Balance.BOSS_SKILL_POINTS);
             killer.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.boss_reward",
-                    victim.getDisplayName(), Balance.BLOOD_KILL_BOSS, Balance.BOSS_SKILL_POINTS));
+                    victim.getDisplayName(), bossBlood, Balance.BOSS_SKILL_POINTS));
             Effects.sound(killer, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
             NetworkHandler.syncTo(killer);
             QuestManager.progress(killer, Quest.Trigger.KILL_BOSS, 1);
         } else if (victim instanceof GhoulNpc || victim instanceof CcgAgentNpc) {
-            data.addBloodPoints(Balance.BLOOD_KILL_NPC);
-            killer.displayClientMessage(Component.translatable("message.tokyoghoulrpg.kill_reward",
-                    Balance.BLOOD_KILL_NPC), true);
+            data.addBloodPoints(npcBlood);
+            killer.displayClientMessage(Component.translatable("message.tokyoghoulrpg.kill_reward", npcBlood), true);
             NetworkHandler.syncTo(killer);
         }
     }
@@ -342,9 +387,14 @@ public final class CombatEvents {
      */
     @SubscribeEvent
     public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
-        double bonus = SkillEffects.humanMining(SkillEffects.level(PlayerData.get(event.getEntity()), SkillTree.Branch.MINING));
+        PlayerData data = PlayerData.get(event.getEntity());
+        double bonus = SkillEffects.humanMining(SkillEffects.level(data, SkillTree.Branch.MINING));
         if (bonus > 0.0) {
             event.setNewSpeed((float) (event.getNewSpeed() * (1.0 + bonus)));
+        }
+        // Гуль копает выпущенным кагуне быстрее
+        if (data != null && data.getPlayerClass().hasKagune() && data.isKaguneActive()) {
+            event.setNewSpeed(event.getNewSpeed() * Balance.KAGUNE_MINING_SPEED);
         }
     }
 
@@ -356,6 +406,14 @@ public final class CombatEvents {
             if (event.getState().is(Tags.Blocks.ORES)) {
                 QuestManager.progress(player, Quest.Trigger.MINE_ORE, 1);
             }
+        }
+    }
+
+    /** «Подавитель RC»: гуль после удара агента не лечится. */
+    @SubscribeEvent
+    public static void onHeal(LivingHealEvent event) {
+        if (!event.getEntity().level().isClientSide() && RcSuppress.isSuppressed(event.getEntity())) {
+            event.setCanceled(true);
         }
     }
 

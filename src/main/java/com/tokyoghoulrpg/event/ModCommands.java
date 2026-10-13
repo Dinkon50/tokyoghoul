@@ -359,6 +359,7 @@ public final class ModCommands {
     private static Component resetQuests(ServerPlayer player, PlayerData data) {
         data.setQuestIndex(0);
         data.setQuestProgress(0);
+        data.setFinalQuinques(0);
         return null;
     }
 }

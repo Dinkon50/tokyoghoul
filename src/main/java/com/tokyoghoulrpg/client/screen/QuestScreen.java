@@ -67,7 +67,9 @@ public class QuestScreen extends Screen {
             Component text = active ? quest.description() : quest.title();
             gfx.drawString(this.font, text, left + 18, y + 2, textColor, false);
 
-            Component reward = Component.translatable("screen.tokyoghoulrpg.quests.reward", quest.reward(), quest.bloodReward());
+            Component reward = Component.translatable("screen.tokyoghoulrpg.quests.reward", quest.reward(),
+                    quest == Quest.C_FINAL ? com.tokyoghoulrpg.combat.Balance.FINAL_BLOOD_MIN + "-"
+                            + com.tokyoghoulrpg.combat.Balance.FINAL_BLOOD_MAX : String.valueOf(quest.bloodReward()));
             gfx.drawString(this.font, reward, left + WIDTH - 6 - this.font.width(reward), y + 2,
                     done ? 0x555555 : 0xC9822B, false);
 

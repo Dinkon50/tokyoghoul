@@ -11,6 +11,23 @@ public final class QuestManager {
     private QuestManager() {
     }
 
+    /** Текущее задание игрока или null. */
+    public static Quest current(ServerPlayer player) {
+        PlayerData data = PlayerData.get(player);
+        return data == null ? null : Quest.byIndex(data.getPlayerClass(), data.getQuestIndex());
+    }
+
+    /** Задать прогресс текущего задания (для финала агента) и проверить выполнение. */
+    public static void setProgress(ServerPlayer player, int value) {
+        PlayerData data = PlayerData.get(player);
+        if (data == null) {
+            return;
+        }
+        data.setQuestProgress(value);
+        checkComplete(player, data);
+        NetworkHandler.syncTo(player);
+    }
+
     /** Событие для заданий-счётчиков (убийства, укусы, попадания). */
     public static void progress(ServerPlayer player, Quest.Trigger trigger, int amount) {
         PlayerData data = PlayerData.get(player);
@@ -72,12 +89,16 @@ public final class QuestManager {
     private static void checkComplete(ServerPlayer player, PlayerData data) {
         Quest quest = Quest.byIndex(data.getPlayerClass(), data.getQuestIndex());
         while (quest != null && data.getQuestProgress() >= quest.goal()) {
+            int blood = quest.bloodReward(player.getRandom());
             data.addSkillPoints(quest.reward());
-            data.addBloodPoints(quest.bloodReward());
+            data.addBloodPoints(blood);
             data.setQuestIndex(data.getQuestIndex() + 1);
             if (!ModCommands.isSilent()) {
                 player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.quest_done",
-                        quest.title(), quest.reward(), quest.bloodReward()));
+                        quest.title(), quest.reward(), blood));
+            }
+            if (quest == Quest.C_FINAL && !ModCommands.isSilent()) {
+                player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.ccg_chain_done"));
             }
             quest = Quest.byIndex(data.getPlayerClass(), data.getQuestIndex());
             // Следующее задание «по факту» может быть уже выполнено

@@ -1,5 +1,6 @@
 package com.tokyoghoulrpg.client.kagune;
 
+import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -33,6 +34,12 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
         if (kagune == null || !kagune.shouldRender()) {
             return;
         }
+
+        // Ходьба и копание: для своего игрока копание видно по ломанию блока, для других — по взмаху руки
+        Minecraft mc = Minecraft.getInstance();
+        boolean breaking = player.swinging
+                || (player == mc.player && mc.gameMode != null && mc.gameMode.isDestroying());
+        kagune.setMotion(limbSwingAmount > 0.15F, breaking);
 
         poseStack.pushPose();
         // Привязываем кагуне к телу игрока: так оно наклоняется вместе с телом, когда игрок приседает.

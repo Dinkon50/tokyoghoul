@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "tokyoghoulrpg:item/training_quinque"
+  }
+}

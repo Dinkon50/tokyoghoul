@@ -15,6 +15,9 @@ public final class Effects {
     /** Яркие красные частицы ауры ярости. */
     public static final DustParticleOptions RAGE = new DustParticleOptions(new Vector3f(0.9F, 0.08F, 0.18F), 1.0F);
 
+    /** Бирюзовые частицы подавителя RC. */
+    public static final DustParticleOptions RC = new DustParticleOptions(new Vector3f(0.2F, 0.85F, 0.75F), 1.0F);
+
     private Effects() {
     }
 

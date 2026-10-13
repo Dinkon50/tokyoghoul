@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 /** Лавка торговца: товары за очки крови и кнопка обычной торговли за изумруды. */
 public class BloodShopScreen extends Screen {
     private static final int WIDTH = 260;
-    private static final int ROW_H = 26;
+    private static final int ROW_H = 22;
 
     private final int traderId;
     private final List<Button> buyButtons = new ArrayList<>();

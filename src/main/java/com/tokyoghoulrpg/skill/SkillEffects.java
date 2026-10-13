@@ -3,11 +3,119 @@ package com.tokyoghoulrpg.skill;
 import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.data.PlayerData;
 
-/** Формулы всех бонусов дерева навыков. Работают только у гуля и полугуля. */
+/** Формулы всех бонусов дерева навыков. Ветка действует, только если она есть в дереве класса игрока. */
 public final class SkillEffects {
     /** Множитель урона от падения: всем -20%, «Мягкое приземление» ещё -15% за уровень. */
     public static float fallFactor(int softLandingLevel) {
         return (float) (Balance.FALL_DAMAGE_BASE * (1.0 - Balance.SOFT_LANDING_PER_LEVEL * softLandingLevel));
+    }
+
+    // ---------- Агент CCG ----------
+
+    // ---------- Агент CCG: Освобождение и квинке ----------
+
+    private static double lerp(int level, double min, double max) {
+        int top = Balance.RAGE_LEVEL_MAX;
+        return min + (max - min) * Math.min(level, top) / (double) top;
+    }
+
+    /** «Освобождение квинке»: длительность, урон, защита, скорость (уровень 0 — без прокачки). */
+    public static int releaseTicks(int level) {
+        return (int) Math.round(lerp(level, Balance.RELEASE_SECONDS_MIN, Balance.RELEASE_SECONDS_MAX) * 20.0);
+    }
+
+    public static double releaseDamage(int level) {
+        return lerp(level, Balance.RELEASE_DAMAGE_MIN, Balance.RELEASE_DAMAGE_MAX);
+    }
+
+    public static double releaseReduction(int level) {
+        return lerp(level, Balance.RELEASE_REDUCTION_MIN, Balance.RELEASE_REDUCTION_MAX);
+    }
+
+    public static double releaseSpeed(int level) {
+        return lerp(level, Balance.RELEASE_SPEED_MIN, Balance.RELEASE_SPEED_MAX);
+    }
+
+    public static double releaseGainBonus(int level) {
+        return Balance.RELEASE_GAIN_PER_LEVEL * level;
+    }
+
+    public static double qComboDamage(int level) {
+        return Balance.Q_COMBO_DAMAGE_PER_LEVEL * level;
+    }
+
+    public static float qFinisherBonus(int level) {
+        return Balance.Q_FINISHER_PER_LEVEL * level;
+    }
+
+    public static double qStrongDamage(int level) {
+        return Balance.Q_STRONG_DAMAGE_PER_LEVEL * level;
+    }
+
+    public static double qStrongReach(int level) {
+        return Balance.Q_STRONG_REACH_PER_LEVEL * level;
+    }
+
+    public static int qFlurryExtraHits(int level) {
+        return Balance.Q_FLURRY_HITS_PER_LEVEL * level;
+    }
+
+    public static int qFlurryCooldown(int level) {
+        return Balance.QUINQUE_FLURRY_COOLDOWN - Balance.Q_FLURRY_COOLDOWN_PER_LEVEL * level;
+    }
+
+    public static double qParryWindowBonus(int level) {
+        return Balance.Q_PARRY_WINDOW_PER_LEVEL * level;
+    }
+
+    public static int qParryStun(int level) {
+        return Balance.QUINQUE_PARRY_STUN + Balance.Q_PARRY_STUN_PER_LEVEL * level;
+    }
+
+    public static double qBlockSlow(int level) {
+        return Balance.QUINQUE_BLOCK_SLOW - Balance.Q_BLOCK_SLOW_PER_LEVEL * level;
+    }
+
+    public static int qLungeExtraTicks(int level) {
+        return level;
+    }
+
+    public static double qLungeDamage(int level) {
+        return Balance.Q_LUNGE_DAMAGE_PER_LEVEL * level;
+    }
+
+    /** Откат выпада: 4 с → 2,5 с, меньше 2 с не бывает. */
+    public static int qLungeCooldown(int level) {
+        return Math.max(40, Balance.QUINQUE_LUNGE_COOLDOWN - Balance.Q_LUNGE_COOLDOWN_PER_LEVEL * level);
+    }
+
+    public static double qReach(int level) {
+        return Balance.Q_REACH_PER_LEVEL * level;
+    }
+
+    /** «Знание гулей»: прибавка к урону по гулям (NPC, боссу, игрокам-гулям и полугулям). */
+    public static double ghoulBane(int level) {
+        return Balance.GHOUL_BANE_PER_LEVEL * level;
+    }
+
+    /** «Защита от кагуне»: меньше урона от гулей. */
+    public static double kaguneGuard(int level) {
+        return Balance.KAGUNE_GUARD_PER_LEVEL * level;
+    }
+
+    /** «Подавитель RC»: сколько тиков гуль после удара не лечится. 0 — навыка нет. */
+    public static int rcSuppressTicks(int level) {
+        return level <= 0 ? 0 : Balance.RC_SUPPRESS_BASE + Balance.RC_SUPPRESS_PER_LEVEL * (level - 1);
+    }
+
+    /** «Полевая аптечка»: сколько здоровья восстанавливается раз в FIELD_MEDIC_INTERVAL. */
+    public static float fieldMedic(int level) {
+        return Balance.FIELD_MEDIC_PER_LEVEL * level;
+    }
+
+    /** «Звание»: больше очков крови за убийства и контракты. */
+    public static double rankBloodBonus(int level) {
+        return Balance.RANK_BLOOD_PER_LEVEL * level;
     }
 
     private SkillEffects() {

@@ -2,6 +2,7 @@ package com.tokyoghoulrpg.entity;
 
 import com.tokyoghoulrpg.combat.AbilityManager;
 import com.tokyoghoulrpg.combat.Effects;
+import com.tokyoghoulrpg.combat.QuinqueAbilities;
 import com.tokyoghoulrpg.data.PlayerData;
 import java.util.List;
 import java.util.function.Predicate;
@@ -20,6 +21,10 @@ public final class BossCombat {
         if (target instanceof ServerPlayer player) {
             PlayerData data = PlayerData.get(player);
             if (data != null && data.isBlocking()) {
+                // Идеальный блок гасит и особую атаку босса (сам босс не оглушается)
+                if (QuinqueAbilities.tryParry(player, data, boss)) {
+                    return false;
+                }
                 AbilityManager.breakBlock(player, data);
             }
         }

@@ -48,6 +48,10 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     private int repGhouls = 0;
     /** Когда (время мира) CCG придут с рейдом. 0 — ещё не назначено. */
     private long nextRaid = 0L;
+    /** Агенту CCG уже выдана стартовая квинке Kura. */
+    private boolean starterQuinque = false;
+    /** Финальное задание агента: какие квинке уже получены (1 — Narukami, 2 — IXA). */
+    private int finalQuinques = 0;
     /** Номер текущего задания в цепочке и прогресс по нему. */
     private int questIndex = 0;
     private int questProgress = 0;
@@ -206,6 +210,22 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         this.nextRaid = time;
     }
 
+    public boolean isStarterQuinqueGiven() {
+        return starterQuinque;
+    }
+
+    public void setStarterQuinqueGiven(boolean given) {
+        this.starterQuinque = given;
+    }
+
+    public int getFinalQuinques() {
+        return finalQuinques;
+    }
+
+    public void setFinalQuinques(int mask) {
+        this.finalQuinques = mask & 3;
+    }
+
     public int getQuestIndex() {
         return questIndex;
     }
@@ -345,6 +365,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         repCcg = 0;
         repGhouls = 0;
         nextRaid = 0L;
+        starterQuinque = false;
+        finalQuinques = 0;
         questIndex = 0;
         questProgress = 0;
         savedQuests.clear();
@@ -383,6 +405,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putInt("rep_ccg", repCcg);
         tag.putInt("rep_ghouls", repGhouls);
         tag.putLong("next_raid", nextRaid);
+        tag.putBoolean("starter_quinque", starterQuinque);
+        tag.putInt("final_quinques", finalQuinques);
         tag.putInt("quest_index", questIndex);
         tag.putInt("quest_progress", questProgress);
         CompoundTag saved = new CompoundTag();
@@ -433,6 +457,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         setRepCcg(tag.getInt("rep_ccg"));
         setRepGhouls(tag.getInt("rep_ghouls"));
         nextRaid = tag.getLong("next_raid");
+        starterQuinque = tag.getBoolean("starter_quinque");
+        setFinalQuinques(tag.getInt("final_quinques"));
         setQuestIndex(tag.getInt("quest_index"));
         setQuestProgress(tag.getInt("quest_progress"));
         savedQuests.clear();

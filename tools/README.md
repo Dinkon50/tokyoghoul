@@ -11,3 +11,5 @@
 - `skins_extra.py <папка>` рисует скины боссов и информаторов.
 - `structures.py <папка>` собирает постройки (`ccg_office.nbt`, `ghoul_hideout.nbt`): где какой блок, сундуки и жители. `nbt.py` — чтение и запись формата `.nbt`.
 - `food_icons.py <папка>` рисует иконки плоти и кофе 16 × 16.
+- `bb_anim_merge.py <animation.json> <файлы .bbmodel>` добавляет анимации из Blockbench в файл анимаций кагуне (как экспорт Blockbench в GeckoLib).
+- `quinque_mesh.py <папка с .bbmodel> <assets/tokyoghoulrpg>` переводит модели квинке (меши Blockbench) в файлы мода `.tgqm`, текстуру и иконки 32 × 32.

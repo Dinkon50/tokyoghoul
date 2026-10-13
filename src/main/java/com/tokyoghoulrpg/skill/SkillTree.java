@@ -22,7 +22,12 @@ public final class SkillTree {
         SURVIVAL("survival", PlayerClass.GHOUL, PlayerClass.HALF_GHOUL),
         RAGE_KAGUNE("rage_kagune", PlayerClass.GHOUL, PlayerClass.HALF_GHOUL),
         // Человек
-        HUMAN("human", PlayerClass.HUMAN);
+        HUMAN("human", PlayerClass.HUMAN),
+        // Агент CCG: четыре вкладки, похоже на гуля, но про квинке
+        CCG_TRAINING("ccg_training", PlayerClass.CCG_AGENT),
+        CCG_QUINQUE("ccg_quinque", PlayerClass.CCG_AGENT),
+        CCG_SURVIVAL("ccg_survival", PlayerClass.CCG_AGENT),
+        CCG_HUNT("ccg_hunt", PlayerClass.CCG_AGENT);
 
         private final String id;
         private final List<PlayerClass> classes;
@@ -60,26 +65,43 @@ public final class SkillTree {
         // Выживание
         HUNGER("hunger", Tab.SURVIVAL, 3, Balance.COSTS_3, 1, 0xA0703A),
         VAMPIRISM("vampirism", Tab.SURVIVAL, 3, Balance.COSTS_3, 1, 0x8A0010),
-        SECOND_WIND("second_wind", Tab.SURVIVAL, 1, Balance.COSTS_1, 1, 0xE6D27A),
+        SECOND_WIND("second_wind", Tab.SURVIVAL, 1, Balance.COSTS_1, 1, 0xE6D27A, Tab.CCG_SURVIVAL),
         // Ярость и кагуне
         RAGE_GAIN("rage_gain", Tab.RAGE_KAGUNE, 3, Balance.COSTS_3, 1, 0xD01F4A),
         LAST_STAND("last_stand", Tab.RAGE_KAGUNE, 1, Balance.COSTS_1, 1, 0xFF5A78),
         RAGE_AURA("rage_aura", Tab.RAGE_KAGUNE, 2, Balance.COSTS_2, 1, 0x9A2A4A),
         REACH("reach", Tab.RAGE_KAGUNE, 3, Balance.COSTS_3, 1, 0xB04060),
-        PIERCE("pierce", Tab.RAGE_KAGUNE, 2, Balance.COSTS_2, 1, 0xC9C9C9),
-        BLEED("bleed", Tab.RAGE_KAGUNE, 3, Balance.COSTS_3, 1, 0x6A0A10),
+        PIERCE("pierce", Tab.RAGE_KAGUNE, 2, Balance.COSTS_2, 1, 0xC9C9C9, Tab.CCG_HUNT),
+        BLEED("bleed", Tab.RAGE_KAGUNE, 3, Balance.COSTS_3, 1, 0x6A0A10, Tab.CCG_HUNT),
+        // Агент CCG: «Освобождение квинке» (как ярость у гуля) — первая строка вкладки «Подготовка»
+        RELEASE("release", Tab.CCG_TRAINING, Balance.RAGE_LEVEL_MAX, Balance.RAGE_UPGRADE_COSTS, 1, 0x3FD8C0),
         // Человек
-        TOUGHNESS("toughness", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x5A86C9),
-        VITALITY("vitality", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xB01E1E),
-        ATTACK_SPEED("attack_speed", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xC9822B),
-        MINING("mining", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x9A9A9A),
-        WEAPON_DAMAGE("weapon_damage", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xE0503A),
-        HUMAN_DASH("human_dash", Tab.HUMAN, 2, Balance.COSTS_2, 1, 0x9ED0E6),
+        // Человек; эти же ветки у агента CCG во вкладке «Подготовка» (агент — тоже человек, только обученный)
+        TOUGHNESS("toughness", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x5A86C9, Tab.CCG_TRAINING),
+        VITALITY("vitality", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xB01E1E, Tab.CCG_TRAINING),
+        ATTACK_SPEED("attack_speed", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xC9822B, Tab.CCG_TRAINING),
+        MINING("mining", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x9A9A9A, Tab.CCG_SURVIVAL),
+        WEAPON_DAMAGE("weapon_damage", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xE0503A, Tab.CCG_TRAINING),
+        HUMAN_DASH("human_dash", Tab.HUMAN, 2, Balance.COSTS_2, 1, 0x9ED0E6, Tab.CCG_QUINQUE),
+        // Агент CCG: прокачка способностей квинке
+        Q_COMBO("q_combo", Tab.CCG_QUINQUE, 3, Balance.COSTS_3, 1, 0xE6E6E6),
+        Q_STRONG("q_strong", Tab.CCG_QUINQUE, 3, Balance.COSTS_3, 1, 0xC9822B),
+        Q_FLURRY("q_flurry", Tab.CCG_QUINQUE, 3, Balance.COSTS_3, 1, 0xE0503A),
+        Q_BLOCK("q_block", Tab.CCG_QUINQUE, 3, Balance.COSTS_3, 1, 0x7A8A9A),
+        Q_LUNGE("q_lunge", Tab.CCG_QUINQUE, 3, Balance.COSTS_3, 1, 0x9ED0E6),
+        // Агент CCG: охота на гулей
+        GHOUL_BANE("ghoul_bane", Tab.CCG_HUNT, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xE6E6E6),
+        KAGUNE_GUARD("kagune_guard", Tab.CCG_SURVIVAL, 3, Balance.COSTS_3, 1, 0x5A86C9),
+        RC_SUPPRESS("rc_suppress", Tab.CCG_HUNT, 3, Balance.COSTS_3, 1, 0x4FB0A0),
+        FIELD_MEDIC("field_medic", Tab.CCG_SURVIVAL, 3, Balance.COSTS_3, 1, 0x4FB05A),
+        RANK("rank", Tab.CCG_HUNT, 3, Balance.COSTS_3, 1, 0xD8C26A),
+        RELEASE_GAIN("release_gain", Tab.CCG_HUNT, 3, Balance.COSTS_3, 1, 0x2AA898),
+        Q_REACH("q_reach", Tab.CCG_HUNT, 2, Balance.COSTS_2, 1, 0xB04060),
         // У всех: гуль и полугуль — вкладка «Выживание», человек — вкладка «Человек»
-        SOFT_LANDING("soft_landing", Tab.SURVIVAL, 3, Balance.COSTS_3, 1, 0x7FB8D8, Tab.HUMAN),
+        SOFT_LANDING("soft_landing", Tab.SURVIVAL, 3, Balance.COSTS_3, 1, 0x7FB8D8, Tab.HUMAN, Tab.CCG_SURVIVAL),
         // Секретный навык: у гуля и полугуля во вкладке «Выживание», у человека во вкладке «Человек».
         // Пока не открыт, в меню вместо названия и описания знаки вопроса.
-        MIRROR("mirror", Tab.SURVIVAL, 1, Balance.MIRROR_COST, 1, 0x9A1030, Tab.HUMAN);
+        MIRROR("mirror", Tab.SURVIVAL, 1, Balance.MIRROR_COST, 1, 0x9A1030, Tab.HUMAN, Tab.CCG_SURVIVAL);
 
         private final String id;
         private final Tab tab;
@@ -187,6 +209,27 @@ public final class SkillTree {
                 case WEAPON_DAMAGE -> Component.translatable(key, percent(SkillEffects.humanWeaponDamage(level)));
                 case HUMAN_DASH -> Component.translatable(key, SkillEffects.otherDashCharges(level),
                         seconds(SkillEffects.otherDashCooldown(level)));
+                case RELEASE -> Component.translatable(key, SkillEffects.releaseTicks(level) / 20,
+                        percent(SkillEffects.releaseDamage(level)), percent(SkillEffects.releaseReduction(level)),
+                        percent(SkillEffects.releaseSpeed(level)));
+                case Q_COMBO -> Component.translatable(key, percent(SkillEffects.qComboDamage(level)),
+                        num(Balance.QUINQUE_FINISHER_MULT + SkillEffects.qFinisherBonus(level)));
+                case Q_STRONG -> Component.translatable(key, percent(SkillEffects.qStrongDamage(level)),
+                        num(SkillEffects.qStrongReach(level)));
+                case Q_FLURRY -> Component.translatable(key, SkillEffects.qFlurryExtraHits(level),
+                        seconds(SkillEffects.qFlurryCooldown(level)));
+                case Q_BLOCK -> Component.translatable(key, percent(SkillEffects.qParryWindowBonus(level)),
+                        seconds(SkillEffects.qParryStun(level)), num(SkillEffects.qBlockSlow(level)));
+                case Q_LUNGE -> Component.translatable(key, SkillEffects.qLungeExtraTicks(level),
+                        percent(SkillEffects.qLungeDamage(level)), seconds(SkillEffects.qLungeCooldown(level)));
+                case RELEASE_GAIN -> Component.translatable(key, percent(SkillEffects.releaseGainBonus(level)));
+                case Q_REACH -> Component.translatable(key, num(SkillEffects.qReach(level)));
+                case GHOUL_BANE -> Component.translatable(key, percent(SkillEffects.ghoulBane(level)));
+                case KAGUNE_GUARD -> Component.translatable(key, percent(SkillEffects.kaguneGuard(level)));
+                case RC_SUPPRESS -> Component.translatable(key, seconds(SkillEffects.rcSuppressTicks(level)));
+                case FIELD_MEDIC -> Component.translatable(key, num(SkillEffects.fieldMedic(level) / 2.0),
+                        Balance.FIELD_MEDIC_INTERVAL / 20);
+                case RANK -> Component.translatable(key, percent(SkillEffects.rankBloodBonus(level)));
                 case SOFT_LANDING -> Component.translatable(key, percent(1.0 - SkillEffects.fallFactor(level)));
                 case MIRROR -> Component.translatable(key, percent(Balance.MIRROR_HEALTH),
                         percent(Balance.MIRROR_FULL_CHANCE), percent(Balance.MIRROR_SHARE));

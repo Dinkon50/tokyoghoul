@@ -29,6 +29,10 @@ public class CombatState {
     public boolean mirrorPartial;
     /** Двойной прыжок уже использован в этом прыжке (сбрасывается на земле). */
     public boolean doubleJumpUsed;
+    /** Квинке: последний обычный удар (для серии), откат выпада, момент, когда поставлен блок. */
+    public long lastQuinqueAttack;
+    public long lungeReady;
+    public long blockStart = Long.MIN_VALUE / 2;
     public final List<ActiveAction> actions = new ArrayList<>();
 
     public boolean isDashing() {
@@ -69,6 +73,9 @@ public class CombatState {
         syncedCraving = -1;
         mirrorPartial = false;
         doubleJumpUsed = false;
+        lastQuinqueAttack = 0L;
+        lungeReady = 0L;
+        blockStart = Long.MIN_VALUE / 2;
         actions.clear();
     }
 }

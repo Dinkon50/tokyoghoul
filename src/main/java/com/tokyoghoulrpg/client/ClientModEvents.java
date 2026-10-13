@@ -12,7 +12,10 @@ import com.tokyoghoulrpg.registry.ModEntities;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import com.tokyoghoulrpg.client.quinque.QuinqueRenderer;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -61,6 +64,12 @@ public final class ClientModEvents {
                 renderer.addLayer(new KaguneLayer(renderer));
             }
         }
+    }
+
+    /** F3+T и смена ресурс-паков: модели квинке читаются заново. */
+    @SubscribeEvent
+    public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> QuinqueRenderer.clearCache());
     }
 
     @SubscribeEvent

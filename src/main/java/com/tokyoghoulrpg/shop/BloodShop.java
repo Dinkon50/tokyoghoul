@@ -9,7 +9,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Лавка торговца за очки крови. Пока здесь только инъекции; позже добавим квинке.
+ * Лавка торговца за очки крови: инъекции и квинке.
  * Один и тот же список используют и клиент (показать), и сервер (проверить покупку).
  */
 public final class BloodShop {
@@ -23,7 +23,11 @@ public final class BloodShop {
     public static final List<Entry> ENTRIES = List.of(
             new Entry(ModItems.HUMAN_INJECTION, 1000),
             new Entry(ModItems.GHOUL_INJECTION, 1000),
-            new Entry(ModItems.CCG_INJECTION, 1000));
+            new Entry(ModItems.CCG_INJECTION, 1000),
+            // квинке: способности открываются только у агента CCG, другим это просто оружие.
+            // Narukami и IXA не продаются: их отдаёт Старший следователь в финальном задании агента.
+            new Entry(ModItems.QUINQUE_KURA, 300),
+            new Entry(ModItems.QUINQUE_JASON, 1200));
 
     private BloodShop() {
     }

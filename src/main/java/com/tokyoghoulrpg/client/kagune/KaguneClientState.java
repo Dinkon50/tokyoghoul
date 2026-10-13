@@ -16,9 +16,9 @@ public final class KaguneClientState {
         return STATES.get(entityId);
     }
 
-    public static void applyState(int entityId, boolean active, KaguneVariant variant, boolean rage) {
+    public static void applyState(int entityId, boolean active, KaguneVariant variant, boolean rage, boolean blocking) {
         STATES.computeIfAbsent(entityId, id -> new KaguneAnimatable())
-                .updateState(active, variant, rage, gameTime());
+                .updateState(active, variant, rage, blocking, gameTime());
     }
 
     public static void playAnimation(int entityId, String animation) {

@@ -1,5 +1,6 @@
 package com.tokyoghoulrpg.client.hud;
 
+import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.data.PlayerData;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
@@ -37,9 +38,11 @@ public final class HudOverlay {
         }
 
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
-        boolean showRage = data.getPlayerClass().hasKagune();
+        boolean ghoul = data.getPlayerClass().hasKagune();
+        boolean agent = data.getPlayerClass() == PlayerClass.CCG_AGENT;
+        boolean showRage = ghoul || agent;            // у агента это шкала «Освобождения квинке»
         boolean rageActive = showRage && data.isRageActive();
-        int rows = showRage ? 4 : 2;
+        int rows = ghoul ? 4 : (agent ? 3 : 2);
         int panelH = 18 + rows * 10 + 2 + (rageActive ? 10 : 0);
 
         // Тёмная панель с красной полосой слева
@@ -58,7 +61,7 @@ public final class HudOverlay {
         by += 10;
         drawBar(gfx, bx, by, player.getFoodData().getFoodLevel() / 20.0F, 0xFFC9822B, 0xFF33200C);
 
-        if (showRage) {
+        if (ghoul) {
             // Шкала «Кровь» (жажда крови): пустеет, когда гуль голоден; при малом запасе мигает
             by += 10;
             Component label = Component.translatable("hud.tokyoghoulrpg.blood");
@@ -71,26 +74,30 @@ public final class HudOverlay {
                 cravingColor = scale(0xFFE0203A, pulse);
             }
             drawBar(gfx, bx + labelW, by, BAR_W - labelW, craving / 100.0F, cravingColor, 0xFF240810);
-
+        }
+        if (showRage) {
             by += 10;
+            int full = agent ? 0xFF3FD8C0 : 0xFFFF2A55;
+            int base = agent ? 0xFF2AA898 : 0xFFD01F4A;
+            int back = agent ? 0xFF0A2420 : 0xFF2A0A14;
             if (rageActive) {
                 // Ярость действует: шкала убывает вместе со временем, под ней оставшиеся секунды
                 long total = Math.max(1L, data.getRageEndTick() - data.getRageStartTick());
                 long left = Math.max(0L, data.getRageEndTick() - now);
                 float pulse = 0.8F + 0.2F * Mth.sin((now + partialTick) * 0.4F);
-                drawBar(gfx, bx, by, left / (float) total, scale(0xFFFF2A55, pulse), 0xFF2A0A14);
+                drawBar(gfx, bx, by, left / (float) total, scale(full, pulse), back);
                 int seconds = (int) Math.ceil(left / 20.0);
-                gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.rage_active", seconds),
-                        bx, by + 7, 0xFF5A78, false);
+                gfx.drawString(font, Component.translatable(agent ? "hud.tokyoghoulrpg.release_active"
+                        : "hud.tokyoghoulrpg.rage_active", seconds), bx, by + 7, agent ? 0x6FE8D8 : 0xFF5A78, false);
             } else {
                 float fraction = data.getRage() / (float) PlayerData.RAGE_MAX;
-                int color = 0xFFD01F4A;
+                int color = base;
                 if (data.getRage() >= PlayerData.RAGE_MAX) {
                     // Полная шкала пульсирует: ультимейт готов
                     float pulse = 0.7F + 0.3F * Mth.sin((now + partialTick) * 0.3F);
-                    color = scale(0xFFFF2A55, pulse);
+                    color = scale(full, pulse);
                 }
-                drawBar(gfx, bx, by, fraction, color, 0xFF2A0A14);
+                drawBar(gfx, bx, by, fraction, color, back);
             }
         }
     }

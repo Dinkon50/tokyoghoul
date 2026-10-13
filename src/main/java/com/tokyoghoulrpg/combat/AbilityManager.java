@@ -10,6 +10,7 @@ import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.quest.Quest;
 import com.tokyoghoulrpg.raid.CcgRaids;
 import com.tokyoghoulrpg.quest.QuestManager;
+import com.tokyoghoulrpg.quest.QuinqueReward;
 import com.tokyoghoulrpg.skill.SkillEffects;
 import com.tokyoghoulrpg.skill.SkillTree;
 import java.util.ArrayList;
@@ -67,6 +68,11 @@ public final class AbilityManager {
 
     public static void useAbility(ServerPlayer player, AbilityType type) {
         PlayerData data = PlayerData.get(player);
+        // Агент CCG: способности квинке; J — «Освобождение квинке»
+        if (data != null && data.getPlayerClass() == PlayerClass.CCG_AGENT && type != AbilityType.DASH) {
+            QuinqueAbilities.use(player, data, type == AbilityType.RAGE ? AbilityType.QUINQUE_RELEASE : type);
+            return;
+        }
         // Рывок есть у любого класса
         if (type == AbilityType.DASH && data != null && data.hasChosenClass() && !data.getPlayerClass().hasKagune()) {
             if (player.isAlive() && !LockManager.isLocked(player)) {
@@ -118,7 +124,9 @@ public final class AbilityManager {
      */
     public static void setBarrage(ServerPlayer player, boolean held) {
         if (held) {
-            useAbility(player, AbilityType.BARRAGE);
+            PlayerData holder = PlayerData.get(player);
+            useAbility(player, holder != null && holder.getPlayerClass() == PlayerClass.CCG_AGENT
+                    ? AbilityType.QUINQUE_FLURRY : AbilityType.BARRAGE);
             return;
         }
         PlayerData data = PlayerData.get(player);
@@ -152,7 +160,8 @@ public final class AbilityManager {
         }
         CombatState state = data.combat();
         long now = player.level().getGameTime();
-        if (!data.getPlayerClass().hasKagune() || data.isBlocking() || !player.isAlive()) {
+        boolean canBlock = data.getPlayerClass().hasKagune() || QuinqueAbilities.active(player, data);
+        if (!canBlock || data.isBlocking() || !player.isAlive()) {
             return;
         }
         if (LockManager.isLocked(player) || state.isBarraging()) {
@@ -163,6 +172,7 @@ public final class AbilityManager {
             return;
         }
         data.setBlocking(true);
+        state.blockStart = now;
         NetworkHandler.syncTo(player);
     }
 
@@ -427,6 +437,16 @@ public final class AbilityManager {
         NetworkHandler.syncTo(player);
     }
 
+    /** Снять блок (для квинке). */
+    public static void stopBlock(ServerPlayer player, PlayerData data) {
+        endBlock(player, data);
+    }
+
+    /** Замедление в блоке (для квинке). */
+    public static void blockSlow(ServerPlayer player, double divisor) {
+        applyBlockSlow(player, divisor);
+    }
+
     /** Сильный удар или удар в ярости ломает блок: оглушение 2 секунды и перезарядка блока 10 секунд. */
     public static void breakBlock(ServerPlayer player, PlayerData data) {
         long now = player.level().getGameTime();
@@ -479,6 +499,7 @@ public final class AbilityManager {
         rewardLevels(player, data);
         applyClassStats(player, data, false);
         CcgRaids.tick(player, data);
+        QuinqueReward.giveStarter(player, data);
         // Двойной прыжок снова доступен на земле, в воде и на лестнице
         if (player.onGround() || player.isInWater() || player.onClimbable()) {
             data.combat().doubleJumpUsed = false;
@@ -494,6 +515,15 @@ public final class AbilityManager {
                 }
             }
             tickDashWindow(data, other, time);
+            if (data.getPlayerClass() == PlayerClass.CCG_AGENT) {
+                QuinqueAbilities.tick(player, data, other, time);
+            }
+            // Агент CCG: «Полевая аптечка»
+            int medic = lvl(data, SkillTree.Branch.FIELD_MEDIC);
+            if (medic > 0 && player.isAlive() && player.getHealth() < player.getMaxHealth()
+                    && time % Balance.FIELD_MEDIC_INTERVAL == 0) {
+                player.heal(SkillEffects.fieldMedic(medic));
+            }
             return;
         }
         CombatState state = data.combat();

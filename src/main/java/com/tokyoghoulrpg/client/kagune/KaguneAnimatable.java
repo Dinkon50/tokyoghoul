@@ -26,6 +26,11 @@ public class KaguneAnimatable implements GeoAnimatable {
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("kagune_idle");
     private static final RawAnimation RAGE = RawAnimation.begin().thenLoop("kagune_rage");
+    /** Твои анимации: ходьба, копание кагуне и блок (поднять щупальца, держать, опустить). */
+    private static final RawAnimation WALK = RawAnimation.begin().thenLoop("kagune_walk");
+    private static final RawAnimation BREAK_BLOCKS = RawAnimation.begin().thenLoop("kagune_break_blocks");
+    private static final RawAnimation BLOCK = RawAnimation.begin().thenPlay("kagune_block_start").thenLoop("kagune_block_hold");
+    private static final int BLOCK_END_TICKS = 14;
     private static final Map<String, RawAnimation> ONE_SHOTS = new HashMap<>();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -40,6 +45,10 @@ public class KaguneAnimatable implements GeoAnimatable {
     private boolean initialized = false;
     private boolean active = false;
     private boolean rage = false;
+    private boolean blocking = false;
+    /** Обновляются каждый кадр при отрисовке: идёт ли игрок и копает ли. */
+    private boolean moving = false;
+    private boolean breaking = false;
     private KaguneVariant variant = KaguneVariant.KANEKI;
 
     /** Текущая разовая анимация (появление, удар, барраж и так далее) и тик её окончания. */
@@ -75,8 +84,18 @@ public class KaguneAnimatable implements GeoAnimatable {
     }
 
     /** Новое состояние с сервера. Первое сообщение не проигрывает появление: кагуне просто уже включено. */
-    public void updateState(boolean newActive, KaguneVariant newVariant, boolean newRage, long now) {
+    public void updateState(boolean newActive, KaguneVariant newVariant, boolean newRage, boolean newBlocking,
+                            long now) {
         variant = newVariant;
+        // Блок отпущен: щупальца опускаются (разовая анимация), если кагуне не убирают
+        if (initialized && blocking && !newBlocking && newActive && active) {
+            startOneShot("kagune_block_end", now);
+        }
+        // Блок поставлен: прерываем разовую анимацию, дальше играет подъём щупалец и удержание
+        if (newBlocking && !blocking && oneShot != null && !"kagune_appear".equals(oneShot)) {
+            oneShot = null;
+        }
+        blocking = newBlocking;
         if (newRage && !rage) {
             // Если ярость уже шла, когда мы увидели игрока, вспышку вен не показываем
             rageStart = initialized ? now : now - 1000L;
@@ -94,6 +113,12 @@ public class KaguneAnimatable implements GeoAnimatable {
             visibleUntil = oneShotEnd;
         }
         active = newActive;
+    }
+
+    /** Каждый кадр из слоя отрисовки: идёт ли игрок, копает ли блоки. */
+    public void setMotion(boolean moving, boolean breaking) {
+        this.moving = moving;
+        this.breaking = breaking;
     }
 
     /** Разовая анимация способности. Пустое имя прерывает текущую. */
@@ -116,6 +141,7 @@ public class KaguneAnimatable implements GeoAnimatable {
         return switch (animation) {
             case "kagune_appear" -> APPEAR_TICKS;
             case "kagune_retract" -> RETRACT_TICKS;
+            case "kagune_block_end" -> BLOCK_END_TICKS;
             default -> Math.max(1, AbilitySync.get(animation).duration());
         };
     }
@@ -154,7 +180,16 @@ public class KaguneAnimatable implements GeoAnimatable {
         if (!active) {
             return PlayState.STOP;
         }
-        return state.setAndContinue(rage ? RAGE : IDLE);
+        if (blocking) {
+            return state.setAndContinue(BLOCK);
+        }
+        if (rage) {
+            return state.setAndContinue(RAGE);
+        }
+        if (breaking) {
+            return state.setAndContinue(BREAK_BLOCKS);
+        }
+        return state.setAndContinue(moving ? WALK : IDLE);
     }
 
     @Override

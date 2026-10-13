@@ -31,7 +31,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "11";
+    private static final String PROTOCOL = "12";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -117,7 +117,8 @@ public final class NetworkHandler {
 
     private static KaguneStateS2C kagunePacket(ServerPlayer player, PlayerData data) {
         boolean visible = data.getPlayerClass().hasKagune() && data.isKaguneActive();
-        return new KaguneStateS2C(player.getId(), visible, data.getKaguneVariant(), data.isRageActive());
+        return new KaguneStateS2C(player.getId(), visible, data.getKaguneVariant(), data.isRageActive(),
+                visible && data.isBlocking());
     }
 
     /** Красные края экрана у укусившего. */
