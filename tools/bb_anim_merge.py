@@ -2,7 +2,11 @@
 Добавляет анимации из файлов Blockbench (.bbmodel) в animations/kaneki_crimson_kagune.animation.json.
 Перевод как при экспорте Blockbench в формат Bedrock/GeckoLib: поворот (-x, -y, z), сдвиг (-x, y, z),
 размер как есть; ключевые кадры по времени. Режим повтора: loop -> true, hold -> hold_on_last_frame, once -> нет.
-Запуск: python3 bb_anim_merge.py <animation.json> <файл.bbmodel> [...]
+Запуск: python3 bb_anim_merge.py <animation.json> [--front] <файл.bbmodel> [...]
+
+--front: отразить движение «спина <-> перед» (плоскость тела, ось Z). Нужно, если анимация в Blockbench
+сделана так, что щупальца уходят назад, а в игре они должны быть перед игроком (так сделан блок).
+Отражение: у поворота меняют знак X и Y, у сдвига — Z (в координатах Blockbench).
 """
 import json
 import sys
@@ -15,7 +19,7 @@ def num(v):
         return 0.0
 
 
-def convert(an):
+def convert(an, front=False):
     bones = {}
     for animator in an.get("animators", {}).values():
         name = animator.get("name")
@@ -28,6 +32,11 @@ def convert(an):
                 continue
             dp = kf["data_points"][0]
             x, y, z = num(dp.get("x")), num(dp.get("y")), num(dp.get("z"))
+            if front:
+                if ch == "rotation":
+                    x, y = -x, -y
+                elif ch == "position":
+                    z = -z
             if ch == "rotation":
                 x, y = -x, -y
             elif ch == "position":
@@ -51,8 +60,9 @@ def convert(an):
 if __name__ == "__main__":
     target = sys.argv[1]
     data = json.load(open(target))
-    for path in sys.argv[2:]:
+    front = "--front" in sys.argv[2:]
+    for path in [a for a in sys.argv[2:] if a != "--front"]:
         for an in json.load(open(path)).get("animations", []):
-            data["animations"][an["name"]] = convert(an)
+            data["animations"][an["name"]] = convert(an, front)
             print("добавлена", an["name"], an.get("length"), an.get("loop"))
     json.dump(data, open(target, "w"), indent="\t")

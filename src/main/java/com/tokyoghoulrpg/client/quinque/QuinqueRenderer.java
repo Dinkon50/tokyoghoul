@@ -124,6 +124,10 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.translate(GRIP, GRIP, 0.5F);
         poseStack.mulPose(Axis.ZP.rotationDegrees(-45.0F));
         poseStack.scale(scale, scale, scale);
+        if (type.flipInHand()) {
+            // поворот вокруг древка: лезвие косы уходит с верхней стороны на нижнюю
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        }
 
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         PoseStack.Pose pose = poseStack.last();

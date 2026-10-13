@@ -75,6 +75,14 @@ public enum QuinqueType {
         return mesh != null;
     }
 
+    /**
+     * Перевернуть модель в руке вокруг древка (на 180°). У косы 13's Jason лезвие в модели смотрит
+     * в ту сторону, которая в руке оказывается сверху; перевёрнутая коса держится лезвием вниз.
+     */
+    public boolean flipInHand() {
+        return this == JASON;
+    }
+
     public Tier tier() {
         return tier;
     }
