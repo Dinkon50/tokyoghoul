@@ -60,12 +60,12 @@ public final class BossRewards {
             // особая награда — двоим с наибольшим уроном
             if (i < 2) {
                 data.addBloodPoints(Balance.HG_TOP_BLOOD);
-                data.addSkillPoints(Balance.HG_TOP_POINTS);
+                int points = data.earnSkillPoints(Balance.HG_TOP_POINTS);
                 player.giveExperienceLevels(Balance.HG_TOP_LEVELS);
                 Item quinque = rareQuinque(player);
                 give(player, new ItemStack(quinque));
                 player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.half_ghoul_boss.top",
-                        place, dealt, Balance.HG_TOP_BLOOD, Balance.HG_TOP_POINTS, Balance.HG_TOP_LEVELS,
+                        place, dealt, Balance.HG_TOP_BLOOD, points, Balance.HG_TOP_LEVELS,
                         new ItemStack(quinque).getHoverName()));
                 // ядро III качества: редкое, только двоим лучшим
                 if (player.getRandom().nextDouble() < Balance.CORE_3_CHANCE) {
@@ -79,9 +79,9 @@ public final class BossRewards {
                 QuestManager.progress(player, Quest.Trigger.KILL_BOSS, 1);
             } else {
                 data.addBloodPoints(Balance.HG_OTHER_BLOOD);
-                data.addSkillPoints(Balance.HG_OTHER_POINTS);
+                int points = data.earnSkillPoints(Balance.HG_OTHER_POINTS);
                 player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.half_ghoul_boss.other",
-                        place, dealt, Balance.HG_OTHER_BLOOD, Balance.HG_OTHER_POINTS));
+                        place, dealt, Balance.HG_OTHER_BLOOD, points));
             }
             NetworkHandler.syncTo(player);
         }

@@ -109,7 +109,9 @@ public final class SkillTree {
         // Особые способности всех классов: открывают клавиши R и Z
         RETRIBUTION("retribution", Tab.SPECIAL, 1, Balance.RETRIBUTION_COST, 1, 0x8C1AE6),
         CHARISMA("charisma", Tab.SPECIAL, 1, Balance.CHARISMA_COST, 1, 0xFFD133),
-        FORTUNE("fortune", Tab.SPECIAL, 1, Balance.FORTUNE_COST, 1, 0x3CC878);
+        FORTUNE("fortune", Tab.SPECIAL, 1, Balance.FORTUNE_COST, 1, 0x3CC878),
+        // «Выдержка» у всех классов: оглушение короче (кроме оглушения за сломанный блок)
+        STUN_RESIST("stun_resist", Tab.SPECIAL, 3, Balance.COSTS_3, 1, 0xD8B070);
 
         private final String id;
         private final Tab tab;
@@ -195,7 +197,8 @@ public final class SkillTree {
                 case DAMAGE -> Component.translatable(key, percent(SkillEffects.damageBonus(level)));
                 case REGEN -> Component.translatable(key, num(SkillEffects.regenAmount(level)),
                         Balance.SKILL_REGEN_INTERVAL / 20);
-                case DEFENSE -> Component.translatable(key, percent(SkillEffects.damageReduction(level)));
+                case DEFENSE -> Component.translatable(key, percent(SkillEffects.damageReduction(level)),
+                        percent(SkillEffects.projectileDefense(level)));
                 case SPEED -> Component.translatable(key, percent(SkillEffects.speedBonus(level)));
                 case BITE -> Component.translatable(key, num(SkillEffects.biteHeal(level)),
                         SkillEffects.biteRage(level), seconds(SkillEffects.biteStun(level)),
@@ -220,12 +223,13 @@ public final class SkillTree {
                 case PIERCE -> Component.translatable(key, percent(SkillEffects.pierce(level)));
                 case BLEED -> Component.translatable(key, num(Balance.BLEED_DAMAGE),
                         SkillEffects.bleedSeconds(level));
-                case TOUGHNESS -> Component.translatable(key, percent(SkillEffects.humanToughness(level)));
+                case TOUGHNESS -> Component.translatable(key, percent(SkillEffects.humanToughness(level)),
+                        percent(SkillEffects.projectileDefense(level)));
                 case VITALITY -> {
                     boolean ghoul = playerClass != null && playerClass.hasKagune();
                     double bonus = SkillEffects.vitality(level, ghoul);
                     yield Component.translatable(key, num(bonus / 2.0),
-                            num((SkillEffects.baseHealth(ghoul) + bonus) / 20.0));
+                            num((SkillEffects.baseHealth(playerClass) + bonus) / 20.0));
                 }
                 case ATTACK_SPEED -> Component.translatable(key, percent(SkillEffects.humanAttackSpeed(level)));
                 case MINING -> Component.translatable(key, percent(SkillEffects.humanMining(level)));
@@ -248,6 +252,7 @@ public final class SkillTree {
                 case RELEASE_GAIN -> Component.translatable(key, percent(SkillEffects.releaseGainBonus(level)));
                 case Q_REACH -> Component.translatable(key, num(SkillEffects.qReach(level)));
                 case GHOUL_BANE -> Component.translatable(key, percent(SkillEffects.ghoulBane(level)));
+                case STUN_RESIST -> Component.translatable(key, percent(SkillEffects.stunResist(level)));
                 case KAGUNE_GUARD -> Component.translatable(key, percent(SkillEffects.kaguneGuard(level)));
                 case RC_SUPPRESS -> Component.translatable(key, seconds(SkillEffects.rcSuppressTicks(level)));
                 case FIELD_MEDIC -> Component.translatable(key, num(SkillEffects.fieldMedic(level) / 2.0),
@@ -339,7 +344,7 @@ public final class SkillTree {
         int sum = 0;
         for (Skill skill : ALL) {
             if (isAvailable(playerClass, skill.branch())) {
-                sum += cost(skill, difficulty);
+                sum += cost(skill, difficulty, playerClass);
             }
         }
         return sum;
@@ -353,7 +358,7 @@ public final class SkillTree {
         int sum = 0;
         for (Skill skill : ALL) {
             if (owned.contains(skill.id()) && isAvailable(playerClass, skill.branch())) {
-                sum += cost(skill, difficulty);
+                sum += cost(skill, difficulty, playerClass);
             }
         }
         return sum;
@@ -366,15 +371,24 @@ public final class SkillTree {
 
     /** Упрётся ли открытие этого навыка в лимит 85%. */
     public static boolean overCap(PlayerClass playerClass, java.util.Set<String> owned, Skill skill, Difficulty difficulty) {
-        return spentCost(playerClass, owned, difficulty) + cost(skill, difficulty) > capCost(playerClass, difficulty);
+        return spentCost(playerClass, owned, difficulty) + cost(skill, difficulty, playerClass) > capCost(playerClass, difficulty);
     }
 
     /** Цена навыка на этой сложности: на сложной в 1,5 раза дороже (с округлением вверх). */
     public static int cost(Skill skill, Difficulty difficulty) {
-        if (difficulty == Difficulty.HARD) {
-            return (int) Math.ceil(skill.cost() * Balance.HARD_SKILL_COST_FACTOR);
+        return cost(skill, difficulty, null);
+    }
+
+    /** Цена для класса: у полугуля навыки в 1,2 раза дороже (с округлением), потом сложность. */
+    public static int cost(Skill skill, Difficulty difficulty, PlayerClass playerClass) {
+        int base = skill.cost();
+        if (playerClass == PlayerClass.HALF_GHOUL) {
+            base = (int) Math.round(base * Balance.HALF_GHOUL_COST);
         }
-        return skill.cost();
+        if (difficulty == Difficulty.HARD) {
+            return (int) Math.ceil(base * Balance.HARD_SKILL_COST_FACTOR);
+        }
+        return base;
     }
 
     private static String percent(double value) {

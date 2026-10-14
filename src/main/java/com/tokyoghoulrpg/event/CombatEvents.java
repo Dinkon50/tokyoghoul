@@ -285,6 +285,10 @@ public final class CombatEvents {
             amount *= (float) ClanBond.damageFactor(attackingPlayer);
             // квинке, улучшенная ядрами: +15% / +30% / +50%
             amount *= (float) (1.0 + QuinqueUpgrade.damageBonus(attackingPlayer.getMainHandItem()));
+            // полугуль чуть сильнее гуля
+            if (data != null && data.getPlayerClass() == PlayerClass.HALF_GHOUL) {
+                amount *= (float) (1.0 + Balance.HALF_GHOUL_DAMAGE);
+            }
             // Какудзя и ранг
             if (data != null) {
                 amount *= (float) Kakuja.damageFactor(data, attackingPlayer.level().getGameTime());
@@ -297,7 +301,11 @@ public final class CombatEvents {
                 if (data != null) {
                     QuinqueAbilities.onHitGhoul(attackingPlayer, data);
                 }
-                amount *= (float) (1.0 + SkillEffects.ghoulBane(SkillEffects.level(data, SkillTree.Branch.GHOUL_BANE)));
+                double bane = SkillEffects.ghoulBane(SkillEffects.level(data, SkillTree.Branch.GHOUL_BANE));
+                if (victim instanceof com.tokyoghoulrpg.entity.BossMob) {
+                    bane *= Balance.GHOUL_BANE_BOSS_SHARE;     // боссы-гули не так уязвимы
+                }
+                amount *= (float) (1.0 + bane);
                 int suppress = SkillEffects.rcSuppressTicks(SkillEffects.level(data, SkillTree.Branch.RC_SUPPRESS));
                 if (suppress > 0) {
                     RcSuppress.apply(victim, suppress);
@@ -329,9 +337,19 @@ public final class CombatEvents {
                 amount *= (float) (1.0 - data.fortuneShieldAt(defendingPlayer.level().getGameTime()));
             }
             // Человек: ветка «Стойкость»
-            amount *= (float) (1.0 - SkillEffects.humanToughness(SkillEffects.level(data, SkillTree.Branch.TOUGHNESS)));
+            double toughness = SkillEffects.humanToughness(SkillEffects.level(data, SkillTree.Branch.TOUGHNESS));
+            if (data != null && data.getPlayerClass() == PlayerClass.CCG_AGENT) {
+                toughness *= Balance.CCG_TOUGHNESS_SHARE;      // агент и так защищён квинке и подготовкой
+            }
+            amount *= (float) (1.0 - toughness);
             // Какудзя: броня из кагуне
             amount *= (float) Kakuja.defenseFactor(data, defendingPlayer.level().getGameTime());
+            // Защита от снарядов: часть веток «Защита» (гуль, полугуль) и «Стойкость» (человек, агент)
+            if (event.getSource().is(DamageTypeTags.IS_PROJECTILE)) {
+                int guard = Math.max(SkillEffects.level(data, SkillTree.Branch.DEFENSE),
+                        SkillEffects.level(data, SkillTree.Branch.TOUGHNESS));
+                amount *= (float) (1.0 - SkillEffects.projectileDefense(guard));
+            }
         }
         event.setAmount(amount);
 
@@ -453,9 +471,9 @@ public final class CombatEvents {
         }
         if (victim instanceof BossMob) {
             data.addBloodPoints(bossBlood);
-            data.addSkillPoints(Balance.BOSS_SKILL_POINTS);
+            int points = data.earnSkillPoints(Balance.BOSS_SKILL_POINTS);
             killer.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.boss_reward",
-                    victim.getDisplayName(), bossBlood, Balance.BOSS_SKILL_POINTS));
+                    victim.getDisplayName(), bossBlood, points));
             Effects.sound(killer, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
             NetworkHandler.syncTo(killer);
             QuestManager.progress(killer, Quest.Trigger.KILL_BOSS, 1);

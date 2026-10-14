@@ -90,13 +90,13 @@ public final class QuestManager {
         Quest quest = Quest.byIndex(data.getPlayerClass(), data.getQuestIndex());
         while (quest != null && data.getQuestProgress() >= quest.goal()) {
             int blood = quest.bloodReward(player.getRandom());
-            data.addSkillPoints(quest.reward());
+            int points = data.earnSkillPoints(quest.reward());
             data.addBloodPoints(blood);
             data.setQuestIndex(data.getQuestIndex() + 1);
             com.tokyoghoulrpg.rank.Ranks.add(player, com.tokyoghoulrpg.combat.Balance.RANK_QUEST);
             if (!ModCommands.isSilent()) {
                 player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.quest_done",
-                        quest.title(), quest.reward(), blood));
+                        quest.title(), points, blood));
             }
             if (quest == Quest.C_FINAL && !ModCommands.isSilent()) {
                 player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.ccg_chain_done"));

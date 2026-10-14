@@ -48,6 +48,17 @@ public final class ModBlocks {
             BLOCK_ENTITIES.register("cafe_sign",
                     () -> BlockEntityType.Builder.of(CafeSignBlockEntity::new, CAFE_SIGN.get()).build(null));
 
+    /** Руда RC-стали: редкая (реже алмазов), глубоко под землёй, нужна алмазная кирка. */
+    public static final RegistryObject<Block> RC_STEEL_ORE = BLOCKS.register("rc_steel_ore",
+            () -> new net.minecraft.world.level.block.DropExperienceBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE).requiresCorrectToolForDrops().strength(4.5F, 3.0F),
+                    net.minecraft.util.valueproviders.UniformInt.of(4, 8)));
+    public static final RegistryObject<Block> DEEPSLATE_RC_STEEL_ORE = BLOCKS.register("deepslate_rc_steel_ore",
+            () -> new net.minecraft.world.level.block.DropExperienceBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE).requiresCorrectToolForDrops().strength(6.0F, 3.0F)
+                    .sound(SoundType.DEEPSLATE),
+                    net.minecraft.util.valueproviders.UniformInt.of(4, 8)));
+
     private ModBlocks() {
     }
 }

@@ -81,11 +81,13 @@ public final class Balance {
     public static final int[] RAGE_UPGRADE_COSTS = {1, 1, 2, 2, 3}; // [ВРЕМЕННО] стоимость улучшений ярости I-V
     public static final int PASSIVE_LEVELS = 5;                     // [ВРЕМЕННО] уровней в ветках урона, регенерации, защиты и скорости
     public static final int[] PASSIVE_UPGRADE_COSTS = {1, 1, 2, 2, 3}; // [ВРЕМЕННО] стоимость уровней I-V в этих ветках
-    public static final double SKILL_DAMAGE_PER_LEVEL = 0.04;       // [ВРЕМЕННО] +4% урона за уровень (до +20%)
-    public static final float SKILL_REGEN_PER_LEVEL = 0.5F;         // [ВРЕМЕННО] +0,5 здоровья за уровень (до 2,5 = 1,25 сердца)
+    public static final double SKILL_DAMAGE_PER_LEVEL = 0.06;       // +6% урона за уровень (до +30%) — урон кагуне
+    public static final float SKILL_REGEN_PER_LEVEL = 1.0F;         // +1 здоровья за уровень (до 5 = 2,5 сердца)
     public static final int SKILL_REGEN_INTERVAL = 5 * 20;          // [ВРЕМЕННО] ... раз в 5 секунд
-    public static final double SKILL_DEFENSE_PER_LEVEL = 0.03;      // [ВРЕМЕННО] -3% получаемого урона за уровень (до -15%)
-    public static final double SKILL_SPEED_PER_LEVEL = 0.02;        // [ВРЕМЕННО] +2% скорости за уровень (до +10%)
+    public static final double SKILL_DEFENSE_PER_LEVEL = 0.05;      // -5% получаемого урона за уровень (до -25%)
+    public static final double SKILL_SPEED_PER_LEVEL = 0.03;        // +3% скорости за уровень (до +15%)
+    // Защита от снарядов — часть веток «Защита» (гуль, полугуль) и «Стойкость» (человек, агент CCG)
+    public static final double PROJECTILE_DEFENSE_PER_LEVEL = 0.06; // ещё -6% урона от стрел, трезубцев, файерболов и т. п. за уровень (до -30%)
     public static final int SKILL_POINTS_PER_LEVEL = 2;             // [ТВОЁ] 2 очка навыков за каждый новый уровень Minecraft
 
     // ---------- Новые ветки дерева навыков (все числа временные) ----------
@@ -108,6 +110,8 @@ public final class Balance {
     public static final double HARD_SKILL_COST_FACTOR = 1.5;        // навыки в 1,5 раза дороже (округление вверх)
     // Игроки на сервере (нормальная и сложная): каждый игрок сверх первого, но не больше пяти игроков всего
     public static final int PLAYER_SCALING_CAP = 5;
+    public static final double BOSS_HEALTH_BUFF = 1.25;             // все боссы мода: +25% здоровья
+    public static final double BOSS_DAMAGE_BUFF = 1.15;             // ...и +15% урона (удары и особые атаки)
     public static final double PER_PLAYER_HEALTH = 0.15;            // +15% здоровья враждебным мобам за игрока
     public static final double PER_PLAYER_DAMAGE = 0.05;            // +5% их урона за игрока
 
@@ -156,8 +160,10 @@ public final class Balance {
     public static final double SOFT_LANDING_PER_LEVEL = 0.15;       // «Мягкое приземление»: ещё -15% за уровень
 
     // Дерево агента CCG, вкладка «Охота на гулей» [ВРЕМЕННО]
-    public static final double GHOUL_BANE_PER_LEVEL = 0.10;         // «Знание гулей»: +10% урона по гулям за уровень (V: +50%)
-    public static final double KAGUNE_GUARD_PER_LEVEL = 0.06;       // «Защита от кагуне»: -6% урона от гулей (III: -18%)
+    public static final double GHOUL_BANE_PER_LEVEL = 0.06;         // «Знание гулей»: +6% урона по гулям за уровень (V: +30%)
+    public static final double GHOUL_BANE_BOSS_SHARE = 0.5;         // по боссам-гулям — вполовину
+    public static final double KAGUNE_GUARD_PER_LEVEL = 0.04;       // «Защита от кагуне»: -4% урона от гулей (III: -12%)
+    public static final double CCG_TOUGHNESS_SHARE = 0.6;           // «Стойкость» у агента CCG работает на 60% (у человека полностью)
     public static final int RC_SUPPRESS_BASE = 40;                  // «Подавитель RC»: гуль после удара не лечится 2 с...
     public static final int RC_SUPPRESS_PER_LEVEL = 20;             // ...+1 с за уровень (III: 4 с)
     public static final float FIELD_MEDIC_PER_LEVEL = 1.0F;         // «Полевая аптечка»: +0,5 сердца за уровень...
@@ -192,8 +198,8 @@ public final class Balance {
     public static final double RELEASE_SECONDS_MAX = 30.0;
     public static final double RELEASE_DAMAGE_MIN = 0.30;           // +30% урона → +50%
     public static final double RELEASE_DAMAGE_MAX = 0.50;
-    public static final double RELEASE_REDUCTION_MIN = 0.20;        // -20% получаемого урона → -35%
-    public static final double RELEASE_REDUCTION_MAX = 0.35;
+    public static final double RELEASE_REDUCTION_MIN = 0.12;        // -12% получаемого урона → -25%
+    public static final double RELEASE_REDUCTION_MAX = 0.25;
     public static final double RELEASE_SPEED_MIN = 0.15;            // +15% скорости → +25%
     public static final double RELEASE_SPEED_MAX = 0.25;
     public static final double RELEASE_GAIN_PER_LEVEL = 0.25;       // «Накопление освобождения»: +25% за уровень
@@ -266,8 +272,12 @@ public final class Balance {
     // Ветка «Здоровье» (у всех классов): 5 уровней, 20 очков за ветку
     public static final int VITALITY_LEVELS = 5;
     public static final int[] VITALITY_COSTS = {2, 3, 4, 5, 6};
-    public static final double HUMAN_VITALITY = 10.0;               // человек и агент: +5 сердец за уровень, 20 -> 70 (3,5 строки)
-    public static final double GHOUL_VITALITY = 12.0;               // гуль и полугуль: +6 сердец за уровень, 40 -> 100 (5 строк)
+    public static final double SKILL_POINT_GAIN = 1.5;               // очки навыков у всех, кроме полугуля, в 1,5 раза быстрее
+    public static final double START_HEALTH_BONUS = 4.0;
+    public static final double CCG_BASE_SPEED = 0.05;               // агент CCG от природы на 5% быстрее
+    public static final double GHOUL_BASE_SPEED = 0.05;             // гуль и полугуль — тоже на 5%            // всем классам +2 сердца с самого начала
+    public static final double HUMAN_VITALITY = 9.2;                // человек и агент: 24 -> 70 (3,5 строки) на V
+    public static final double GHOUL_VITALITY = 11.2;               // гуль: 44 -> 100 (5 строк) на V (полугуль 48 -> 104)
     public static final double HUMAN_ATTACK_SPEED = 0.10;           // +10% скорости ударов любым предметом за уровень (до +50%)
     public static final double HUMAN_MINING = 0.15;                 // +15% скорости копания любым предметом за уровень (до +75%)
     public static final double HUMAN_WEAPON_DAMAGE = 0.06;          // +6% урона оружием за уровень (до +30%): мечи, топоры, луки, арбалеты, трезубцы
@@ -455,6 +465,14 @@ public final class Balance {
     public static final double KAKUJA_DAMAGE = 0.40;                // +40% урона
     public static final double KAKUJA_DEFENSE = 0.30;               // -30% входящего урона
     public static final double KAKUJA_SPEED = 0.20;                 // +20% скорости
+
+    // Полугуль: чуть сильнее гуля, но навыки чуть дороже
+    public static final double HALF_GHOUL_DAMAGE = 0.10;            // +10% урона
+    public static final double HALF_GHOUL_HEALTH = 4.0;             // +2 сердца (44 вместо 40)
+    public static final double HALF_GHOUL_COST = 1.2;               // навыки в 1,2 раза дороже (округление)
+
+    // «Выдержка» (у всех): короче оглушение. Оглушение после сломанного блока не уменьшает
+    public static final double[] STUN_RESIST = {0.0, 0.20, 0.35, 0.50};
 
     // Ранги: агент CCG (звания) и гуль/полугуль (рейтинг опасности). У людей ранга нет
     public static final int[] RANK_THRESHOLDS = {0, 50, 150, 350, 700, 1200};

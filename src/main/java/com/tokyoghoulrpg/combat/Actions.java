@@ -232,7 +232,7 @@ public final class Actions {
             }
             if (!latched && elapsed >= latch && elapsed < release) {
                 latched = true;
-                LockManager.lock(target, start + release);
+                LockManager.lockFull(target, start + release);      // кагуне держит цель — это не оглушение
                 Effects.sound(target, SoundEvents.SLIME_SQUISH, 0.9F, 0.7F);
                 Effects.blood(target, 6);
             }

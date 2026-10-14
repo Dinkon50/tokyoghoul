@@ -25,7 +25,7 @@ public final class SkillManager {
         if (skill.requires() != null && !data.hasSkill(skill.requires())) {
             return;
         }
-        int cost = SkillTree.cost(skill, player.level().getDifficulty());
+        int cost = SkillTree.cost(skill, player.level().getDifficulty(), data.getPlayerClass());
         // Обычной прокачкой — не больше 85% дерева: приходится выбирать, что важнее
         if (SkillTree.overCap(data.getPlayerClass(), data.getSkills(), skill, player.level().getDifficulty())) {
             player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.skill_cap",

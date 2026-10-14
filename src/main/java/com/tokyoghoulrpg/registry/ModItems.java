@@ -80,6 +80,22 @@ public final class ModItems {
     public static final RegistryObject<Item> CCG_PANTS = armor("ccg_pants", ModArmorMaterials.CCG_UNIFORM, ArmorItem.Type.LEGGINGS);
     public static final RegistryObject<Item> CCG_BOOTS = armor("ccg_boots", ModArmorMaterials.CCG_UNIFORM, ArmorItem.Type.BOOTS);
 
+    // RC-сталь: редкая руда -> сырая RC-сталь -> слиток (печь или плавильня). Из слитков — броня особого класса
+    public static final RegistryObject<Item> RC_STEEL_ORE = ITEMS.register("rc_steel_ore",
+            () -> new BlockItem(ModBlocks.RC_STEEL_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> DEEPSLATE_RC_STEEL_ORE = ITEMS.register("deepslate_rc_steel_ore",
+            () -> new BlockItem(ModBlocks.DEEPSLATE_RC_STEEL_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> RAW_RC_STEEL = ITEMS.register("raw_rc_steel",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> RC_STEEL_INGOT = ITEMS.register("rc_steel_ingot",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE).fireResistant()));
+
+    // Броня особого класса CCG: сильнее незеритовой, носить может только агент CCG
+    public static final RegistryObject<Item> CCG_ELITE_HELMET = eliteArmor("ccg_elite_helmet", ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> CCG_ELITE_CHESTPLATE = eliteArmor("ccg_elite_chestplate", ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> CCG_ELITE_LEGGINGS = eliteArmor("ccg_elite_leggings", ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> CCG_ELITE_BOOTS = eliteArmor("ccg_elite_boots", ArmorItem.Type.BOOTS);
+
     // Яйца призыва
     public static final RegistryObject<Item> GHOUL_SPAWN_EGG = ITEMS.register("ghoul_spawn_egg",
             () -> new ForgeSpawnEggItem(ModEntities.GHOUL, 0x1A1A1E, 0xB01E1E, new Item.Properties()));
@@ -125,6 +141,11 @@ public final class ModItems {
 
     private static RegistryObject<Item> mask(String name) {
         return ITEMS.register(name, () -> new MaskItem(name, new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> eliteArmor(String name, ArmorItem.Type type) {
+        return ITEMS.register(name, () -> new com.tokyoghoulrpg.item.CcgEliteArmorItem(type,
+                new Item.Properties().rarity(Rarity.EPIC).fireResistant()));
     }
 
     private static RegistryObject<Item> armor(String name, ModArmorMaterials material, ArmorItem.Type type) {

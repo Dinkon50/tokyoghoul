@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "tokyoghoulrpg:block/deepslate_rc_steel_ore"
+  }
+}

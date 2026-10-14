@@ -17,7 +17,13 @@ import net.minecraft.world.item.crafting.Ingredient;
 public enum ModArmorMaterials implements ArmorMaterial {
     MASK("mask", 5, new int[] {1, 1, 1, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, () -> Ingredient.of(Items.BONE)),
     GHOUL_CLOTH("ghoul_cloth", 7, new int[] {1, 2, 3, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, () -> Ingredient.of(Items.LEATHER)),
-    CCG_UNIFORM("ccg_uniform", 15, new int[] {1, 4, 5, 2}, 12, SoundEvents.ARMOR_EQUIP_CHAIN, 0.0F, () -> Ingredient.of(Items.IRON_INGOT));
+    CCG_UNIFORM("ccg_uniform", 15, new int[] {1, 4, 5, 2}, 12, SoundEvents.ARMOR_EQUIP_CHAIN, 0.0F, () -> Ingredient.of(Items.IRON_INGOT)),
+    /**
+     * Броня особого класса CCG — сильнее незеритовой (незерит: 3/6/8/3, прочность 3, отбрасывание 0,1, множитель 37).
+     * Носить может только агент CCG.
+     */
+    CCG_ELITE("ccg_elite", 45, new int[] {4, 7, 9, 4}, 18, SoundEvents.ARMOR_EQUIP_NETHERITE, 4.0F,
+            () -> Ingredient.of(com.tokyoghoulrpg.registry.ModItems.RC_STEEL_INGOT.get()), 0.15F);
 
     /** Базовая прочность по слотам, как у ванильных материалов: ботинки, штаны, нагрудник, шлем. */
     private static final int[] BASE_DURABILITY = {13, 15, 16, 11};
@@ -29,9 +35,15 @@ public enum ModArmorMaterials implements ArmorMaterial {
     private final SoundEvent equipSound;
     private final float toughness;
     private final Supplier<Ingredient> repair;
+    private final float knockbackResistance;
 
     ModArmorMaterials(String name, int durabilityMultiplier, int[] defense, int enchantmentValue, SoundEvent equipSound,
                       float toughness, Supplier<Ingredient> repair) {
+        this(name, durabilityMultiplier, defense, enchantmentValue, equipSound, toughness, repair, 0.0F);
+    }
+
+    ModArmorMaterials(String name, int durabilityMultiplier, int[] defense, int enchantmentValue, SoundEvent equipSound,
+                      float toughness, Supplier<Ingredient> repair, float knockbackResistance) {
         this.name = name;
         this.durabilityMultiplier = durabilityMultiplier;
         this.defense = defense;
@@ -39,6 +51,7 @@ public enum ModArmorMaterials implements ArmorMaterial {
         this.equipSound = equipSound;
         this.toughness = toughness;
         this.repair = repair;
+        this.knockbackResistance = knockbackResistance;
     }
 
     private static int slot(ArmorItem.Type type) {
@@ -88,6 +101,6 @@ public enum ModArmorMaterials implements ArmorMaterial {
 
     @Override
     public float getKnockbackResistance() {
-        return 0.0F;
+        return knockbackResistance;
     }
 }

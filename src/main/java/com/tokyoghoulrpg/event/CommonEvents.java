@@ -49,6 +49,22 @@ public final class CommonEvents {
                     }
                 }));
         event.getOriginal().invalidateCaps();
+        // Уровень Minecraft после смерти не теряется
+        if (event.isWasDeath()) {
+            Player original = event.getOriginal();
+            Player fresh = event.getEntity();
+            fresh.experienceLevel = original.experienceLevel;
+            fresh.experienceProgress = original.experienceProgress;
+            fresh.totalExperience = original.totalExperience;
+        }
+    }
+
+    /** Опыт при смерти не выпадает шариками: он и так остаётся у игрока (иначе можно было бы его удвоить). */
+    @SubscribeEvent
+    public static void onExperienceDrop(net.minecraftforge.event.entity.living.LivingExperienceDropEvent event) {
+        if (event.getEntity() instanceof Player) {
+            event.setCanceled(true);
+        }
     }
 
     /** Сделка с жителем, странствующим торговцем или торговцем мода (за изумруды): репутация растёт. */

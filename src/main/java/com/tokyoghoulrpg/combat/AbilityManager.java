@@ -46,6 +46,8 @@ public final class AbilityManager {
     private static final UUID BARRAGE_SPEED_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e12");
     private static final UUID SKILL_SPEED_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e13");
     private static final UUID GHOUL_HEALTH_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e14");
+    private static final UUID START_HEALTH_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e90");
+    private static final UUID CLASS_SPEED_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e91");
     private static final UUID HUMAN_HEALTH_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e15");
     private static final UUID HUMAN_ATTACK_SPEED_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e16");
 
@@ -499,7 +501,8 @@ public final class AbilityManager {
         long now = player.level().getGameTime();
         data.combat().blockReady = now + Balance.BLOCK_BREAK_COOLDOWN;
         endBlock(player, data);
-        LockManager.lock(player, now + SkillEffects.blockStun(lvl(data, SkillTree.Branch.BLOCK)));
+        // оглушение за сломанный блок «Выдержка» не сокращает
+        LockManager.lockFull(player, now + SkillEffects.blockStun(lvl(data, SkillTree.Branch.BLOCK)));
         player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.block_broken"), true);
         Effects.sound(player, SoundEvents.SHIELD_BREAK, 1.0F, 0.8F);
     }
@@ -727,10 +730,9 @@ public final class AbilityManager {
         if (level > data.getMaxLevelRewarded()) {
             int gained = level - data.getMaxLevelRewarded();
             data.setMaxLevelRewarded(level);
-            data.addSkillPoints(gained * Balance.SKILL_POINTS_PER_LEVEL);
+            int earned = data.earnSkillPoints(gained * Balance.SKILL_POINTS_PER_LEVEL);
             NetworkHandler.syncTo(player);
-            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.level_points",
-                    gained * Balance.SKILL_POINTS_PER_LEVEL), true);
+            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.level_points", earned), true);
         }
     }
 
@@ -741,9 +743,28 @@ public final class AbilityManager {
      */
     public static void applyClassStats(ServerPlayer player, PlayerData data, boolean fillHealth) {
         boolean ghoul = data.getPlayerClass() == PlayerClass.GHOUL || data.getPlayerClass() == PlayerClass.HALF_GHOUL;
+        // немного скорости от класса: агент CCG и гули (человек — как обычно)
+        double classSpeed = data.getPlayerClass() == PlayerClass.CCG_AGENT ? Balance.CCG_BASE_SPEED
+                : data.getPlayerClass().hasKagune() ? Balance.GHOUL_BASE_SPEED : 0.0;
+        if (classSpeed > 0.0) {
+            AttrUtil.set(player, Attributes.MOVEMENT_SPEED, CLASS_SPEED_ID, "tg_class_speed", classSpeed,
+                    AttributeModifier.Operation.MULTIPLY_TOTAL);
+        } else {
+            AttrUtil.remove(player, Attributes.MOVEMENT_SPEED, CLASS_SPEED_ID);
+        }
+        // всем классам +2 сердца с самого начала
+        if (data.hasChosenClass()) {
+            AttrUtil.setPermanent(player, Attributes.MAX_HEALTH, START_HEALTH_ID, "tg_start_health",
+                    Balance.START_HEALTH_BONUS, AttributeModifier.Operation.ADDITION);
+        } else {
+            AttrUtil.remove(player, Attributes.MAX_HEALTH, START_HEALTH_ID);
+        }
         if (ghoul) {
+            // полугуль: на 2 сердца больше гуля
+            double bonus = Balance.GHOUL_MAX_HEALTH_BONUS
+                    + (data.getPlayerClass() == PlayerClass.HALF_GHOUL ? Balance.HALF_GHOUL_HEALTH : 0.0);
             AttrUtil.setPermanent(player, Attributes.MAX_HEALTH, GHOUL_HEALTH_ID, "tg_ghoul_health",
-                    Balance.GHOUL_MAX_HEALTH_BONUS, AttributeModifier.Operation.ADDITION);
+                    bonus, AttributeModifier.Operation.ADDITION);
         } else {
             AttrUtil.remove(player, Attributes.MAX_HEALTH, GHOUL_HEALTH_ID);
             if (player.getHealth() > player.getMaxHealth()) {

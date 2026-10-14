@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": {
+    "item": "tokyoghoulrpg:deepslate_rc_steel_ore"
+  },
+  "result": "tokyoghoulrpg:rc_steel_ingot",
+  "experience": 1.0,
+  "cookingtime": 100
+}

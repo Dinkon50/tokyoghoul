@@ -65,8 +65,21 @@ public final class DifficultyScaling {
         return difficulty == Difficulty.NORMAL || difficulty == Difficulty.HARD;
     }
 
+    /** Боссы мода чуть сильнее на любой сложности (действует и на уже появившихся). */
+    private static double bossHealth(LivingEntity mob) {
+        return mob instanceof BossMob ? Balance.BOSS_HEALTH_BUFF : 1.0;
+    }
+
+    private static double bossDamage(LivingEntity mob) {
+        return mob instanceof BossMob ? Balance.BOSS_DAMAGE_BUFF : 1.0;
+    }
+
     /** Во сколько раз больше здоровья. */
     public static double healthFactor(LivingEntity mob) {
+        return healthFactorBase(mob) * bossHealth(mob);
+    }
+
+    private static double healthFactorBase(LivingEntity mob) {
         Difficulty difficulty = mob.level().getDifficulty();
         if (!scaled(difficulty)) {
             return 1.0;
@@ -86,6 +99,10 @@ public final class DifficultyScaling {
 
     /** Во сколько раз сильнее бьёт этот моб. */
     public static double damageFactor(LivingEntity mob) {
+        return damageFactorBase(mob) * bossDamage(mob);
+    }
+
+    private static double damageFactorBase(LivingEntity mob) {
         Difficulty difficulty = mob.level().getDifficulty();
         if (!scaled(difficulty) || !isFighter(mob)) {
             return 1.0;

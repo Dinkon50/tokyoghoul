@@ -111,14 +111,20 @@ public final class KaguneReach {
                 continue;
             }
 
-            // начало — середина спины (за плечами), с учётом поворота тела
+            // начало — основание кагуне на пояснице (за спиной), с учётом поворота тела
             double ox = Mth.lerp(partial, owner.xo, owner.getX());
             double oy = Mth.lerp(partial, owner.yo, owner.getY());
             double oz = Mth.lerp(partial, owner.zo, owner.getZ());
             float bodyYaw = Mth.rotLerp(partial, owner.yBodyRotO, owner.yBodyRot) * Mth.DEG_TO_RAD;
             double fx = -Mth.sin(bodyYaw);
             double fz = Mth.cos(bodyYaw);
-            Vec3 from = new Vec3(ox - fx * 0.28, oy + owner.getBbHeight() * 0.68, oz - fz * 0.28);
+            double rx = -fz;                // вправо от взгляда
+            double rz = fx;
+            double h = owner.getBbHeight();
+            Vec3 from = new Vec3(ox - fx * 0.26, oy + h * 0.6, oz - fz * 0.26);
+            // изгиб: щупальце поднимается из-за спины над правым плечом и уже оттуда летит к цели,
+            // поэтому никогда не проходит сквозь тело
+            Vec3 bend = new Vec3(ox - fx * 0.45 + rx * 0.75, oy + h * 1.25, oz - fz * 0.45 + rz * 0.75);
 
             // конец — существо (следуем за ним) или точка на блоке
             Vec3 to = reach.point();
@@ -128,8 +134,7 @@ public final class KaguneReach {
                         Mth.lerp(partial, target.yo, target.getY()) + target.getBbHeight() * 0.55,
                         Mth.lerp(partial, target.zo, target.getZ()));
             }
-            Vec3 tip = from.add(to.subtract(from).scale(extend));
-            drawTentacle(level, poseStack, consumer, cam, from, tip, t);
+            drawTentacle(level, poseStack, consumer, cam, from, bend, to, extend, t);
             drawn = true;
         }
         if (drawn) {
@@ -137,33 +142,42 @@ public final class KaguneReach {
         }
     }
 
-    /** Щупальце — цепочка четырёхгранных отрезков, тоньше к концу, с лёгкой волной. */
+    /** Точка на изогнутом щупальце: квадратичная кривая Безье from → bend → to. */
+    private static Vec3 curve(Vec3 a, Vec3 b, Vec3 c, double s) {
+        double u = 1.0 - s;
+        return a.scale(u * u).add(b.scale(2.0 * u * s)).add(c.scale(s * s));
+    }
+
+    /** Щупальце — цепочка четырёхгранных отрезков вдоль кривой, тоньше к концу, с лёгкой волной. */
     private static void drawTentacle(ClientLevel level, PoseStack poseStack, VertexConsumer consumer, Vec3 cam,
-                                     Vec3 from, Vec3 tip, float time) {
-        Vec3 line = tip.subtract(from);
-        double length = line.length();
+                                     Vec3 from, Vec3 bend, Vec3 to, float extend, float time) {
+        double length = from.distanceTo(bend) + bend.distanceTo(to);
         if (length < 0.05) {
             return;
         }
-        Vec3 dir = line.scale(1.0 / length);
-        Vec3 side = dir.cross(new Vec3(0, 1, 0));
-        if (side.lengthSqr() < 1.0E-4) {
-            side = dir.cross(new Vec3(1, 0, 0));
-        }
-        side = side.normalize();
-        Vec3 up = side.cross(dir).normalize();
-
-        int segments = Math.max(4, Math.min(80, (int) Math.ceil(length * 3.0)));
+        int segments = Math.max(6, Math.min(96, (int) Math.ceil(length * extend * 3.0)));
         Vec3[] centers = new Vec3[segments + 1];
         float[] radii = new float[segments + 1];
+        Vec3 shown = curve(from, bend, to, extend).subtract(from);
+        double shownLength = Math.max(0.5, shown.length());
         for (int i = 0; i <= segments; i++) {
-            float s = i / (float) segments;
+            float k = i / (float) segments;
+            double s = k * extend;
+            Vec3 p = curve(from, bend, to, s);
+            Vec3 tangent = curve(from, bend, to, Math.min(1.0, s + 0.01)).subtract(curve(from, bend, to, Math.max(0.0, s - 0.01)));
+            Vec3 dir = tangent.lengthSqr() < 1.0E-8 ? new Vec3(0, 1, 0) : tangent.normalize();
+            Vec3 side = dir.cross(new Vec3(0, 1, 0));
+            if (side.lengthSqr() < 1.0E-4) {
+                side = dir.cross(new Vec3(1, 0, 0));
+            }
+            side = side.normalize();
+            Vec3 up = side.cross(dir).normalize();
             // волна гаснет у основания и у цели, чтобы щупальце крепко «держало» цель
-            double envelope = Mth.sin((float) Math.PI * s) * Math.min(1.0, length / 4.0);
-            double waveSide = Mth.sin(s * 9.0F - time * 0.45F) * 0.12 * envelope;
-            double waveUp = Mth.cos(s * 7.0F - time * 0.35F) * 0.08 * envelope;
-            centers[i] = from.add(line.scale(s)).add(side.scale(waveSide)).add(up.scale(waveUp));
-            radii[i] = Mth.lerp(s, BASE_RADIUS, TIP_RADIUS);
+            double envelope = Mth.sin((float) Math.PI * k) * Math.min(1.0, shownLength / 4.0);
+            double waveSide = Mth.sin(k * 9.0F - time * 0.45F) * 0.12 * envelope;
+            double waveUp = Mth.cos(k * 7.0F - time * 0.35F) * 0.08 * envelope;
+            centers[i] = p.add(side.scale(waveSide)).add(up.scale(waveUp));
+            radii[i] = Mth.lerp(k, BASE_RADIUS, TIP_RADIUS);
         }
 
         // координаты считаем относительно камеры: так нет дрожания вдали от центра мира
@@ -174,6 +188,17 @@ public final class KaguneReach {
         for (int i = 0; i < segments; i++) {
             Vec3 a = centers[i];
             Vec3 b = centers[i + 1];
+            Vec3 dir = b.subtract(a);
+            if (dir.lengthSqr() < 1.0E-8) {
+                continue;
+            }
+            dir = dir.normalize();
+            Vec3 side = dir.cross(new Vec3(0, 1, 0));
+            if (side.lengthSqr() < 1.0E-4) {
+                side = dir.cross(new Vec3(1, 0, 0));
+            }
+            side = side.normalize();
+            Vec3 up = side.cross(dir).normalize();
             int light = LevelRenderer.getLightColor(level, BlockPos.containing(a.x, a.y, a.z));
             float v0 = (i % 4) * 0.25F;
             float v1 = v0 + 0.25F;
@@ -191,8 +216,16 @@ public final class KaguneReach {
                 vertex(consumer, matrix, normal, cam, b.add(o0.scale(radii[i + 1])), u0, v1, light, n);
             }
         }
-        // острый кончик
+        // острый кончик по направлению последнего отрезка
         Vec3 end = centers[segments];
+        Vec3 dir = end.subtract(centers[segments - 1]);
+        dir = dir.lengthSqr() < 1.0E-8 ? new Vec3(0, 0, 1) : dir.normalize();
+        Vec3 side = dir.cross(new Vec3(0, 1, 0));
+        if (side.lengthSqr() < 1.0E-4) {
+            side = dir.cross(new Vec3(1, 0, 0));
+        }
+        side = side.normalize();
+        Vec3 up = side.cross(dir).normalize();
         Vec3 point = end.add(dir.scale(0.25));
         int light = LevelRenderer.getLightColor(level, BlockPos.containing(end.x, end.y, end.z));
         for (int k = 0; k < 4; k++) {

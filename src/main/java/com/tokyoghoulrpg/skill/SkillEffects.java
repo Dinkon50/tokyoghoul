@@ -249,9 +249,23 @@ public final class SkillEffects {
         return (ghoul ? Balance.GHOUL_VITALITY : Balance.HUMAN_VITALITY) * level;
     }
 
-    /** Здоровье без прокачки: гуль и полугуль — 2 строки сердец (40), остальные — одна (20). */
-    public static double baseHealth(boolean ghoul) {
-        return 20.0 + (ghoul ? Balance.GHOUL_MAX_HEALTH_BONUS : 0.0);
+    /** Здоровье без прокачки: гуль — 2 строки сердец (40), полугуль — 44, остальные — одна (20). */
+    public static double baseHealth(com.tokyoghoulrpg.data.PlayerClass playerClass) {
+        if (playerClass == null || !playerClass.hasKagune()) {
+            return 20.0 + Balance.START_HEALTH_BONUS;
+        }
+        return 20.0 + Balance.START_HEALTH_BONUS + Balance.GHOUL_MAX_HEALTH_BONUS
+                + (playerClass == com.tokyoghoulrpg.data.PlayerClass.HALF_GHOUL ? Balance.HALF_GHOUL_HEALTH : 0.0);
+    }
+
+    /** Защита от снарядов (в ветках «Защита» и «Стойкость»): дополнительно к общей защите. */
+    public static double projectileDefense(int level) {
+        return Balance.PROJECTILE_DEFENSE_PER_LEVEL * level;
+    }
+
+    /** «Выдержка»: насколько короче оглушение (0,2 / 0,35 / 0,5). */
+    public static double stunResist(int level) {
+        return Balance.STUN_RESIST[Math.max(0, Math.min(Balance.STUN_RESIST.length - 1, level))];
     }
 
     public static double humanAttackSpeed(int level) {

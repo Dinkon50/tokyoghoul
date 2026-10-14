@@ -436,6 +436,17 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         setSkillPoints(skillPoints + points);
     }
 
+    /**
+     * Заработать очки навыков (уровни, задания, контракты, боссы): у всех классов в 1,5 раза больше,
+     * кроме полугуля. Возвращает, сколько начислено. Передача и возврат очков идут через addSkillPoints.
+     */
+    public int earnSkillPoints(int base) {
+        int amount = playerClass == PlayerClass.HALF_GHOUL ? base
+                : (int) Math.round(base * com.tokyoghoulrpg.combat.Balance.SKILL_POINT_GAIN);
+        addSkillPoints(amount);
+        return amount;
+    }
+
     public boolean hasSkill(String id) {
         return skills.contains(id);
     }

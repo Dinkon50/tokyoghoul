@@ -100,11 +100,11 @@ public final class ContractManager {
         }
         int blood = contract.bloodFor(data);
         data.addBloodPoints(blood);
-        data.addSkillPoints(contract.points());
+        int points = data.earnSkillPoints(contract.points());
         data.setContract(null, 0);
         data.setContractDoneDay(day(player));
         player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.contract_done",
-                contract.title(), blood, contract.points()));
+                contract.title(), blood, points));
         // Охота на одну сторону радует другую; остальная работа — немного плюс своей стороне
         switch (contract.kind()) {
             case KILL_GHOUL -> Reputation.change(player, Balance.REP_CONTRACT, 0);

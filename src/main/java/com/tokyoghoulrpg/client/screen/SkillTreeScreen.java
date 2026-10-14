@@ -313,7 +313,9 @@ public class SkillTreeScreen extends Screen {
     }
 
     private static int cost(SkillTree.Skill skill) {
-        return SkillTree.cost(skill, difficulty());
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        PlayerData data = mc.player == null ? null : PlayerData.get(mc.player);
+        return SkillTree.cost(skill, difficulty(), data == null ? null : data.getPlayerClass());
     }
 
     /** Секретная ветка скрыта знаками вопроса, пока её навык не открыт. */
