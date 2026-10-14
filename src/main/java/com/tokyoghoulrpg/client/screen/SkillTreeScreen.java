@@ -24,7 +24,7 @@ public class SkillTreeScreen extends Screen {
     private static final int ROW_STEP = 24;
     private static final int TAB_H = 14;
     private static final int MAX_ROWS = 8;
-    private static final int TOTAL_H = 26 + TAB_H + 10 + ROW_STEP * (MAX_ROWS - 1) + NODE + 8 + 36;
+    private static final int TOTAL_H = 36 + TAB_H + 10 + ROW_STEP * (MAX_ROWS - 1) + NODE + 8 + 48;
 
     /** Последняя открытая вкладка, чтобы при повторном открытии меню вернуться на неё. */
     private static SkillTree.Tab lastTab = SkillTree.Tab.BASE;
@@ -50,6 +50,7 @@ public class SkillTreeScreen extends Screen {
         UNLOCKED("screen.tokyoghoulrpg.skill_tree.state_unlocked", 0xB01E1E),
         AVAILABLE("screen.tokyoghoulrpg.skill_tree.state_available", 0xE6E6E6),
         NO_POINTS("screen.tokyoghoulrpg.skill_tree.state_no_points", 0xC9822B),
+        CAP("screen.tokyoghoulrpg.skill_tree.state_cap", 0x9A5A7A),
         LOCKED("screen.tokyoghoulrpg.skill_tree.state_locked", 0x777777);
 
         private final String key;
@@ -87,11 +88,29 @@ public class SkillTreeScreen extends Screen {
     }
 
     private int tabsY() {
-        return top() + 26;
+        return top() + 36;
     }
 
-    private int tabWidth() {
-        return contentWidth() / Math.max(1, tabs().size());
+    /**
+     * Границы вкладок по X (на одну больше, чем вкладок). Ширина вкладки по её названию, чтобы влезали
+     * и пять вкладок; если места хватает, вкладки растягиваются на ширину дерева.
+     */
+    private int[] tabEdges() {
+        List<SkillTree.Tab> tabs = tabs();
+        int[] widths = new int[tabs.size()];
+        int total = 0;
+        for (int i = 0; i < tabs.size(); i++) {
+            widths[i] = this.font.width(tabs.get(i).title()) + 12;
+            total += widths[i];
+        }
+        int extra = tabs.isEmpty() ? 0 : Math.max(0, contentWidth() - total) / tabs.size();
+        total += extra * tabs.size();
+        int[] edges = new int[tabs.size() + 1];
+        edges[0] = this.width / 2 - total / 2;
+        for (int i = 0; i < tabs.size(); i++) {
+            edges[i + 1] = edges[i] + widths[i] + extra;
+        }
+        return edges;
     }
 
     private int rowY(int row) {
@@ -108,6 +127,9 @@ public class SkillTreeScreen extends Screen {
         }
         if (skill.requires() != null && !data.hasSkill(skill.requires())) {
             return State.LOCKED;
+        }
+        if (SkillTree.overCap(data.getPlayerClass(), data.getSkills(), skill, difficulty())) {
+            return State.CAP;
         }
         if (data.getSkillPoints() < cost(skill)) {
             return State.NO_POINTS;
@@ -136,9 +158,9 @@ public class SkillTreeScreen extends Screen {
             return null;
         }
         List<SkillTree.Tab> tabs = tabs();
+        int[] edges = tabEdges();
         for (int i = 0; i < tabs.size(); i++) {
-            int x = left() + i * tabWidth();
-            if (mouseX >= x && mouseX < x + tabWidth()) {
+            if (mouseX >= edges[i] && mouseX < edges[i + 1]) {
                 return tabs.get(i);
             }
         }
@@ -160,7 +182,15 @@ public class SkillTreeScreen extends Screen {
             Component points = Component.translatable("screen.tokyoghoulrpg.skill_tree.points", data.getSkillPoints());
             Component blood = Component.translatable("screen.tokyoghoulrpg.skill_tree.blood", data.getBloodPoints());
             Component rep = Component.translatable("screen.tokyoghoulrpg.skill_tree.rep",
-                    signed(data.getRepCcg()), signed(data.getRepGhouls()));
+                    signed(data.getStanding()), signed(data.getRepCcg()), signed(data.getRepGhouls()));
+            if (!tabs().isEmpty()) {
+                // сколько дерева уже открыто и сколько можно открыть всего (85%)
+                Component cap = Component.translatable("screen.tokyoghoulrpg.skill_tree.cap",
+                        SkillTree.spentCost(data.getPlayerClass(), data.getSkills(), difficulty()),
+                        SkillTree.capCost(data.getPlayerClass(), difficulty()),
+                        SkillTree.totalCost(data.getPlayerClass(), difficulty()));
+                gfx.drawCenteredString(this.font, cap, this.width / 2, top + 22, 0x9A5A7A);
+            }
             int gap = 16;
             int total = this.font.width(points) + gap + this.font.width(blood) + gap + this.font.width(rep);
             int x = this.width / 2 - total / 2;
@@ -197,17 +227,19 @@ public class SkillTreeScreen extends Screen {
 
     private void drawTabs(GuiGraphics gfx, int mouseX, int mouseY) {
         List<SkillTree.Tab> tabs = tabs();
+        int[] edges = tabEdges();
         int y = tabsY();
         for (int i = 0; i < tabs.size(); i++) {
-            int x = left() + i * tabWidth();
+            int x = edges[i];
+            int w = edges[i + 1] - edges[i];
             boolean selected = tabs.get(i) == currentTab();
-            boolean hovered = mouseX >= x && mouseX < x + tabWidth() && mouseY >= y && mouseY < y + TAB_H;
+            boolean hovered = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + TAB_H;
             int back = selected ? 0xFF4A0E0E : (hovered ? 0xFF2A1416 : 0xFF180A0C);
-            gfx.fill(x + 1, y, x + tabWidth() - 1, y + TAB_H, back);
+            gfx.fill(x + 1, y, x + w - 1, y + TAB_H, back);
             if (selected) {
-                gfx.fill(x + 1, y + TAB_H - 2, x + tabWidth() - 1, y + TAB_H, 0xFFB01E1E);
+                gfx.fill(x + 1, y + TAB_H - 2, x + w - 1, y + TAB_H, 0xFFB01E1E);
             }
-            gfx.drawCenteredString(this.font, tabs.get(i).title(), x + tabWidth() / 2, y + 3,
+            gfx.drawCenteredString(this.font, tabs.get(i).title(), x + w / 2, y + 3,
                     selected ? 0xFFFFFF : 0x9A9A9A);
         }
     }
@@ -252,7 +284,12 @@ public class SkillTreeScreen extends Screen {
         boolean hidden = isHidden(data, skill.branch());
         gfx.drawCenteredString(this.font, hidden ? Component.literal("???") : skill.branch().skillName(skill.tier()),
                 centerX, y, 0xE6E6E6);
-        gfx.drawCenteredString(this.font, hidden ? Component.literal("? ? ?") : skill.branch().effect(skill.tier()),
+        Component flavor = hidden ? null : skill.branch().flavor();
+        if (flavor != null) {
+            gfx.drawCenteredString(this.font, flavor.copy().withStyle(net.minecraft.ChatFormatting.ITALIC), centerX, y + 12, 0xFFD133);
+            y += 12;
+        }
+        gfx.drawCenteredString(this.font, hidden ? Component.literal("? ? ?") : skill.branch().effect(skill.tier(), data == null ? null : data.getPlayerClass()),
                 centerX, y + 12, 0xC9C9C9);
         Component costLine = Component.translatable(hardMode() ? "screen.tokyoghoulrpg.skill_tree.cost_hard"
                         : "screen.tokyoghoulrpg.skill_tree.cost", cost(skill))

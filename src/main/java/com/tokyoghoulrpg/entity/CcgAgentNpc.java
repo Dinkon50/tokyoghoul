@@ -137,8 +137,13 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
         // Рейд: свою цель находят даже за стенами
         this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, 5, false, false,
                 this::isRaidTarget));
+        // Волна NPC: своя цель — игрок с плохой репутацией
+        this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, 5, false, false,
+                e -> Hunt.isTarget(this, e)));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this).setAlertOthers(CcgAgentNpc.class));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, GhoulNpc.class, true));
+        // гулей из той же волны не трогают
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, GhoulNpc.class, 10, true, false,
+                e -> !Hunt.allies(this, e)));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
                 CcgAgentNpc::isGhoulPlayer));
     }
@@ -158,10 +163,17 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
         return result;
     }
 
-    /** Агенты не исчезают, когда игрок уходит далеко. Кроме отрядов из рейда: те уходят. */
+    /** Агенты не исчезают, когда игрок уходит далеко. Кроме отрядов из рейда и волн: те уходят. */
     @Override
     public boolean removeWhenFarAway(double distance) {
-        return raider;
+        return raider || Hunt.isHunter(this);
+    }
+
+    /** Агент из волны уходит, когда цель пропала или прошло 5 минут. */
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        Hunt.tick(this);
     }
 
     @Override

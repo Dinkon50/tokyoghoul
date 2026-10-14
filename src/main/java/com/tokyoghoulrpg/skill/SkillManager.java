@@ -26,6 +26,13 @@ public final class SkillManager {
             return;
         }
         int cost = SkillTree.cost(skill, player.level().getDifficulty());
+        // Обычной прокачкой — не больше 85% дерева: приходится выбирать, что важнее
+        if (SkillTree.overCap(data.getPlayerClass(), data.getSkills(), skill, player.level().getDifficulty())) {
+            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.skill_cap",
+                    SkillTree.spentCost(data.getPlayerClass(), data.getSkills(), player.level().getDifficulty()),
+                    SkillTree.capCost(data.getPlayerClass(), player.level().getDifficulty())), true);
+            return;
+        }
         if (data.getSkillPoints() < cost) {
             player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.skill_no_points"), true);
             return;

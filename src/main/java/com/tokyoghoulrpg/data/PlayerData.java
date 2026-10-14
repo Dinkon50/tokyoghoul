@@ -48,6 +48,31 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     private int repGhouls = 0;
     /** Когда (время мира) CCG придут с рейдом. 0 — ещё не назначено. */
     private long nextRaid = 0L;
+    /** Личная репутация (от -100 до 100): торговля и боссы поднимают, убийство мирных и смерть снижают. */
+    private int standing = 0;
+    /** Сколько сделок уже засчитано в репутацию в игровые сутки tradeDay (не больше STANDING_TRADE_DAILY). */
+    private long tradeDay = -1L;
+    private int tradesToday = 0;
+    /** Когда придёт следующая волна NPC (0 — волн нет). */
+    private long nextWave = 0L;
+    /** «Удачный день» у торговцев: в какие сутки бросали и какая скидка в процентах (0 — нет). */
+    private long dealDay = -1L;
+    private int dealPercent = 0;
+    /** Привязанные квинке, которые не выпали при смерти: вернутся в инвентарь после возрождения. */
+    private final ListTag keptItems = new ListTag();
+    /** Кофейня: в какие игровые сутки гуль уже взял бесплатный кофе и бесплатное мясо. */
+    private long cafeCoffeeDay = -1L;
+    private long cafeFleshDay = -1L;
+    /** Какудзя: накопленные очки (100 — форма открыта) и до какого тика форма действует. */
+    private int kakujaPoints = 0;
+    private long kakujaEndTick = 0L;
+    /** Очки ранга: отдельно звание CCG и рейтинг гуля (при смене класса своё не теряется). */
+    private int rankCcg = 0;
+    private int rankGhoul = 0;
+    /** Для меню «Профиль»: клан игрока (сервер заполняет перед отправкой) и откаты способностей. */
+    private String clanNameCache = "";
+    private int clanRepCache = 0;
+    private final Map<String, Long> cooldownsCache = new HashMap<>();
     /** Агенту CCG уже выдана стартовая квинке Kura. */
     private boolean starterQuinque = false;
     /** Финальное задание агента: какие квинке уже получены (1 — Narukami, 2 — IXA). */
@@ -67,6 +92,17 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     private long rageEndTick = 0L;
     private boolean blocking = false;
     private long lockEndTick = 0L;
+    /** Особые ауры и «тишина» (время мира, до которого действуют). */
+    private long retributionEndTick = 0L;
+    private long charismaEndTick = 0L;
+    private long silenceEndTick = 0L;
+    /** «Бросок судьбы»: защита от урона (доля) и до какого времени. */
+    private double fortuneShield = 0.0;
+    private long fortuneShieldEndTick = 0L;
+    /** Передача силы в клане (только для показа на экране): до какого тика, множитель силы, откат. */
+    private long bondEndTick = 0L;
+    private double bondPower = 0.0;
+    private long bondCooldownEnd = 0L;
 
     // Только сервер
     private final CombatState combat = new CombatState();
@@ -200,6 +236,152 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public void setRepGhouls(int value) {
         this.repGhouls = Mth.clamp(value, -100, 100);
+    }
+
+    /** Передача силы: power > 0 — получил силу, < 0 — отдал; endTick — когда закончится; cooldownEnd — откат. */
+    public void setBond(long endTick, double power, long cooldownEnd) {
+        this.bondEndTick = endTick;
+        this.bondPower = power;
+        this.bondCooldownEnd = cooldownEnd;
+    }
+
+    public long getBondEndTick() {
+        return bondEndTick;
+    }
+
+    public double getBondPower() {
+        return bondPower;
+    }
+
+    public long getBondCooldownEnd() {
+        return bondCooldownEnd;
+    }
+
+    public int getStanding() {
+        return standing;
+    }
+
+    public void setStanding(int value) {
+        this.standing = Mth.clamp(value, -100, 100);
+    }
+
+    /** Засчитать сделку в репутацию: true, если в эти игровые сутки лимит ещё не исчерпан. */
+    public boolean countTrade(long day, int dailyLimit) {
+        if (day != tradeDay) {
+            tradeDay = day;
+            tradesToday = 0;
+        }
+        if (tradesToday >= dailyLimit) {
+            return false;
+        }
+        tradesToday++;
+        return true;
+    }
+
+    public void addKeptItem(CompoundTag item) {
+        keptItems.add(item);
+    }
+
+    /** Забрать сохранённые при смерти предметы (список очищается). */
+    public java.util.List<CompoundTag> takeKeptItems() {
+        java.util.List<CompoundTag> list = new java.util.ArrayList<>();
+        for (int i = 0; i < keptItems.size(); i++) {
+            list.add(keptItems.getCompound(i));
+        }
+        keptItems.clear();
+        return list;
+    }
+
+    public int getKakujaPoints() {
+        return kakujaPoints;
+    }
+
+    public void setKakujaPoints(int points) {
+        this.kakujaPoints = Math.max(0, Math.min(9999, points));
+    }
+
+    public long getKakujaEndTick() {
+        return kakujaEndTick;
+    }
+
+    public void setKakujaEndTick(long tick) {
+        this.kakujaEndTick = tick;
+    }
+
+    public boolean isKakujaActive(long now) {
+        return kakujaEndTick > now;
+    }
+
+    public int getRankCcg() {
+        return rankCcg;
+    }
+
+    public int getRankGhoul() {
+        return rankGhoul;
+    }
+
+    public void setRankCcg(int points) {
+        this.rankCcg = Math.max(0, points);
+    }
+
+    public void setRankGhoul(int points) {
+        this.rankGhoul = Math.max(0, points);
+    }
+
+    public void setClanCache(String name, int reputation) {
+        this.clanNameCache = name == null ? "" : name;
+        this.clanRepCache = reputation;
+    }
+
+    public String getClanNameCache() {
+        return clanNameCache;
+    }
+
+    public int getClanRepCache() {
+        return clanRepCache;
+    }
+
+    /** Откаты способностей для меню «Профиль»: имя → тик, когда снова готово (только у клиента). */
+    public Map<String, Long> getCooldownsCache() {
+        return cooldownsCache;
+    }
+
+    public long getCafeCoffeeDay() {
+        return cafeCoffeeDay;
+    }
+
+    public long getCafeFleshDay() {
+        return cafeFleshDay;
+    }
+
+    public void setCafeCoffeeDay(long day) {
+        this.cafeCoffeeDay = day;
+    }
+
+    public void setCafeFleshDay(long day) {
+        this.cafeFleshDay = day;
+    }
+
+    public long getNextWave() {
+        return nextWave;
+    }
+
+    public void setNextWave(long time) {
+        this.nextWave = time;
+    }
+
+    public long getDealDay() {
+        return dealDay;
+    }
+
+    /** Скидка «удачного дня» у торговца мода в процентах (0 — сегодня скидки нет). */
+    public int getDealPercent() {
+        return dealPercent;
+    }
+
+    public void setDeal(long day, int percent) {
+        this.dealDay = day;
+        this.dealPercent = Math.max(0, Math.min(90, percent));
     }
 
     public long getNextRaid() {
@@ -339,6 +521,62 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         this.lockEndTick = lockEndTick;
     }
 
+    public long getRetributionEndTick() {
+        return retributionEndTick;
+    }
+
+    public void setRetributionEndTick(long tick) {
+        this.retributionEndTick = tick;
+    }
+
+    public long getCharismaEndTick() {
+        return charismaEndTick;
+    }
+
+    public void setCharismaEndTick(long tick) {
+        this.charismaEndTick = tick;
+    }
+
+    public long getSilenceEndTick() {
+        return silenceEndTick;
+    }
+
+    public void setSilenceEndTick(long tick) {
+        this.silenceEndTick = tick;
+    }
+
+    public double getFortuneShield() {
+        return fortuneShield;
+    }
+
+    public long getFortuneShieldEndTick() {
+        return fortuneShieldEndTick;
+    }
+
+    public void setFortuneShield(double shield, long endTick) {
+        this.fortuneShield = shield;
+        this.fortuneShieldEndTick = endTick;
+    }
+
+    /** Защита «Броска судьбы» сейчас (0 — нет). */
+    public double fortuneShieldAt(long now) {
+        return fortuneShieldEndTick > now ? fortuneShield : 0.0;
+    }
+
+    /** Действует ли «Аура возмездия». */
+    public boolean isRetributionActive(long now) {
+        return retributionEndTick > now;
+    }
+
+    public boolean isCharismaActive(long now) {
+        return charismaEndTick > now;
+    }
+
+    /** Под «тишиной»: способности недоступны, только обычные удары. */
+    public boolean isSilencedAt(long now) {
+        return silenceEndTick > now;
+    }
+
     /** Оглушён или обездвижен в этот момент (для клиента: блокировать управление). */
     public boolean isLockedAt(long now) {
         return lockEndTick > now;
@@ -365,6 +603,19 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         repCcg = 0;
         repGhouls = 0;
         nextRaid = 0L;
+        standing = 0;
+        tradeDay = -1L;
+        tradesToday = 0;
+        nextWave = 0L;
+        dealDay = -1L;
+        dealPercent = 0;
+        keptItems.clear();
+        cafeCoffeeDay = -1L;
+        cafeFleshDay = -1L;
+        kakujaPoints = 0;
+        kakujaEndTick = 0L;
+        rankCcg = 0;
+        rankGhoul = 0;
         starterQuinque = false;
         finalQuinques = 0;
         questIndex = 0;
@@ -377,6 +628,14 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         rageEndTick = 0L;
         blocking = false;
         lockEndTick = 0L;
+        retributionEndTick = 0L;
+        charismaEndTick = 0L;
+        silenceEndTick = 0L;
+        fortuneShield = 0.0;
+        fortuneShieldEndTick = 0L;
+        bondEndTick = 0L;
+        bondPower = 0.0;
+        bondCooldownEnd = 0L;
         combat.reset();
     }
 
@@ -405,6 +664,18 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putInt("rep_ccg", repCcg);
         tag.putInt("rep_ghouls", repGhouls);
         tag.putLong("next_raid", nextRaid);
+        tag.putInt("standing", standing);
+        tag.putLong("trade_day", tradeDay);
+        tag.putInt("trades_today", tradesToday);
+        tag.putLong("next_wave", nextWave);
+        tag.putLong("deal_day", dealDay);
+        tag.putInt("deal_percent", dealPercent);
+        tag.put("kept_items", keptItems.copy());
+        tag.putLong("cafe_coffee_day", cafeCoffeeDay);
+        tag.putLong("cafe_flesh_day", cafeFleshDay);
+        tag.putInt("kakuja_points", kakujaPoints);
+        tag.putInt("rank_ccg", rankCcg);
+        tag.putInt("rank_ghoul", rankGhoul);
         tag.putBoolean("starter_quinque", starterQuinque);
         tag.putInt("final_quinques", finalQuinques);
         tag.putInt("quest_index", questIndex);
@@ -435,6 +706,33 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putLong("rage_end", rageEndTick);
         tag.putBoolean("blocking", blocking);
         tag.putLong("lock_end", lockEndTick);
+        tag.putLong("retribution_end", retributionEndTick);
+        tag.putLong("charisma_end", charismaEndTick);
+        tag.putLong("silence_end", silenceEndTick);
+        tag.putDouble("fortune_shield", fortuneShield);
+        tag.putLong("fortune_end", fortuneShieldEndTick);
+        tag.putLong("bond_end", bondEndTick);
+        tag.putDouble("bond_power", bondPower);
+        tag.putLong("bond_cooldown", bondCooldownEnd);
+        tag.putLong("kakuja_end", kakujaEndTick);
+        tag.putString("clan_name", clanNameCache);
+        tag.putInt("clan_rep", clanRepCache);
+        CompoundTag cd = new CompoundTag();
+        cd.putLong("bite", combat.biteReady);
+        cd.putLong("dash", combat.dashReady);
+        cd.putLong("barrage", combat.barrageReady);
+        cd.putLong("block", combat.blockReady);
+        cd.putLong("grapple", combat.grappleReady);
+        cd.putLong("pull", combat.pullReady);
+        cd.putLong("strong", combat.strongReady);
+        cd.putLong("human_strong", combat.humanStrongReady);
+        cd.putLong("lunge", combat.lungeReady);
+        cd.putLong("retribution", combat.retributionReady);
+        cd.putLong("charisma", combat.charismaReady);
+        cd.putLong("fortune", combat.fortuneReady);
+        cd.putLong("kakuja", combat.kakujaReady);
+        cd.putLong("bond", bondCooldownEnd);
+        tag.put("cooldowns", cd);
         return tag;
     }
 
@@ -457,6 +755,21 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         setRepCcg(tag.getInt("rep_ccg"));
         setRepGhouls(tag.getInt("rep_ghouls"));
         nextRaid = tag.getLong("next_raid");
+        setStanding(tag.getInt("standing"));
+        tradeDay = tag.contains("trade_day") ? tag.getLong("trade_day") : -1L;
+        tradesToday = tag.getInt("trades_today");
+        nextWave = tag.getLong("next_wave");
+        setDeal(tag.contains("deal_day") ? tag.getLong("deal_day") : -1L, tag.getInt("deal_percent"));
+        keptItems.clear();
+        ListTag kept = tag.getList("kept_items", Tag.TAG_COMPOUND);
+        for (int i = 0; i < kept.size(); i++) {
+            keptItems.add(kept.getCompound(i));
+        }
+        cafeCoffeeDay = tag.contains("cafe_coffee_day") ? tag.getLong("cafe_coffee_day") : -1L;
+        cafeFleshDay = tag.contains("cafe_flesh_day") ? tag.getLong("cafe_flesh_day") : -1L;
+        setKakujaPoints(tag.getInt("kakuja_points"));
+        setRankCcg(tag.getInt("rank_ccg"));
+        setRankGhoul(tag.getInt("rank_ghoul"));
         starterQuinque = tag.getBoolean("starter_quinque");
         setFinalQuinques(tag.getInt("final_quinques"));
         setQuestIndex(tag.getInt("quest_index"));
@@ -486,5 +799,21 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         rageEndTick = tag.getLong("rage_end");
         blocking = tag.getBoolean("blocking");
         lockEndTick = tag.getLong("lock_end");
+        retributionEndTick = tag.getLong("retribution_end");
+        charismaEndTick = tag.getLong("charisma_end");
+        silenceEndTick = tag.getLong("silence_end");
+        fortuneShield = tag.getDouble("fortune_shield");
+        fortuneShieldEndTick = tag.getLong("fortune_end");
+        bondEndTick = tag.getLong("bond_end");
+        bondPower = tag.getDouble("bond_power");
+        bondCooldownEnd = tag.getLong("bond_cooldown");
+        kakujaEndTick = tag.getLong("kakuja_end");
+        clanNameCache = tag.getString("clan_name");
+        clanRepCache = tag.getInt("clan_rep");
+        cooldownsCache.clear();
+        CompoundTag cd = tag.getCompound("cooldowns");
+        for (String key : cd.getAllKeys()) {
+            cooldownsCache.put(key, cd.getLong(key));
+        }
     }
 }

@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 902417553,
+    "separation": 28,
+    "spacing": 72
+  },
+  "structures": [
+    {
+      "structure": "tokyoghoulrpg:half_ghoul_arena",
+      "weight": 1
+    }
+  ]
+}

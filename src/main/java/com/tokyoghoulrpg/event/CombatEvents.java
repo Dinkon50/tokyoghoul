@@ -8,9 +8,13 @@ import com.tokyoghoulrpg.combat.BleedManager;
 import com.tokyoghoulrpg.combat.CombatContext;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.combat.GhoulDiet;
+import com.tokyoghoulrpg.combat.Kakuja;
+import com.tokyoghoulrpg.rank.Ranks;
 import com.tokyoghoulrpg.combat.QuinqueAbilities;
 import com.tokyoghoulrpg.data.PlayerClass;
 import com.tokyoghoulrpg.combat.RcSuppress;
+import com.tokyoghoulrpg.combat.Silence;
+import com.tokyoghoulrpg.combat.SpecialAbilities;
 import com.tokyoghoulrpg.registry.ModItems;
 import com.tokyoghoulrpg.combat.LockManager;
 import com.tokyoghoulrpg.combat.RageStats;
@@ -22,7 +26,14 @@ import com.tokyoghoulrpg.entity.CcgAgentNpc;
 import com.tokyoghoulrpg.entity.GhoulNpc;
 import com.tokyoghoulrpg.entity.GhoulBoss;
 import com.tokyoghoulrpg.entity.CcgBoss;
+import com.tokyoghoulrpg.entity.BossRewards;
+import com.tokyoghoulrpg.entity.HalfGhoulBoss;
+import com.tokyoghoulrpg.entity.HalfGhoulNpc;
 import com.tokyoghoulrpg.quest.QuinqueReward;
+import com.tokyoghoulrpg.rep.Standing;
+import com.tokyoghoulrpg.clan.ClanBond;
+import com.tokyoghoulrpg.item.QuinqueEvents;
+import com.tokyoghoulrpg.item.QuinqueUpgrade;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.quest.Quest;
 import com.tokyoghoulrpg.quest.QuestManager;
@@ -83,6 +94,7 @@ public final class CombatEvents {
         if (event.phase == TickEvent.Phase.END) {
             LockManager.tick();
             BleedManager.tick();
+            ClanBond.tick(event.getServer());
         }
     }
 
@@ -91,6 +103,8 @@ public final class CombatEvents {
         LockManager.clear();
         BleedManager.clear();
         RcSuppress.clear();
+        Silence.clear();
+        ClanBond.clear();
     }
 
     @SubscribeEvent
@@ -98,6 +112,32 @@ public final class CombatEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             AbilityManager.cancelAll(player);
             LockManager.unlock(player);
+            Silence.remove(player);
+            ClanBond.onLeave(player);
+            com.tokyoghoulrpg.rank.Ranks.forget(player);
+            PlayerData data = PlayerData.get(player);
+            if (data != null) {
+                Kakuja.end(player, data, player.level().getGameTime());
+            }
+        }
+    }
+
+    /**
+     * Особые ауры. «Харизма»: удар отменяется, вместо урона лечение и усиления. «Аура возмездия»: урон проходит,
+     * ударивший получает урон, оглушение и «тишину». Срабатывает раньше блока и «Кровавого зеркала».
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onAuraAttack(LivingAttackEvent event) {
+        if (reflecting || !(event.getEntity() instanceof ServerPlayer victim) || victim.isSpectator()) {
+            return;
+        }
+        // Неуязвимость после прошлого удара: игра этот удар всё равно не засчитает
+        if (victim.invulnerableTime > 10 || !(event.getSource().getEntity() instanceof LivingEntity attacker)) {
+            return;
+        }
+        PlayerData data = PlayerData.get(victim);
+        if (data != null && SpecialAbilities.onAttacked(victim, data, attacker)) {
+            event.setCanceled(true);
         }
     }
 
@@ -171,7 +211,7 @@ public final class CombatEvents {
      */
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onMirrorAttack(LivingAttackEvent event) {
-        if (reflecting || !(event.getEntity() instanceof ServerPlayer victim)
+        if (reflecting || SpecialAbilities.isRetaliating() || !(event.getEntity() instanceof ServerPlayer victim)
                 || victim.isCreative() || victim.isSpectator()) {
             return;
         }
@@ -241,6 +281,15 @@ public final class CombatEvents {
                         ? QuinqueAbilities.releaseDamageBonus(data) : RageStats.damageBonus(data.getRageLevel())));
             }
             amount *= (float) (1.0 + SkillEffects.damageBonus(SkillEffects.level(data, SkillTree.Branch.DAMAGE)));
+            // передача силы в клане: получатель сильнее, отдавший слабее (и удары, и способности)
+            amount *= (float) ClanBond.damageFactor(attackingPlayer);
+            // квинке, улучшенная ядрами: +15% / +30% / +50%
+            amount *= (float) (1.0 + QuinqueUpgrade.damageBonus(attackingPlayer.getMainHandItem()));
+            // Какудзя и ранг
+            if (data != null) {
+                amount *= (float) Kakuja.damageFactor(data, attackingPlayer.level().getGameTime());
+                amount *= (float) (1.0 + Ranks.damageBonus(data));
+            }
             // Человек: ветка «Урон оружием». Работает и для ближнего боя, и для стрел и трезубцев:
             // у выпущенного снаряда источник урона — сам игрок.
             // Агент CCG: «Знание гулей» и «Подавитель RC»
@@ -275,14 +324,20 @@ public final class CombatEvents {
             if (attacker instanceof LivingEntity livingAttacker && RcSuppress.isGhoul(livingAttacker)) {
                 amount *= (float) (1.0 - SkillEffects.kaguneGuard(SkillEffects.level(data, SkillTree.Branch.KAGUNE_GUARD)));
             }
+            // «Бросок судьбы»: защита после удачного броска
+            if (data != null) {
+                amount *= (float) (1.0 - data.fortuneShieldAt(defendingPlayer.level().getGameTime()));
+            }
             // Человек: ветка «Стойкость»
             amount *= (float) (1.0 - SkillEffects.humanToughness(SkillEffects.level(data, SkillTree.Branch.TOUGHNESS)));
+            // Какудзя: броня из кагуне
+            amount *= (float) Kakuja.defenseFactor(data, defendingPlayer.level().getGameTime());
         }
         event.setAmount(amount);
 
         // «Кровавое зеркало», часть 2: шанс полного отражения не выпал, урон проходит,
         // а бьющий получает половину этого урона
-        if (victim instanceof ServerPlayer mirrorOwner && !reflecting) {
+        if (victim instanceof ServerPlayer mirrorOwner && !reflecting && !SpecialAbilities.isRetaliating()) {
             PlayerData mirrorData = PlayerData.get(mirrorOwner);
             if (mirrorData != null && mirrorData.combat().mirrorPartial) {
                 mirrorData.combat().mirrorPartial = false;
@@ -304,6 +359,14 @@ public final class CombatEvents {
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
+        // Кровавый полугуль в первой стадии не умирает: превращается и восстанавливает всё здоровье
+        if (event.getEntity() instanceof HalfGhoulBoss halfGhoulBoss && halfGhoulBoss.getPhase() == 1
+                && !event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            event.setCanceled(true);
+            halfGhoulBoss.setHealth(1.0F);
+            halfGhoulBoss.startPhase2();
+            return;
+        }
         // Ветка «Второе дыхание»: смертельный удар оставляет 1 сердце, раз в 5 минут.
         // Не спасает от урона, который игнорирует всё (/kill, падение в пустоту).
         if (event.getEntity() instanceof ServerPlayer dying
@@ -350,10 +413,29 @@ public final class CombatEvents {
                 QuinqueReward.onCcgBossKilled(killerPlayer);
             }
             Reputation.onKill(killerPlayer, event.getEntity());
+            // личная репутация и репутация клана: мирный — минус, босс — плюс
+            Standing.onKill(killerPlayer, event.getEntity());
+            // ядра гулей: очень редко
+            QuinqueEvents.onKill(killerPlayer, event.getEntity());
+            // Какудзя (гуль поедает гулей) и ранг
+            Kakuja.onKill(killerPlayer, event.getEntity());
+            Ranks.onKill(killerPlayer, event.getEntity());
+        }
+        // Кровавый полугуль: награда по урону и таймер возрождения на арене
+        if (event.getEntity() instanceof HalfGhoulBoss defeated) {
+            BossRewards.give(defeated);
+            defeated.onDefeated();
         }
         if (event.getEntity() instanceof ServerPlayer dead) {
             AbilityManager.cancelAll(dead);
             LockManager.unlock(dead);
+            Silence.remove(dead);
+            Standing.onDeath(dead);
+            ClanBond.onLeave(dead);
+            PlayerData deadData = PlayerData.get(dead);
+            if (deadData != null) {
+                Kakuja.end(dead, deadData, dead.level().getGameTime());
+            }
         }
     }
 
@@ -362,9 +444,13 @@ public final class CombatEvents {
      * Животные, торговцы и информаторы ничего не дают.
      */
     private static void rewardKill(ServerPlayer killer, PlayerData data, LivingEntity victim) {
-        double rank = 1.0 + SkillEffects.rankBloodBonus(SkillEffects.level(data, SkillTree.Branch.RANK));
+        double rank = 1.0 + SkillEffects.rankBloodBonus(SkillEffects.level(data, SkillTree.Branch.RANK))
+                + Ranks.bloodBonus(data);
         int bossBlood = (int) Math.round(Balance.BLOOD_KILL_BOSS * rank);
         int npcBlood = (int) Math.round(Balance.BLOOD_KILL_NPC * rank);
+        if (victim instanceof HalfGhoulBoss) {
+            return;     // своя награда по урону: BossRewards
+        }
         if (victim instanceof BossMob) {
             data.addBloodPoints(bossBlood);
             data.addSkillPoints(Balance.BOSS_SKILL_POINTS);
@@ -373,7 +459,7 @@ public final class CombatEvents {
             Effects.sound(killer, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
             NetworkHandler.syncTo(killer);
             QuestManager.progress(killer, Quest.Trigger.KILL_BOSS, 1);
-        } else if (victim instanceof GhoulNpc || victim instanceof CcgAgentNpc) {
+        } else if (victim instanceof GhoulNpc || victim instanceof CcgAgentNpc || victim instanceof HalfGhoulNpc) {
             data.addBloodPoints(npcBlood);
             killer.displayClientMessage(Component.translatable("message.tokyoghoulrpg.kill_reward", npcBlood), true);
             NetworkHandler.syncTo(killer);

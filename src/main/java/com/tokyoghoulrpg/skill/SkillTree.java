@@ -27,7 +27,9 @@ public final class SkillTree {
         CCG_TRAINING("ccg_training", PlayerClass.CCG_AGENT),
         CCG_QUINQUE("ccg_quinque", PlayerClass.CCG_AGENT),
         CCG_SURVIVAL("ccg_survival", PlayerClass.CCG_AGENT),
-        CCG_HUNT("ccg_hunt", PlayerClass.CCG_AGENT);
+        CCG_HUNT("ccg_hunt", PlayerClass.CCG_AGENT),
+        // У всех классов: особые способности на своих клавишах
+        SPECIAL("special", PlayerClass.GHOUL, PlayerClass.HALF_GHOUL, PlayerClass.HUMAN, PlayerClass.CCG_AGENT);
 
         private final String id;
         private final List<PlayerClass> classes;
@@ -58,8 +60,8 @@ public final class SkillTree {
         BITE("bite", Tab.ABILITIES, 3, Balance.COSTS_3, 1, 0xB01E1E),
         BARRAGE("barrage", Tab.ABILITIES, 3, Balance.COSTS_3, 1, 0xE0503A),
         DASH("dash", Tab.ABILITIES, 2, Balance.COSTS_2, 1, 0x9ED0E6),
-        // Без прокачки захваты бьют на 5 блоков: это уровень I. Единственный навык ветки показан как II.
-        GRAB("grab", Tab.ABILITIES, 1, Balance.COSTS_1, 2, 0x8E5AC9),
+        // Без прокачки захваты достают на 10 блоков: это уровень I. Навыки ветки показаны как II-IV (15, 20, 25 блоков).
+        GRAB("grab", Tab.ABILITIES, 3, Balance.COSTS_3, 2, 0x8E5AC9),
         BLOCK("block", Tab.ABILITIES, 3, Balance.COSTS_3, 1, 0x7A8A9A),
         STRONG("strong", Tab.ABILITIES, 3, Balance.COSTS_3, 1, 0xC9822B),
         // Выживание
@@ -78,7 +80,9 @@ public final class SkillTree {
         // Человек
         // Человек; эти же ветки у агента CCG во вкладке «Подготовка» (агент — тоже человек, только обученный)
         TOUGHNESS("toughness", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x5A86C9, Tab.CCG_TRAINING),
-        VITALITY("vitality", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xB01E1E, Tab.CCG_TRAINING),
+        // «Здоровье» у всех: человек и агент до 3,5 строк сердец, гуль и полугуль (вкладка «Выживание») до 5 строк
+        VITALITY("vitality", Tab.HUMAN, Balance.VITALITY_LEVELS, Balance.VITALITY_COSTS, 1, 0xB01E1E, Tab.CCG_TRAINING,
+                Tab.SURVIVAL),
         ATTACK_SPEED("attack_speed", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xC9822B, Tab.CCG_TRAINING),
         MINING("mining", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x9A9A9A, Tab.CCG_SURVIVAL),
         WEAPON_DAMAGE("weapon_damage", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xE0503A, Tab.CCG_TRAINING),
@@ -101,7 +105,11 @@ public final class SkillTree {
         SOFT_LANDING("soft_landing", Tab.SURVIVAL, 3, Balance.COSTS_3, 1, 0x7FB8D8, Tab.HUMAN, Tab.CCG_SURVIVAL),
         // Секретный навык: у гуля и полугуля во вкладке «Выживание», у человека во вкладке «Человек».
         // Пока не открыт, в меню вместо названия и описания знаки вопроса.
-        MIRROR("mirror", Tab.SURVIVAL, 1, Balance.MIRROR_COST, 1, 0x9A1030, Tab.HUMAN, Tab.CCG_SURVIVAL);
+        MIRROR("mirror", Tab.SURVIVAL, 1, Balance.MIRROR_COST, 1, 0x9A1030, Tab.HUMAN, Tab.CCG_SURVIVAL),
+        // Особые способности всех классов: открывают клавиши R и Z
+        RETRIBUTION("retribution", Tab.SPECIAL, 1, Balance.RETRIBUTION_COST, 1, 0x8C1AE6),
+        CHARISMA("charisma", Tab.SPECIAL, 1, Balance.CHARISMA_COST, 1, 0xFFD133),
+        FORTUNE("fortune", Tab.SPECIAL, 1, Balance.FORTUNE_COST, 1, 0x3CC878);
 
         private final String id;
         private final Tab tab;
@@ -124,6 +132,11 @@ public final class SkillTree {
         /** Есть ли ветка на этой вкладке (секретная ветка есть сразу на нескольких). */
         public boolean inTab(Tab other) {
             return tab == other || extraTabs.contains(other);
+        }
+
+        /** Строка-описание под названием (сейчас только у «Харизмы»), null — нет. */
+        public Component flavor() {
+            return this == CHARISMA ? Component.translatable("skill.tokyoghoulrpg." + id + ".flavor") : null;
         }
 
         /** Секретная ветка: до открытия показывается знаками вопроса. */
@@ -167,6 +180,11 @@ public final class SkillTree {
 
         /** Что даёт ветка на этом уровне. */
         public Component effect(int level) {
+            return effect(level, null);
+        }
+
+        /** Описание эффекта; класс нужен веткам, у которых число зависит от класса («Здоровье»). */
+        public Component effect(int level, PlayerClass playerClass) {
             String key = "skill.tokyoghoulrpg." + id + ".effect";
             return switch (this) {
                 case RAGE -> Component.translatable(key,
@@ -203,7 +221,12 @@ public final class SkillTree {
                 case BLEED -> Component.translatable(key, num(Balance.BLEED_DAMAGE),
                         SkillEffects.bleedSeconds(level));
                 case TOUGHNESS -> Component.translatable(key, percent(SkillEffects.humanToughness(level)));
-                case VITALITY -> Component.translatable(key, num(SkillEffects.humanVitality(level) / 2.0));
+                case VITALITY -> {
+                    boolean ghoul = playerClass != null && playerClass.hasKagune();
+                    double bonus = SkillEffects.vitality(level, ghoul);
+                    yield Component.translatable(key, num(bonus / 2.0),
+                            num((SkillEffects.baseHealth(ghoul) + bonus) / 20.0));
+                }
                 case ATTACK_SPEED -> Component.translatable(key, percent(SkillEffects.humanAttackSpeed(level)));
                 case MINING -> Component.translatable(key, percent(SkillEffects.humanMining(level)));
                 case WEAPON_DAMAGE -> Component.translatable(key, percent(SkillEffects.humanWeaponDamage(level)));
@@ -233,6 +256,11 @@ public final class SkillTree {
                 case SOFT_LANDING -> Component.translatable(key, percent(1.0 - SkillEffects.fallFactor(level)));
                 case MIRROR -> Component.translatable(key, percent(Balance.MIRROR_HEALTH),
                         percent(Balance.MIRROR_FULL_CHANCE), percent(Balance.MIRROR_SHARE));
+                case RETRIBUTION -> Component.translatable(key, Balance.AURA_TICKS / 20, num(Balance.RETRIBUTION_DAMAGE / 2.0),
+                        Balance.RETRIBUTION_STUN / 20, Balance.RETRIBUTION_SILENCE / 20, Balance.AURA_COOLDOWN / 20);
+                case CHARISMA -> Component.translatable(key, Balance.AURA_TICKS / 20, percent(Balance.CHARISMA_HEAL),
+                        Balance.CHARISMA_BUFF_TICKS / 20, Balance.AURA_COOLDOWN / 20);
+                case FORTUNE -> Component.translatable(key, Balance.FORTUNE_COOLDOWN / 20);
             };
         }
     }
@@ -315,6 +343,30 @@ public final class SkillTree {
             }
         }
         return sum;
+    }
+
+    /**
+     * Сколько очков (по ценам этой сложности) стоят уже открытые навыки дерева этого класса.
+     * Навыки, открытые командой бесплатно, тоже считаются: лимит про то, сколько дерева открыто.
+     */
+    public static int spentCost(PlayerClass playerClass, java.util.Set<String> owned, Difficulty difficulty) {
+        int sum = 0;
+        for (Skill skill : ALL) {
+            if (owned.contains(skill.id()) && isAvailable(playerClass, skill.branch())) {
+                sum += cost(skill, difficulty);
+            }
+        }
+        return sum;
+    }
+
+    /** Лимит прокачки: 85% стоимости всего дерева класса (с округлением вниз). */
+    public static int capCost(PlayerClass playerClass, Difficulty difficulty) {
+        return (int) Math.floor(totalCost(playerClass, difficulty) * Balance.SKILL_CAP_SHARE);
+    }
+
+    /** Упрётся ли открытие этого навыка в лимит 85%. */
+    public static boolean overCap(PlayerClass playerClass, java.util.Set<String> owned, Skill skill, Difficulty difficulty) {
+        return spentCost(playerClass, owned, difficulty) + cost(skill, difficulty) > capCost(playerClass, difficulty);
     }
 
     /** Цена навыка на этой сложности: на сложной в 1,5 раза дороже (с округлением вверх). */

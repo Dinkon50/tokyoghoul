@@ -18,7 +18,13 @@ public enum AbilityType {
     QUINQUE_STRONG("quinque_strong", false),
     QUINQUE_LUNGE("quinque_lunge", false),
     QUINQUE_FLURRY("quinque_flurry", false),
-    QUINQUE_RELEASE("quinque_release", false);
+    QUINQUE_RELEASE("quinque_release", false),
+    // Особые способности всех классов (открываются в дереве навыков)
+    RETRIBUTION("retribution", false),
+    CHARISMA("charisma", false),
+    FORTUNE("fortune", false),
+    // Какудзя: гуль и полугуль, когда накопили очки
+    KAKUJA("kakuja", false);
 
     private final String id;
     private final boolean needsKagune;
@@ -31,6 +37,11 @@ public enum AbilityType {
     /** Нужно ли для способности включённое кагуне (G). */
     public boolean needsKagune() {
         return needsKagune;
+    }
+
+    /** Под «тишиной» (после «Ауры возмездия») можно только обычные удары. */
+    public boolean allowedWhenSilenced() {
+        return this == BASIC_ATTACK || this == QUINQUE_ATTACK;
     }
 
     public String translationKey() {

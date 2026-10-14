@@ -2,7 +2,6 @@ package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.combat.Effects;
-import com.tokyoghoulrpg.difficulty.DifficultyScaling;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
 import java.util.function.Predicate;
@@ -36,7 +35,7 @@ public class LeapSlamGoal extends Goal {
         if (readyAt < 0L) {
             readyAt = now + FIRST_DELAY;
         }
-        if (now < readyAt) {
+        if (now < readyAt || !BossCombat.canAct(mob)) {   // «тишина» от «Ауры возмездия», превращение
             return false;
         }
         LivingEntity target = mob.getTarget();
@@ -91,12 +90,12 @@ public class LeapSlamGoal extends Goal {
         Effects.particles(mob, ParticleTypes.EXPLOSION, 3, 1.2, 0.0);
         Effects.particles(mob, ParticleTypes.CLOUD, 30, 1.5, 0.08);
         for (LivingEntity victim : BossCombat.around(mob, Balance.BOSS_LEAP_RADIUS, ally)) {
-            BossCombat.strongHit(mob, victim, Balance.BOSS_LEAP_DAMAGE, 1.2);
+            BossCombat.strongHit(mob, victim, Balance.BOSS_LEAP_DAMAGE * BossCombat.mult(mob), 1.2);
         }
     }
 
     @Override
     public void stop() {
-        readyAt = mob.level().getGameTime() + DifficultyScaling.bossCooldown(mob, Balance.BOSS_LEAP_COOLDOWN);
+        readyAt = mob.level().getGameTime() + BossCombat.cooldown(mob, Balance.BOSS_LEAP_COOLDOWN);
     }
 }

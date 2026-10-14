@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 517203661,
+    "separation": 12,
+    "spacing": 34
+  },
+  "structures": [
+    {
+      "structure": "tokyoghoulrpg:cafe",
+      "weight": 1
+    }
+  ]
+}

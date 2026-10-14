@@ -38,6 +38,23 @@ public final class ClientHooks {
         }
     }
 
+    /** Ранг игрока: запомнить и обновить ник над головой. */
+    public static void rank(int entityId, int code) {
+        com.tokyoghoulrpg.rank.Ranks.acceptClient(entityId, code);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level.getEntity(entityId) instanceof net.minecraft.world.entity.player.Player player) {
+            player.refreshDisplayName();
+        }
+    }
+
+    /** Меню хозяина кофейни. */
+    public static void openCafe(int ownerId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            mc.setScreen(new com.tokyoghoulrpg.client.screen.CafeScreen(ownerId));
+        }
+    }
+
     /** Пришло состояние клана: обновить меню клана. */
     public static void clanState(ClanStateS2C state) {
         ClanScreen.accept(state);

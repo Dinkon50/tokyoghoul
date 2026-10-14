@@ -6,11 +6,19 @@ import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.ClanActionC2S;
 import com.tokyoghoulrpg.network.packet.ClanStateS2C;
+import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.rep.Standing;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 import java.util.UUID;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -30,6 +38,8 @@ public class ClanScreen extends Screen {
     private static ClanStateS2C state;
 
     private EditBox nameBox;
+    /** Кнопки «+» и в игре ли участник: доступность обновляется каждый кадр (откат идёт и при открытом меню). */
+    private final Map<Button, Boolean> powerButtons = new HashMap<>();
     private EditBox amountBox;
     private String nameText = "";
     private String amountText = "10";
@@ -95,6 +105,7 @@ public class ClanScreen extends Screen {
     protected void init() {
         nameBox = null;
         amountBox = null;
+        powerButtons.clear();
         if (state == null) {
             return;
         }
@@ -141,6 +152,14 @@ public class ClanScreen extends Screen {
             }
             boolean self = member.id().equals(me());
             if (!self) {
+                // «+»: передать силу и половину здоровья на 30 секунд
+                Button power = Button.builder(Component.literal("+"),
+                        b -> send(ClanManager.GIVE_POWER, "", member.id(), 0)).bounds(left + 132, y, 14, 14)
+                        .tooltip(Tooltip.create(Component.translatable("screen.tokyoghoulrpg.clan.give_power_tip")))
+                        .build();
+                power.active = member.flag() && canGivePower();
+                powerButtons.put(power, member.flag());
+                addRenderableWidget(power);
                 Button points = Button.builder(Component.translatable("screen.tokyoghoulrpg.clan.give_points"),
                         b -> send(ClanManager.GIVE_POINTS, "", member.id(), amount())).bounds(left + 150, y, 52, 14).build();
                 Button blood = Button.builder(Component.translatable("screen.tokyoghoulrpg.clan.give_blood"),
@@ -209,7 +228,16 @@ public class ClanScreen extends Screen {
                 gfx.drawString(this.font, invite.name(), left + 10, y + 3, 0xFFFFFF, false);
                 y += ROW;
             }
+            // своя репутация (без клана репутация клана считается обычной)
+            PlayerData own = data();
+            int standing = own == null ? 0 : own.getStanding();
+            Component repLine = Component.translatable("screen.tokyoghoulrpg.clan.rep_own", Standing.colored(standing));
+            int ry = top + HEIGHT - 20;
+            gfx.drawString(this.font, repLine, left + 10, ry, 0xC9C9C9, false);
             super.render(gfx, mouseX, mouseY, partialTick);
+            if (inside(mouseX, mouseY, left + 10, ry - 2, this.font.width(repLine), 12)) {
+                gfx.renderComponentTooltip(this.font, repTooltip(standing, null), mouseX, mouseY);
+            }
             return;
         }
 
@@ -222,6 +250,13 @@ public class ClanScreen extends Screen {
         gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.amount"), left + 10, top + 33, 0xE6E6E6, false);
         gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.members", state.members.size()),
                 left + 10, top + 48, 0xE6E6E6, false);
+        // репутация клана и своя (наведи — подсказка, что они дают)
+        int standing = data == null ? 0 : data.getStanding();
+        Component repLine = Component.translatable("screen.tokyoghoulrpg.clan.rep",
+                Standing.colored(state.reputation), Standing.colored(standing));
+        int repX = left + WIDTH - 10 - this.font.width(repLine);
+        gfx.drawString(this.font, repLine, repX, top + 48, 0xC9C9C9, false);
+        boolean repHover = inside(mouseX, mouseY, repX, top + 46, this.font.width(repLine), 12);
 
         int y = top + 60;
         int shown = 0;
@@ -262,7 +297,44 @@ public class ClanScreen extends Screen {
             gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.leader_only"),
                     left + 10, top + HEIGHT - 20, 0x777777, false);
         }
+        boolean canGive = canGivePower();
+        powerButtons.forEach((button, online) -> button.active = online && canGive);
         super.render(gfx, mouseX, mouseY, partialTick);
+        if (repHover) {
+            gfx.renderComponentTooltip(this.font, repTooltip(standing, state.reputation), mouseX, mouseY);
+        }
+    }
+
+    /** Сам сейчас можешь передать силу: нет связи и нет отката (сервер всё равно проверит). */
+    private static boolean canGivePower() {
+        Minecraft mc = Minecraft.getInstance();
+        PlayerData data = data();
+        if (mc.level == null || data == null) {
+            return false;
+        }
+        long now = mc.level.getGameTime();
+        return data.getBondEndTick() <= now && data.getBondCooldownEnd() <= now;
+    }
+
+    private static boolean inside(int mouseX, int mouseY, int x, int y, int w, int h) {
+        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
+    }
+
+    /** Подсказка: откуда берётся репутация и что она даёт сейчас. clanRep = null — игрок без клана. */
+    private static List<Component> repTooltip(int own, Integer clanRep) {
+        Standing.Tier ownTier = Standing.tier(own);
+        Standing.Tier clanTier = clanRep == null ? Standing.Tier.NEUTRAL : Standing.tier(clanRep);
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.translatable("screen.tokyoghoulrpg.rep_tip.title").withStyle(ChatFormatting.GOLD));
+        lines.add(Component.translatable("screen.tokyoghoulrpg.rep_tip.up").withStyle(ChatFormatting.GREEN));
+        lines.add(Component.translatable("screen.tokyoghoulrpg.rep_tip.down").withStyle(ChatFormatting.RED));
+        lines.add(Component.translatable("screen.tokyoghoulrpg.rep_tip.levels", Balance.STANDING_HIGH, Balance.STANDING_LOW)
+                .withStyle(ChatFormatting.GRAY));
+        if (clanRep == null) {
+            lines.add(Component.translatable("screen.tokyoghoulrpg.rep_tip.no_clan").withStyle(ChatFormatting.GRAY));
+        }
+        lines.add(Component.translatable("screen.tokyoghoulrpg.rep_status." + Standing.statusKey(ownTier, clanTier)));
+        return lines;
     }
 
     private static PlayerData data() {

@@ -26,6 +26,8 @@ public class ClanData extends SavedData {
         public final Map<UUID, String> members = new LinkedHashMap<>();
         /** Приглашённые: кто ещё не ответил. */
         public final Set<UUID> invited = new LinkedHashSet<>();
+        /** Репутация клана (от -100 до 100). Меняется от дел всех участников. */
+        public int reputation = 0;
 
         Clan(UUID id, String name, UUID leader) {
             this.id = id;
@@ -91,6 +93,16 @@ public class ClanData extends SavedData {
         setDirty();
     }
 
+    /** Изменить репутацию клана (в пределах от -100 до 100). Возвращает старое значение. */
+    public int changeReputation(Clan clan, int delta) {
+        int before = clan.reputation;
+        clan.reputation = Math.max(-100, Math.min(100, before + delta));
+        if (clan.reputation != before) {
+            setDirty();
+        }
+        return before;
+    }
+
     /** Кланы, которые пригласили игрока. */
     public List<Clan> invitesFor(UUID player) {
         List<Clan> list = new ArrayList<>();
@@ -121,6 +133,7 @@ public class ClanData extends SavedData {
             c.putUUID("id", clan.id);
             c.putString("name", clan.name);
             c.putUUID("leader", clan.leader);
+            c.putInt("rep", clan.reputation);
             ListTag members = new ListTag();
             for (Map.Entry<UUID, String> entry : clan.members.entrySet()) {
                 CompoundTag m = new CompoundTag();
@@ -148,6 +161,7 @@ public class ClanData extends SavedData {
         for (int i = 0; i < list.size(); i++) {
             CompoundTag c = list.getCompound(i);
             Clan clan = new Clan(c.getUUID("id"), c.getString("name"), c.getUUID("leader"));
+            clan.reputation = Math.max(-100, Math.min(100, c.getInt("rep")));
             ListTag members = c.getList("members", Tag.TAG_COMPOUND);
             for (int j = 0; j < members.size(); j++) {
                 CompoundTag m = members.getCompound(j);

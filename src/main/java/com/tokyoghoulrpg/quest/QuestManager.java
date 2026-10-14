@@ -93,6 +93,7 @@ public final class QuestManager {
             data.addSkillPoints(quest.reward());
             data.addBloodPoints(blood);
             data.setQuestIndex(data.getQuestIndex() + 1);
+            com.tokyoghoulrpg.rank.Ranks.add(player, com.tokyoghoulrpg.combat.Balance.RANK_QUEST);
             if (!ModCommands.isSilent()) {
                 player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.quest_done",
                         quest.title(), quest.reward(), blood));

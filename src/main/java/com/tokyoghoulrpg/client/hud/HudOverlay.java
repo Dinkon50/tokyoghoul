@@ -100,6 +100,51 @@ public final class HudOverlay {
                 drawBar(gfx, bx, by, fraction, color, back);
             }
         }
+
+        // Под панелью: особые ауры и «тишина», сколько секунд осталось
+        int ty = PANEL_Y + panelH + 3;
+        if (data.isRetributionActive(now)) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.retribution", secondsLeft(data.getRetributionEndTick(), now)),
+                    PANEL_X + 2, ty, 0xB070FF, true);
+            ty += 10;
+        }
+        if (data.isCharismaActive(now)) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.charisma", secondsLeft(data.getCharismaEndTick(), now)),
+                    PANEL_X + 2, ty, 0xFFD133, true);
+            ty += 10;
+        }
+        double shield = data.fortuneShieldAt(now);
+        if (shield > 0.0) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.fortune", Math.round(shield * 100),
+                    secondsLeft(data.getFortuneShieldEndTick(), now)), PANEL_X + 2, ty, 0x3CC878, true);
+            ty += 10;
+        }
+        if (data.isSilencedAt(now)) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.silenced", secondsLeft(data.getSilenceEndTick(), now)),
+                    PANEL_X + 2, ty, 0xA0A0A0, true);
+            ty += 10;
+        }
+        // Какудзя
+        if (data.isKakujaActive(now)) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.kakuja", secondsLeft(data.getKakujaEndTick(), now)),
+                    PANEL_X + 2, ty, 0xE0203A, true);
+            ty += 10;
+        }
+        // передача силы в клане: получил (+) или отдал (-), потом откат
+        if (data.getBondEndTick() > now) {
+            double power = data.getBondPower();
+            boolean gained = power >= 0.0;
+            gfx.drawString(font, Component.translatable(gained ? "hud.tokyoghoulrpg.bond_gained" : "hud.tokyoghoulrpg.bond_given",
+                            Math.round(Math.abs(power) * 100), secondsLeft(data.getBondEndTick(), now)),
+                    PANEL_X + 2, ty, gained ? 0xFFC040 : 0xC07858, true);
+        } else if (data.getBondCooldownEnd() > now) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.bond_cooldown",
+                    secondsLeft(data.getBondCooldownEnd(), now)), PANEL_X + 2, ty, 0x8A8A8A, true);
+        }
+    }
+
+    private static int secondsLeft(long end, long now) {
+        return (int) Math.ceil(Math.max(0L, end - now) / 20.0);
     }
 
     private static void drawBar(GuiGraphics gfx, int x, int y, float fraction, int fill, int back) {

@@ -68,6 +68,35 @@ public final class AbilityManager {
 
     public static void useAbility(ServerPlayer player, AbilityType type) {
         PlayerData data = PlayerData.get(player);
+        // кофейня — мирная зона: никаких способностей (кроме тех, кто дрался с игроком меньше минуты назад)
+        if (com.tokyoghoulrpg.world.Cafe.inside(player) && !com.tokyoghoulrpg.world.Cafe.inFight(player)) {
+            cafePeace(player);
+            return;
+        }
+        // «Тишина» после чужой «Ауры возмездия»: только обычные удары
+        if (data != null && !type.allowedWhenSilenced() && Silence.isSilenced(player)) {
+            silenced(player);
+            return;
+        }
+        // Особые ауры есть у всех классов
+        if (type == AbilityType.RETRIBUTION || type == AbilityType.CHARISMA) {
+            if (data != null) {
+                SpecialAbilities.use(player, data, type);
+            }
+            return;
+        }
+        if (type == AbilityType.KAKUJA) {
+            if (data != null) {
+                Kakuja.use(player, data);
+            }
+            return;
+        }
+        if (type == AbilityType.FORTUNE) {
+            if (data != null) {
+                Fortune.use(player, data);
+            }
+            return;
+        }
         // Агент CCG: способности квинке; J — «Освобождение квинке»
         if (data != null && data.getPlayerClass() == PlayerClass.CCG_AGENT && type != AbilityType.DASH) {
             QuinqueAbilities.use(player, data, type == AbilityType.RAGE ? AbilityType.QUINQUE_RELEASE : type);
@@ -147,9 +176,17 @@ public final class AbilityManager {
     }
 
     /** Блок удерживается кнопкой: клиент присылает «нажал» и «отпустил». */
+    private static void cafePeace(ServerPlayer player) {
+        player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.cafe.peace"), true);
+    }
+
     public static void setBlock(ServerPlayer player, boolean held) {
         PlayerData data = PlayerData.get(player);
         if (data == null) {
+            return;
+        }
+        if (held && com.tokyoghoulrpg.world.Cafe.inside(player) && !com.tokyoghoulrpg.world.Cafe.inFight(player)) {
+            cafePeace(player);
             return;
         }
         if (!held) {
@@ -160,6 +197,10 @@ public final class AbilityManager {
         }
         CombatState state = data.combat();
         long now = player.level().getGameTime();
+        if (Silence.isSilenced(player)) {
+            silenced(player);
+            return;
+        }
         boolean canBlock = data.getPlayerClass().hasKagune() || QuinqueAbilities.active(player, data);
         if (!canBlock || data.isBlocking() || !player.isAlive()) {
             return;
@@ -209,6 +250,8 @@ public final class AbilityManager {
         // Укус утоляет жажду крови полностью
         data.setCraving(Balance.CRAVING_MAX);
         QuestManager.progress(player, Quest.Trigger.BITE, 1);
+        // укус гуля копит Какудзя
+        Kakuja.onBite(player, target);
         // Во время ярости очки не копятся: addRage сам это проверяет
         gainRage(data, SkillEffects.biteRage(level));
         NetworkHandler.syncTo(player);
@@ -231,7 +274,9 @@ public final class AbilityManager {
                 || entity instanceof CcgAgentNpc
                 || entity instanceof InformantNpc
                 || entity instanceof GhoulBoss
-                || entity instanceof CcgBoss;
+                || entity instanceof CcgBoss
+                || entity instanceof com.tokyoghoulrpg.entity.HalfGhoulNpc
+                || entity instanceof com.tokyoghoulrpg.entity.HalfGhoulBoss;
     }
 
     /**
@@ -403,6 +448,7 @@ public final class AbilityManager {
         AbilitySync.Timing timing = AbilitySync.get("kagune_grapple");
         state.grappleReady = now + Balance.GRAPPLE_COOLDOWN;
         NetworkHandler.playAnimation(player, "kagune_grapple");
+        NetworkHandler.kaguneReach(player, hit.entity() != null ? hit.entity().getId() : -1, hit.point(), "kagune_grapple");
         Effects.sound(player, SoundEvents.FISHING_BOBBER_THROW, 0.9F, 0.6F);
         state.actions.add(new Actions.GrappleSelf(now, hit.entity(), hit.point(),
                 timing.pullStart(), timing.pullEnd(), timing.duration()));
@@ -422,6 +468,7 @@ public final class AbilityManager {
         AbilitySync.Timing timing = AbilitySync.get("kagune_grab_pull");
         state.pullReady = now + Balance.PULL_COOLDOWN;
         NetworkHandler.playAnimation(player, "kagune_grab_pull");
+        NetworkHandler.kaguneReach(player, hit.entity().getId(), hit.point(), "kagune_grab_pull");
         Effects.sound(player, SoundEvents.FISHING_BOBBER_THROW, 0.9F, 0.6F);
         state.actions.add(new Actions.PullTarget(now, hit.entity(), timing));
         QuestManager.progress(player, Quest.Trigger.PULL, 1);
@@ -498,7 +545,10 @@ public final class AbilityManager {
         }
         rewardLevels(player, data);
         applyClassStats(player, data, false);
+        SpecialAbilities.tick(player, data, player.level().getGameTime());
+        Kakuja.tick(player, data, player.level().getGameTime());
         CcgRaids.tick(player, data);
+        com.tokyoghoulrpg.rep.Standing.tick(player, data);
         QuinqueReward.giveStarter(player, data);
         // Двойной прыжок снова доступен на земле, в воде и на лестнице
         if (player.onGround() || player.isInWater() || player.onClimbable()) {
@@ -703,7 +753,8 @@ public final class AbilityManager {
 
         // Человек: ветки «Здоровье» и «Скорость ударов» из его дерева навыков.
         // У других классов level() вернёт 0, и модификаторы снимутся.
-        double vitality = SkillEffects.humanVitality(lvl(data, SkillTree.Branch.VITALITY));
+        // «Здоровье» есть у всех классов: у гуля и полугуля прибавка больше
+        double vitality = SkillEffects.vitality(lvl(data, SkillTree.Branch.VITALITY), ghoul);
         if (vitality > 0.0) {
             AttrUtil.setPermanent(player, Attributes.MAX_HEALTH, HUMAN_HEALTH_ID, "tg_human_health",
                     vitality, AttributeModifier.Operation.ADDITION);
@@ -789,6 +840,11 @@ public final class AbilityManager {
         String seconds = String.format(Locale.ROOT, "%.1f", ticksLeft / 20.0);
         player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.cooldown",
                 Component.translatable(type.translationKey()), seconds), true);
+    }
+
+    private static void silenced(ServerPlayer player) {
+        String seconds = String.format(Locale.ROOT, "%.1f", Silence.ticksLeft(player) / 20.0);
+        player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.silenced", seconds), true);
     }
 
     private static void noTarget(ServerPlayer player) {

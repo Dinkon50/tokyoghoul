@@ -2,7 +2,9 @@
 Постройки мода в формате .nbt (как сохраняет структурный блок Minecraft 1.20.1, DataVersion 3465).
   ccg_office    — двухэтажный офис CCG: белые стены, кварцевые колонны, окна, кабинет босса на 2-м этаже.
   ghoul_hideout — разрушенное логово гулей: глубинносланцевые руины, паутина, кости, кровь на полу.
-Запуск: python3 structures.py <папка data/tokyoghoulrpg/structures>
+  half_ghoul_arena — круглая арена Кровавого полугуля: алтарь в центре, колонны, сундуки с редкой добычей.
+  cafe          — кофейня: мирная зона, стойка с хозяином, столики, кухня; открыта днём.
+Запуск: python3 structures.py <папка data/tokyoghoulrpg/structures> [имена построек]
 """
 import os
 import random
@@ -286,9 +288,168 @@ def ghoul_hideout():
     return b
 
 
+def half_ghoul_arena():
+    """
+    Арена Кровавого полугуля 39 x 13 x 39. Круглая площадка радиусом 18 из чернокаменного кирпича,
+    кольца из багровых и плачущих обсидиановых плит, в центре алтарь арены (он призывает босса).
+    Низкая стена по кругу с четырьмя проходами, восемь колонн с фонарями душ, четыре сундука с редкой добычей.
+    Внутри всё освещено, чтобы на арене не появлялись обычные монстры.
+    """
+    W, H, D = 39, 13, 39
+    C = 19
+    b = Build(W, H, D, 7707)
+    rng = b.rng
+    import math
+    for x in range(W):
+        for z in range(D):
+            r = math.hypot(x - C, z - C)
+            if r > 18.6:
+                # углы квадрата: земля и обломки, чтобы не было дыр
+                b.set(x, 0, z, rng.choice(["coarse_dirt", "blackstone", "coarse_dirt", "gravel"]))
+                continue
+            if r < 1.0:
+                continue                                         # центр — алтарь
+            if r < 3.2:
+                block = "crying_obsidian" if int(r * 3) % 2 == 0 else "obsidian"
+            elif r < 4.6:
+                block = "red_nether_bricks"
+            elif abs(r - 9.0) < 0.6:
+                block = "shroomlight" if (x - C) * (z - C) == 0 or abs(abs(x - C) - abs(z - C)) <= 0 else "red_nether_bricks"
+            elif abs(r - 14.0) < 0.5:
+                block = "chiseled_polished_blackstone"
+            else:
+                angle = math.atan2(z - C, x - C)
+                spoke = min(abs(((angle / (math.pi / 4)) % 1.0) - 0.5) for _ in range(1)) < 0.06
+                block = "polished_blackstone" if spoke else rng.choice(
+                    ["polished_blackstone_bricks"] * 6 + ["cracked_polished_blackstone_bricks"] * 2 + ["gilded_blackstone"])
+            b.set(x, 0, z, block)
+    b.set(C, 0, C, "tokyoghoulrpg:arena_altar")
+    # светящиеся пятна крови на площадке
+    for _ in range(26):
+        x, z = rng.randint(4, W - 5), rng.randint(4, D - 5)
+        if 4.6 < math.hypot(x - C, z - C) < 16.5 and b.get(x, 0, z) != "minecraft:shroomlight":
+            b.set(x, 0, z, rng.choice(["crimson_nylium", "red_nether_bricks", "crying_obsidian"]))
+    # стена по кругу высотой 2 с полуплитами сверху и четыре прохода (север, юг, запад, восток)
+    for x in range(W):
+        for z in range(D):
+            r = math.hypot(x - C, z - C)
+            if 17.6 <= r <= 18.6:
+                if abs(x - C) <= 2 or abs(z - C) <= 2:
+                    continue
+                b.set(x, 1, z, "polished_blackstone_bricks")
+                b.set(x, 2, z, "polished_blackstone_bricks" if rng.random() < 0.85 else "cracked_polished_blackstone_bricks")
+                b.set(x, 3, z, "polished_blackstone_brick_slab", type="bottom", waterlogged="false")
+    # восемь колонн радиусом 13 с фонарями
+    for i in range(8):
+        a = i * math.pi / 4 + math.pi / 8
+        px, pz = C + round(math.cos(a) * 13), C + round(math.sin(a) * 13)
+        for dx in (0, 1):
+            for dz in (0, 1):
+                for y in range(1, 9):
+                    mid = y in (4, 5)
+                    b.set(px + dx, y, pz + dz, "shroomlight" if (mid and (dx + dz) % 2 == 0) else
+                          ("chiseled_polished_blackstone" if y in (1, 8) else "polished_blackstone"))
+                b.set(px + dx, 9, pz + dz, "crying_obsidian")
+        b.set(px, 10, pz, "soul_lantern", hanging="false", waterlogged="false")
+        b.set(px + 1, 10, pz + 1, "soul_lantern", hanging="false", waterlogged="false")
+    # сундуки с редкой добычей по диагоналям, лицом к центру
+    for sx, sz, facing in ((C - 11, C - 11, "south"), (C + 11, C - 11, "south"), (C - 11, C + 11, "north"), (C + 11, C + 11, "north")):
+        b.chest(sx, 1, sz, facing, "half_ghoul_arena")
+        b.set(sx, 0, sz, "gilded_blackstone")
+    return b
+
+
+def cafe():
+    """
+    Кофейня 15 x 8 x 15 (квадрат: зона кофейни одинакова при любом повороте постройки). Вход с севера (z = 0).
+    В полу за стойкой знак кофейни (7, 0, 8): на нём стоит хозяин, от него считается мирная зона.
+    Спереди витрины и два столика со стульями, U-образная стойка с «кофемашиной», сзади кухня.
+    """
+    W, H, D = 15, 8, 15
+    b = Build(W, H, D, 7808)
+    # пол: тёмное дерево, «шахматка» у стойки
+    b.fill(0, 0, 0, W - 1, 0, D - 1, "spruce_planks")
+    for x in range(3, 12):
+        for z in range(6, 11):
+            b.set(x, 0, z, "dark_oak_planks" if (x + z) % 2 == 0 else "stripped_dark_oak_wood", axis="y")
+    b.set(7, 0, 8, "tokyoghoulrpg:cafe_sign")
+    # стены: низ — тёмный дуб, выше — белая терракота; углы — брёвна
+    for y in range(1, 5):
+        for x in range(W):
+            for z in (0, D - 1):
+                b.set(x, y, z, "dark_oak_planks" if y == 1 else "white_terracotta")
+        for z in range(D):
+            for x in (0, W - 1):
+                b.set(x, y, z, "dark_oak_planks" if y == 1 else "white_terracotta")
+    for x, z in ((0, 0), (W - 1, 0), (0, D - 1), (W - 1, D - 1)):
+        for y in range(1, 6):
+            b.set(x, y, z, "stripped_dark_oak_log", axis="y")
+    # витрины спереди и окна по бокам
+    for x in (2, 3, 4, 10, 11, 12):
+        for y in (2, 3):
+            b.set(x, y, 0, "brown_stained_glass")
+    for z in (3, 4, 10, 11):
+        for y in (2, 3):
+            b.set(0, y, z, "brown_stained_glass")
+            b.set(W - 1, y, z, "brown_stained_glass")
+    # дверь и полосатый навес над входом
+    b.door(7, 1, 0, "spruce_door", "south", hinge="left")
+    for x in range(3, 12):
+        b.set(x, 4, 0, "red_wool" if x % 2 == 0 else "white_wool")
+    # крыша и бортик
+    b.fill(0, 5, 0, W - 1, 5, D - 1, "dark_oak_planks")
+    for x in range(W):
+        b.set(x, 6, 0, "dark_oak_slab", type="bottom", waterlogged="false")
+        b.set(x, 6, D - 1, "dark_oak_slab", type="bottom", waterlogged="false")
+    for z in range(D):
+        b.set(0, 6, z, "dark_oak_slab", type="bottom", waterlogged="false")
+        b.set(W - 1, 6, z, "dark_oak_slab", type="bottom", waterlogged="false")
+    b.set(7, 6, 7, "campfire", facing="north", lit="false", signal_fire="false", waterlogged="false")  # «труба»
+    # свет: фонари под потолком
+    for x, z in ((3, 3), (11, 3), (7, 3), (3, 11), (11, 11), (7, 12)):
+        b.set(x, 4, z, "lantern", hanging="true", waterlogged="false")
+    # U-образная стойка, хозяин внутри
+    for x in range(3, 12):
+        b.set(x, 1, 6, "spruce_planks")
+    for z in (7, 8, 9):
+        b.set(3, 1, z, "spruce_planks")
+        b.set(11, 1, z, "spruce_planks")
+    b.set(5, 2, 6, "brewing_stand", has_bottle_0="false", has_bottle_1="false", has_bottle_2="false")
+    b.set(9, 2, 6, "potted_red_tulip")
+    b.set(10, 2, 6, "lantern", hanging="false", waterlogged="false")
+    b.set(3, 2, 8, "potted_azalea_bush")
+    # кухня у задней стены
+    b.set(4, 1, 13, "smoker", facing="south", lit="false")
+    b.set(5, 1, 13, "barrel", facing="up", open="false")
+    b.set(6, 1, 13, "water_cauldron", level="3")
+    for x in (8, 9, 10):
+        b.set(x, 1, 13, "spruce_planks")
+    b.set(8, 2, 13, "potted_fern")
+    b.set(9, 2, 13, "barrel", facing="up", open="false")
+    for y in (1, 2):
+        b.set(12, y, 13, "bookshelf")
+        b.set(13, y, 13, "bookshelf")
+    b.set(13, 1, 10, "lectern", facing="west", has_book="false", powered="false")
+    # два столика со стульями у витрин и скамья у боковой стены
+    for tx in (3, 11):
+        b.set(tx, 0, 3, "brown_wool")
+        b.set(tx, 1, 3, "spruce_fence", north="false", east="false", south="false", west="false", waterlogged="false")
+        b.set(tx, 2, 3, "spruce_pressure_plate", powered="false")
+        b.set(tx - 1, 1, 3, "spruce_stairs", facing="east", half="bottom", shape="straight", waterlogged="false")
+        b.set(tx + 1, 1, 3, "spruce_stairs", facing="west", half="bottom", shape="straight", waterlogged="false")
+    for z in (9, 10, 11):
+        b.set(1, 1, z, "spruce_stairs", facing="east", half="bottom", shape="straight", waterlogged="false")
+    b.set(1, 1, 1, "potted_bamboo")
+    b.set(W - 2, 1, 1, "potted_bamboo")
+    return b
+
+
 if __name__ == "__main__":
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
-    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout)):
+    only = set(sys.argv[2:])
+    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe)):
+        if only and name not in only:
+            continue
         info = build().save(os.path.join(out, name + ".nbt"))
         print(name, "palette/blocks/entities:", info)

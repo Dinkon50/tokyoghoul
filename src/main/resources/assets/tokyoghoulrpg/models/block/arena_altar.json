@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "tokyoghoulrpg:block/arena_altar_top",
+    "side": "tokyoghoulrpg:block/arena_altar_side",
+    "bottom": "tokyoghoulrpg:block/arena_altar_bottom"
+  }
+}

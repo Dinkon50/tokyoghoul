@@ -13,6 +13,7 @@ import com.tokyoghoulrpg.network.packet.ClanStateS2C;
 import com.tokyoghoulrpg.network.packet.ContractActionC2S;
 import com.tokyoghoulrpg.network.packet.DoubleJumpC2S;
 import com.tokyoghoulrpg.network.packet.KaguneAnimS2C;
+import com.tokyoghoulrpg.network.packet.KaguneReachS2C;
 import com.tokyoghoulrpg.network.packet.KaguneStateS2C;
 import com.tokyoghoulrpg.network.packet.OpenBloodShopS2C;
 import com.tokyoghoulrpg.network.packet.OpenClassSelectionS2C;
@@ -31,7 +32,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "12";
+    private static final String PROTOCOL = "16";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -84,13 +85,47 @@ public final class NetworkHandler {
                 ClanActionC2S::encode, ClanActionC2S::decode, ClanActionC2S::handle);
         CHANNEL.registerMessage(id++, ClanStateS2C.class,
                 ClanStateS2C::encode, ClanStateS2C::decode, ClanStateS2C::handle);
+        CHANNEL.registerMessage(id++, KaguneReachS2C.class,
+                KaguneReachS2C::encode, KaguneReachS2C::decode, KaguneReachS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.OpenCafeS2C.class,
+                com.tokyoghoulrpg.network.packet.OpenCafeS2C::encode, com.tokyoghoulrpg.network.packet.OpenCafeS2C::decode,
+                com.tokyoghoulrpg.network.packet.OpenCafeS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.CafeActionC2S.class,
+                com.tokyoghoulrpg.network.packet.CafeActionC2S::encode, com.tokyoghoulrpg.network.packet.CafeActionC2S::decode,
+                com.tokyoghoulrpg.network.packet.CafeActionC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.RankS2C.class,
+                com.tokyoghoulrpg.network.packet.RankS2C::encode, com.tokyoghoulrpg.network.packet.RankS2C::decode,
+                com.tokyoghoulrpg.network.packet.RankS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.RequestSyncC2S.class,
+                com.tokyoghoulrpg.network.packet.RequestSyncC2S::encode, com.tokyoghoulrpg.network.packet.RequestSyncC2S::decode,
+                com.tokyoghoulrpg.network.packet.RequestSyncC2S::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */
     public static void syncTo(ServerPlayer player) {
-        player.getCapability(PlayerData.CAP).ifPresent(data ->
-                CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new SyncDataS2C(data.toSyncTag())));
+        player.getCapability(PlayerData.CAP).ifPresent(data -> {
+            // клан для меню «Профиль»
+            net.minecraft.server.MinecraftServer server = player.getServer();
+            com.tokyoghoulrpg.clan.ClanData.Clan clan = server == null ? null
+                    : com.tokyoghoulrpg.clan.ClanData.get(server).clanOf(player.getUUID());
+            data.setClanCache(clan == null ? "" : clan.name, clan == null ? 0 : clan.reputation);
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new SyncDataS2C(data.toSyncTag()));
+            com.tokyoghoulrpg.rank.Ranks.broadcastIfChanged(player, data);
+        });
         broadcastKagune(player);
+    }
+
+    /** Ранг игрока — ему самому и всем, кто его видит (над головой). */
+    public static void sendRank(ServerPlayer player, int code) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new com.tokyoghoulrpg.network.packet.RankS2C(player.getId(), code));
+    }
+
+    /** Когда receiver начинает видеть target: его ранг. */
+    public static void sendRankTo(ServerPlayer receiver, ServerPlayer target) {
+        PlayerData data = PlayerData.get(target);
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> receiver),
+                new com.tokyoghoulrpg.network.packet.RankS2C(target.getId(), com.tokyoghoulrpg.rank.Ranks.code(data)));
     }
 
     /** Сообщает игроку и всем, кто его видит, включено ли кагуне и действует ли ярость. */
@@ -121,6 +156,17 @@ public final class NetworkHandler {
                 visible && data.isBlocking());
     }
 
+    /** Анимация кагуне у любого существа с кагуне (например, у Кровавого полугуля): видят все, кто рядом. */
+    public static void playAnimationFor(net.minecraft.world.entity.Entity entity, String animation) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new KaguneAnimS2C(entity.getId(), animation));
+    }
+
+    /** Щупальце захвата тянется к цели: видят все, кто видит игрока. targetId -1 — цель блок. */
+    public static void kaguneReach(ServerPlayer player, int targetId, net.minecraft.world.phys.Vec3 point, String animation) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new KaguneReachS2C(player.getId(), targetId, point.x, point.y, point.z, animation));
+    }
+
     /** Красные края экрана у укусившего. */
     public static void biteFlash(ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new BiteFlashS2C());
@@ -132,6 +178,11 @@ public final class NetworkHandler {
         Contract offer = data == null ? null : ContractManager.todayOffer(player, data);
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new OpenContractsS2C(informantId, offer == null ? "" : offer.id(), ContractManager.day(player)));
+    }
+
+    /** Открыть игроку меню хозяина кофейни. */
+    public static void openCafe(ServerPlayer player, int ownerId) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new com.tokyoghoulrpg.network.packet.OpenCafeS2C(ownerId));
     }
 
     /** Открыть игроку лавку торговца. */

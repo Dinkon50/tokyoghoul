@@ -68,7 +68,7 @@ public final class CcgRaids {
         }
     }
 
-    private static boolean canRaidNow(ServerPlayer player) {
+    static boolean canRaidNow(ServerPlayer player) {
         return player.isAlive() && !player.isCreative() && !player.isSpectator()
                 && player.level().dimension() == Level.OVERWORLD
                 && player.level().getDifficulty() != Difficulty.PEACEFUL;
@@ -110,7 +110,7 @@ public final class CcgRaids {
     }
 
     /** Место на поверхности в 18-26 блоках от игрока: твёрдый блок под ногами, два блока воздуха. */
-    private static BlockPos findSpot(ServerLevel level, ServerPlayer player, double angle, RandomSource random) {
+    static BlockPos findSpot(ServerLevel level, ServerPlayer player, double angle, RandomSource random) {
         for (int attempt = 0; attempt < 12; attempt++) {
             double distance = Balance.RAID_DIST_MIN + random.nextDouble() * (Balance.RAID_DIST_MAX - Balance.RAID_DIST_MIN);
             double a = angle + (attempt == 0 ? 0.0 : (random.nextDouble() - 0.5) * 1.5);

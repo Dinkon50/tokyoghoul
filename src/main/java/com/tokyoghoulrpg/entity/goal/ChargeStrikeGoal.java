@@ -2,7 +2,6 @@ package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.combat.Effects;
-import com.tokyoghoulrpg.difficulty.DifficultyScaling;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -42,7 +41,7 @@ public class ChargeStrikeGoal extends Goal {
         if (readyAt < 0L) {
             readyAt = now + FIRST_DELAY;
         }
-        if (now < readyAt) {
+        if (now < readyAt || !BossCombat.canAct(mob)) {   // «тишина» от «Ауры возмездия», превращение
             return false;
         }
         LivingEntity target = mob.getTarget();
@@ -94,7 +93,7 @@ public class ChargeStrikeGoal extends Goal {
         Effects.particles(mob, ParticleTypes.CLOUD, 3, 0.3, 0.02);
         for (LivingEntity victim : BossCombat.around(mob, 1.6, ally)) {
             if (hit.add(victim)) {
-                BossCombat.strongHit(mob, victim, Balance.BOSS_CHARGE_DAMAGE, 1.0);
+                BossCombat.strongHit(mob, victim, Balance.BOSS_CHARGE_DAMAGE * BossCombat.mult(mob), 1.0);
                 Effects.sound(victim, SoundEvents.PLAYER_ATTACK_CRIT, 1.0F, 0.8F);
             }
         }
@@ -102,7 +101,7 @@ public class ChargeStrikeGoal extends Goal {
 
     @Override
     public void stop() {
-        readyAt = mob.level().getGameTime() + DifficultyScaling.bossCooldown(mob, Balance.BOSS_CHARGE_COOLDOWN);
+        readyAt = mob.level().getGameTime() + BossCombat.cooldown(mob, Balance.BOSS_CHARGE_COOLDOWN);
         mob.setDeltaMovement(mob.getDeltaMovement().multiply(0.2, 1.0, 0.2));
     }
 }

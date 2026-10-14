@@ -5,6 +5,9 @@ import com.tokyoghoulrpg.entity.CcgAgentNpc;
 import com.tokyoghoulrpg.entity.CcgBoss;
 import com.tokyoghoulrpg.entity.GhoulBoss;
 import com.tokyoghoulrpg.entity.GhoulNpc;
+import com.tokyoghoulrpg.entity.HalfGhoulBoss;
+import com.tokyoghoulrpg.entity.HalfGhoulNpc;
+import com.tokyoghoulrpg.entity.CafeOwnerNpc;
 import com.tokyoghoulrpg.entity.InformantNpc;
 import com.tokyoghoulrpg.entity.TraderNpc;
 import net.minecraft.world.entity.EntityType;
@@ -47,6 +50,20 @@ public final class ModEntities {
             () -> EntityType.Builder.of(CcgBoss::new, MobCategory.CREATURE)
                     .sized(0.75F, 2.4F).clientTrackingRange(10).build("ccg_boss"));
 
+    /** Свита Кровавого полугуля: в мире сама не появляется, её зовёт босс. */
+    public static final RegistryObject<EntityType<HalfGhoulNpc>> HALF_GHOUL = ENTITIES.register("half_ghoul",
+            () -> EntityType.Builder.of(HalfGhoulNpc::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("half_ghoul"));
+    /** Кровавый полугуль: самый сильный босс, живёт на своей арене. */
+    public static final RegistryObject<EntityType<HalfGhoulBoss>> HALF_GHOUL_BOSS = ENTITIES.register("half_ghoul_boss",
+            () -> EntityType.Builder.of(HalfGhoulBoss::new, MobCategory.MONSTER)
+                    .sized(0.8F, 2.6F).fireImmune().clientTrackingRange(12).build("half_ghoul_boss"));
+
+    /** Хозяин кофейни: стоит за стойкой, продаёт кофе и мясо, даёт задания. */
+    public static final RegistryObject<EntityType<CafeOwnerNpc>> CAFE_OWNER = ENTITIES.register("cafe_owner",
+            () -> EntityType.Builder.of(CafeOwnerNpc::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("cafe_owner"));
+
     private ModEntities() {
     }
 
@@ -57,6 +74,9 @@ public final class ModEntities {
         event.put(INFORMANT.get(), InformantNpc.createAttributes().build());
         event.put(GHOUL_BOSS.get(), GhoulBoss.createAttributes().build());
         event.put(CCG_BOSS.get(), CcgBoss.createAttributes().build());
+        event.put(HALF_GHOUL.get(), HalfGhoulNpc.createAttributes().build());
+        event.put(HALF_GHOUL_BOSS.get(), HalfGhoulBoss.createAttributes().build());
+        event.put(CAFE_OWNER.get(), InformantNpc.createAttributes().build());
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {

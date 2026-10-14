@@ -1,5 +1,8 @@
 package com.tokyoghoulrpg.event;
 
+import com.tokyoghoulrpg.clan.ClanData;
+import com.tokyoghoulrpg.raid.HuntWaves;
+import com.tokyoghoulrpg.rep.Standing;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -150,7 +153,37 @@ public final class ModCommands {
                                                 data.setRepGhouls(value);
                                                 return null;
                                             };
+                                        })))
+                        // личная репутация и репутация клана игрока
+                        .then(Commands.literal("personal")
+                                .then(withTarget(Commands.argument("value", IntegerArgumentType.integer(-100, 100)),
+                                        ctx -> {
+                                            int value = IntegerArgumentType.getInteger(ctx, "value");
+                                            return (player, data) -> {
+                                                Standing.change(player, value - data.getStanding(), 0);
+                                                return null;
+                                            };
+                                        })))
+                        .then(Commands.literal("clan")
+                                .then(withTarget(Commands.argument("value", IntegerArgumentType.integer(-100, 100)),
+                                        ctx -> {
+                                            int value = IntegerArgumentType.getInteger(ctx, "value");
+                                            return (player, data) -> {
+                                                ClanData.Clan clan = Standing.clanOf(player);
+                                                if (clan == null || player.getServer() == null) {
+                                                    return Component.translatable("command.tokyoghoulrpg.rep.no_clan",
+                                                            player.getDisplayName());
+                                                }
+                                                Standing.changeClan(player.getServer(), clan, value - clan.reputation);
+                                                return null;
+                                            };
                                         }))))
+                // волна NPC приходит сразу, даже если репутация хорошая
+                .then(Commands.literal("wave").requires(src -> src.hasPermission(OP))
+                        .then(withTarget(Commands.literal("big"), ctx -> (player, data) ->
+                                HuntWaves.start(player, true) > 0 ? null : Component.translatable("command.tokyoghoulrpg.raid.no_place")))
+                        .then(withTarget(Commands.literal("small"), ctx -> (player, data) ->
+                                HuntWaves.start(player, false) > 0 ? null : Component.translatable("command.tokyoghoulrpg.raid.no_place"))))
                 .then(withTarget(Commands.literal("raid").requires(src -> src.hasPermission(OP)), ctx -> (player, data) -> {
                     // отряд приходит сразу, даже если игрока сейчас не ищут; следующий рейд по обычному расписанию
                     return CcgRaids.start(player) ? null : Component.translatable("command.tokyoghoulrpg.raid.no_place");
@@ -256,7 +289,7 @@ public final class ModCommands {
     // ------------------------------------------------------------------
 
     private static int help(CommandContext<CommandSourceStack> ctx) {
-        for (int i = 0; i <= 18; i++) {
+        for (int i = 0; i <= 19; i++) {
             final int line = i;
             ctx.getSource().sendSuccess(() -> Component.translatable("command.tokyoghoulrpg.help." + line), false);
         }
@@ -283,9 +316,20 @@ public final class ModCommands {
                 .append("\n").append(questLine)
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.rep",
                         data.getRepCcg(), data.getRepGhouls()))
+                .append("\n").append(standingLine(player, data))
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.difficulty",
                         player.level().getDifficulty().getDisplayName(),
                         DifficultyScaling.describe(player.level())));
+    }
+
+    /** Личная репутация, репутация клана и что из них сейчас следует. */
+    private static Component standingLine(ServerPlayer player, PlayerData data) {
+        ClanData.Clan clan = Standing.clanOf(player);
+        Component clanPart = clan == null ? Component.translatable("command.tokyoghoulrpg.info.no_clan")
+                : Standing.colored(clan.reputation);
+        String status = Standing.statusKey(Standing.tier(data.getStanding()), Standing.clanTier(player));
+        return Component.translatable("command.tokyoghoulrpg.info.standing", Standing.colored(data.getStanding()),
+                clanPart, Component.translatable("screen.tokyoghoulrpg.rep_status." + status));
     }
 
     private static Component setClass(ServerPlayer player, PlayerData data, PlayerClass target) {

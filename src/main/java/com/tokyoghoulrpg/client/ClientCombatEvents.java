@@ -21,7 +21,8 @@ import net.minecraftforge.fml.common.Mod;
 
 /**
  * Управление атаками кагуне мышью и ограничения движения:
- * ЛКМ: обычная атака, ПКМ дважды быстро: сильная, Shift + ПКМ: рывок к цели, Shift + ЛКМ: притянуть цель.
+ * ЛКМ: обычная атака, ПКМ дважды быстро: сильная, Ctrl + ПКМ: рывок к цели, Ctrl + ЛКМ: притянуть цель
+ * (клавишу захвата можно переназначить, на Mac по умолчанию Option).
  * Работает только когда кагуне включено (G).
  */
 @Mod.EventBusSubscriber(modid = TokyoGhoulRPG.MOD_ID, value = Dist.CLIENT)
@@ -120,19 +121,19 @@ public final class ClientCombatEvents {
         if (!data.getPlayerClass().hasKagune() || !data.isKaguneActive()) {
             return;
         }
-        boolean shift = player.isShiftKeyDown();
+        boolean grab = KeyBindings.grabHeld();
 
         if (event.isAttack()) {
             // ЛКМ по блоку — кагуне копает, а не бьёт
-            if (!shift && mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK) {
+            if (!grab && mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK) {
                 return;
             }
             cancel(event);
-            send(shift ? AbilityType.PULL_TARGET : AbilityType.BASIC_ATTACK);
+            send(grab ? AbilityType.PULL_TARGET : AbilityType.BASIC_ATTACK);
         } else if (event.isUseItem()) {
             boolean fresh = useReleased;
             useReleased = false;
-            if (shift) {
+            if (grab) {
                 cancel(event);
                 send(AbilityType.GRAPPLE_SELF);
                 return;

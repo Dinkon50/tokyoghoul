@@ -2,7 +2,6 @@ package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.combat.Effects;
-import com.tokyoghoulrpg.difficulty.DifficultyScaling;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
 import java.util.function.Predicate;
@@ -36,7 +35,7 @@ public class SpinSweepGoal extends Goal {
         if (readyAt < 0L) {
             readyAt = now + FIRST_DELAY;
         }
-        if (now < readyAt) {
+        if (now < readyAt || !BossCombat.canAct(mob)) {   // «тишина» от «Ауры возмездия», превращение
             return false;
         }
         LivingEntity target = mob.getTarget();
@@ -68,13 +67,13 @@ public class SpinSweepGoal extends Goal {
             Effects.sound(mob, SoundEvents.PLAYER_ATTACK_SWEEP, 1.4F, 0.6F);
             Effects.particles(mob, ParticleTypes.SWEEP_ATTACK, 8, 1.8, 0.0);
             for (LivingEntity victim : BossCombat.around(mob, Balance.BOSS_SWEEP_RADIUS, ally)) {
-                BossCombat.strongHit(mob, victim, Balance.BOSS_SWEEP_DAMAGE, 0.9);
+                BossCombat.strongHit(mob, victim, Balance.BOSS_SWEEP_DAMAGE * BossCombat.mult(mob), 0.9);
             }
         }
     }
 
     @Override
     public void stop() {
-        readyAt = mob.level().getGameTime() + DifficultyScaling.bossCooldown(mob, Balance.BOSS_SWEEP_COOLDOWN);
+        readyAt = mob.level().getGameTime() + BossCombat.cooldown(mob, Balance.BOSS_SWEEP_COOLDOWN);
     }
 }

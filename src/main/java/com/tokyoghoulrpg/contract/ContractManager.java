@@ -116,6 +116,7 @@ public final class ContractManager {
             }
         }
         Effects.sound(player, SoundEvents.PLAYER_LEVELUP, 0.6F, 1.2F);
+        com.tokyoghoulrpg.rank.Ranks.add(player, Balance.RANK_CONTRACT);
         QuestManager.progress(player, Quest.Trigger.CONTRACT, 1);
     }
 
@@ -127,7 +128,9 @@ public final class ContractManager {
             return;
         }
         boolean counts = switch (contract.kind()) {
-            case KILL_GHOUL -> victim instanceof GhoulNpc || victim instanceof GhoulBoss;
+            case KILL_GHOUL -> victim instanceof GhoulNpc || victim instanceof GhoulBoss
+                    || victim instanceof com.tokyoghoulrpg.entity.HalfGhoulNpc
+                    || victim instanceof com.tokyoghoulrpg.entity.HalfGhoulBoss;
             case KILL_CCG -> victim instanceof CcgAgentNpc || victim instanceof CcgBoss;
             case KILL_MONSTER -> victim instanceof Enemy;
             case KILL_BOSS -> victim instanceof BossMob;

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "tokyoghoulrpg:block/cafe_sign_top",
+    "side": "tokyoghoulrpg:block/cafe_sign_side",
+    "bottom": "tokyoghoulrpg:block/cafe_sign_bottom"
+  }
+}

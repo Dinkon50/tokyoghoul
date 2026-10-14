@@ -91,13 +91,18 @@ public class GhoulNpc extends Monster implements SkinVariant {
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
+        // Волна NPC: своя цель — игрок с плохой репутацией, чует его сквозь стены
+        this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, 5, false, false,
+                e -> Hunt.isTarget(this, e)));
         // Ударили: отвечает и зовёт гулей рядом. Так гули дерутся с гулями и полугулями,
         // только если те напали первыми.
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this).setAlertOthers(GhoulNpc.class));
         // Сами нападают на людей: игроков-людей и агентов CCG, NPC-агентов и торговцев
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
                 GhoulNpc::isHumanPlayer));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, CcgAgentNpc.class, true));
+        // агентов из той же волны не трогают
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, CcgAgentNpc.class, 10, true, false,
+                e -> !Hunt.allies(this, e)));
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, TraderNpc.class, true));
     }
 
@@ -138,6 +143,13 @@ public class GhoulNpc extends Monster implements SkinVariant {
             this.setDropChance(EquipmentSlot.CHEST, 0.08F);
         }
         return result;
+    }
+
+    /** Гуль из волны уходит, когда цель пропала или прошло 5 минут. */
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        Hunt.tick(this);
     }
 
     @Override

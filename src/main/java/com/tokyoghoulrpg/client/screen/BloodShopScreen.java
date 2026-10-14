@@ -1,8 +1,10 @@
 package com.tokyoghoulrpg.client.screen;
 
+import com.tokyoghoulrpg.combat.Balance;
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.ShopActionC2S;
+import com.tokyoghoulrpg.rep.Standing;
 import com.tokyoghoulrpg.shop.BloodShop;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +29,7 @@ public class BloodShopScreen extends Screen {
     }
 
     private int top() {
-        int height = 40 + BloodShop.ENTRIES.size() * ROW_H + 34;
+        int height = 40 + BloodShop.ENTRIES.size() * ROW_H + 58;
         return Math.max(6, (this.height - height) / 2);
     }
 
@@ -48,6 +50,13 @@ public class BloodShopScreen extends Screen {
             buyButtons.add(addRenderableWidget(button));
             y += ROW_H;
         }
+        // продать ядра гулей (купить их здесь нельзя)
+        addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.shop.sell_cores",
+                                Balance.CORE_PRICE[0], Balance.CORE_PRICE[1], Balance.CORE_PRICE[2]),
+                        b -> NetworkHandler.CHANNEL.sendToServer(new ShopActionC2S(traderId, ShopActionC2S.SELL_CORES)))
+                .bounds(left() + 6, y + 8, WIDTH - 12, 20)
+                .build());
+        y += 24;
         addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.shop.emeralds"), b -> {
                     NetworkHandler.CHANNEL.sendToServer(new ShopActionC2S(traderId, ShopActionC2S.EMERALD_TRADE));
                     onClose();
@@ -75,7 +84,7 @@ public class BloodShopScreen extends Screen {
         gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
         int top = top();
         int left = left();
-        int panelH = 40 + BloodShop.ENTRIES.size() * ROW_H + 34;
+        int panelH = 40 + BloodShop.ENTRIES.size() * ROW_H + 58;
         gfx.fill(left, top - 6, left + WIDTH, top + panelH, 0xC0140808);
         gfx.fill(left, top - 6, left + 2, top + panelH, 0xFFB01E1E);
 
@@ -83,6 +92,12 @@ public class BloodShopScreen extends Screen {
         int blood = blood();
         gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.shop.balance", blood),
                 this.width / 2, top + 14, 0xFF5A78);
+        // «удачный день» за высокую репутацию
+        int deal = Standing.dealPercent(mcData());
+        if (deal > 0) {
+            gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.shop.deal", deal),
+                    this.width / 2, top + 26, 0x6EE07A);
+        }
 
         int y = top + 40;
         for (int i = 0; i < BloodShop.ENTRIES.size(); i++) {

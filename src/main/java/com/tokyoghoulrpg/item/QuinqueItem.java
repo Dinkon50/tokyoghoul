@@ -1,5 +1,6 @@
 package com.tokyoghoulrpg.item;
 
+import com.tokyoghoulrpg.combat.Balance;
 import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
@@ -34,7 +35,27 @@ public class QuinqueItem extends SwordItem {
         if (type != QuinqueType.TRAINING) {
             tooltip.add(Component.translatable("item.tokyoghoulrpg.quinque_" + type.id() + ".desc")
                     .withStyle(ChatFormatting.DARK_AQUA));
+            int upgrade = QuinqueUpgrade.level(stack);
+            if (upgrade > 0) {
+                tooltip.add(Component.translatable("item.tokyoghoulrpg.quinque.level", QuinqueUpgrade.roman(upgrade),
+                        Math.round(Balance.QUINQUE_LEVEL_BONUS[upgrade] * 100)).withStyle(ChatFormatting.RED));
+            } else {
+                tooltip.add(Component.translatable("item.tokyoghoulrpg.quinque.level_none").withStyle(ChatFormatting.DARK_GRAY));
+            }
+            if (level != null && QuinqueUpgrade.isLocked(stack, level.getGameTime())) {
+                long left = (QuinqueUpgrade.lockedUntil(stack) - level.getGameTime() + 19) / 20;
+                tooltip.add(Component.translatable("item.tokyoghoulrpg.quinque.locked",
+                        String.format("%d:%02d", left / 60, left % 60)).withStyle(ChatFormatting.GOLD));
+            }
         }
+    }
+
+    /** Улучшенная ядрами квинке: уровень виден прямо в названии, например «Kura II». */
+    @Override
+    public Component getName(ItemStack stack) {
+        Component base = super.getName(stack);
+        int upgrade = QuinqueUpgrade.level(stack);
+        return upgrade > 0 ? Component.empty().append(base).append(" " + QuinqueUpgrade.roman(upgrade)) : base;
     }
 
     /**

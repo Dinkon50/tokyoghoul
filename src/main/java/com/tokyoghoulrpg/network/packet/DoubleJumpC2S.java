@@ -26,7 +26,8 @@ public class DoubleJumpC2S {
                 return;
             }
             PlayerData data = PlayerData.get(player);
-            if (data == null || !data.hasChosenClass() || data.combat().doubleJumpUsed) {
+            if (data == null || !data.hasChosenClass() || data.combat().doubleJumpUsed
+                    || com.tokyoghoulrpg.combat.Silence.isSilenced(player)) {
                 return;
             }
             data.combat().doubleJumpUsed = true;

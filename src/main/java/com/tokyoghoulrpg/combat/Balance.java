@@ -55,15 +55,15 @@ public final class Balance {
     public static final int KAGUNE_TOGGLE_COOLDOWN = 20;            // [ТВОЁ: небольшой, значение временное] 1 с между нажатиями G
 
     // ---------- Захваты ----------
-    public static final double GRAB_RANGE_BASE = 5.0;               // [ТВОЁ] захваты без прокачки: 5 блоков
-    public static final double GRAB_RANGE_UPGRADED = 10.0;          // [ТВОЁ] с прокачкой «Захваты II»: 10 блоков, больше нельзя
+    public static final double GRAB_RANGE_BASE = 10.0;              // [ТВОЁ] захваты без прокачки: 10 блоков
+    public static final double GRAB_RANGE_PER_LEVEL = 5.0;          // [ТВОЁ] +5 за уровень: 15, 20, 25 (максимум)
     public static final int GRAPPLE_COOLDOWN = 5 * 20;              // [СПЕКА] 5 секунд
     public static final double GRAPPLE_STOP_BLOCK = 1.0;            // [ВРЕМЕННО] на каком расстоянии остановиться у блока
     public static final double GRAPPLE_STOP_ENTITY = 1.6;           // [ВРЕМЕННО] то же у существа
-    public static final double GRAPPLE_MAX_SPEED = 1.3;             // [ВРЕМЕННО] блоков за тик
+    public static final double GRAPPLE_MAX_SPEED = 1.8;             // [ВРЕМЕННО] блоков за тик
     public static final int PULL_COOLDOWN = 10 * 20;                // [СПЕКА] 10 секунд
     public static final double PULL_STOP = 1.4;                     // [ВРЕМЕННО] на каком расстоянии остановить цель
-    public static final double PULL_MAX_SPEED = 1.0;                // [ВРЕМЕННО] блоков за тик
+    public static final double PULL_MAX_SPEED = 1.4;                // [ВРЕМЕННО] блоков за тик
 
     // ---------- Ярость (J) ----------
     public static final int RAGE_LEVEL_MAX = 5;                     // [ВРЕМЕННО] число уровней прокачки (задаст дерево навыков)
@@ -103,6 +103,8 @@ public final class Balance {
     public static final double HARD_FOLLOW = 1.5;                   // замечают в 1,5 раза дальше (и дальше зовут подмогу),
     public static final double HARD_KNOCKBACK_RESIST = 0.2;         // хуже отлетают от ударов,
     public static final double HARD_BOSS_COOLDOWN = 0.7;            // боссы чаще делают особые атаки
+    /** Обычной прокачкой можно открыть не больше этой доли дерева своего класса (по очкам). Всё дерево — только командой. */
+    public static final double SKILL_CAP_SHARE = 0.85;
     public static final double HARD_SKILL_COST_FACTOR = 1.5;        // навыки в 1,5 раза дороже (округление вверх)
     // Игроки на сервере (нормальная и сложная): каждый игрок сверх первого, но не больше пяти игроков всего
     public static final int PLAYER_SCALING_CAP = 5;
@@ -154,7 +156,7 @@ public final class Balance {
     public static final double SOFT_LANDING_PER_LEVEL = 0.15;       // «Мягкое приземление»: ещё -15% за уровень
 
     // Дерево агента CCG, вкладка «Охота на гулей» [ВРЕМЕННО]
-    public static final double GHOUL_BANE_PER_LEVEL = 0.08;         // «Знание гулей»: +8% урона по гулям за уровень (V: +40%)
+    public static final double GHOUL_BANE_PER_LEVEL = 0.10;         // «Знание гулей»: +10% урона по гулям за уровень (V: +50%)
     public static final double KAGUNE_GUARD_PER_LEVEL = 0.06;       // «Защита от кагуне»: -6% урона от гулей (III: -18%)
     public static final int RC_SUPPRESS_BASE = 40;                  // «Подавитель RC»: гуль после удара не лечится 2 с...
     public static final int RC_SUPPRESS_PER_LEVEL = 20;             // ...+1 с за уровень (III: 4 с)
@@ -261,7 +263,11 @@ public final class Balance {
     public static final int HUMAN_LEVELS = 5;                       // в каждой ветке уровни I-V
     public static final int[] HUMAN_COSTS = {1, 1, 2, 2, 3};        // 9 очков за ветку
     public static final double HUMAN_TOUGHNESS = 0.04;              // -4% получаемого урона за уровень (до -20%)
-    public static final double HUMAN_VITALITY = 2.0;                // +1 сердце здоровья за уровень (до +5 сердец)
+    // Ветка «Здоровье» (у всех классов): 5 уровней, 20 очков за ветку
+    public static final int VITALITY_LEVELS = 5;
+    public static final int[] VITALITY_COSTS = {2, 3, 4, 5, 6};
+    public static final double HUMAN_VITALITY = 10.0;               // человек и агент: +5 сердец за уровень, 20 -> 70 (3,5 строки)
+    public static final double GHOUL_VITALITY = 12.0;               // гуль и полугуль: +6 сердец за уровень, 40 -> 100 (5 строк)
     public static final double HUMAN_ATTACK_SPEED = 0.10;           // +10% скорости ударов любым предметом за уровень (до +50%)
     public static final double HUMAN_MINING = 0.15;                 // +15% скорости копания любым предметом за уровень (до +75%)
     public static final double HUMAN_WEAPON_DAMAGE = 0.06;          // +6% урона оружием за уровень (до +30%): мечи, топоры, луки, арбалеты, трезубцы
@@ -312,4 +318,152 @@ public final class Balance {
 
     // ---------- Голод ----------
     public static final float HUNGER_DRAIN_FACTOR = 0.6F;           // [ВРЕМЕННО] у гулей голод тратится в 0,6 раза от обычного
+
+    // ---------- Особые способности (у всех классов, открываются в дереве навыков) [СПЕКА] ----------
+    public static final int[] RETRIBUTION_COST = {20};              // «Аура возмездия»: 20 очков (на сложной дороже, как все)
+    public static final int[] CHARISMA_COST = {25};                 // «Харизма»: 25 очков
+    public static final int AURA_TICKS = 10 * 20;                   // обе ауры держатся 10 секунд
+    public static final int AURA_COOLDOWN = 60 * 20;                // откат каждой — 1 минута (считается с нажатия)
+    public static final float RETRIBUTION_DAMAGE = 6.0F;            // [ВРЕМЕННО] урон ударившему (3 сердца)
+    public static final int RETRIBUTION_STUN = 2 * 20;              // оглушение ударившего 2 секунды
+    public static final int RETRIBUTION_SILENCE = 7 * 20;           // 7 секунд без способностей (обычные удары можно)
+    public static final double CHARISMA_HEAL = 0.5;                 // удар вместо урона лечит 50% здоровья
+    public static final int CHARISMA_BUFF_TICKS = 3 * 20;           // небольшие усиления на 3 секунды
+
+    // «Бросок судьбы»: один из шести исходов [СПЕКА]; шансы в сумме 100%
+    public static final int[] FORTUNE_COST = {25};                  // 25 очков (на сложной 38)
+    public static final int FORTUNE_COOLDOWN = 60 * 20;             // [ВРЕМЕННО] откат 1 минута
+    public static final int FORTUNE_SHIELD_TICKS = 30 * 20;         // защита у баффов держится 30 секунд
+    // шанс в процентах, лечение (доля макс. здоровья), защита (доля урона, которая не проходит)
+    public static final int FORTUNE_BUFF1_CHANCE = 30;
+    public static final double FORTUNE_BUFF1_HEAL = 0.25;
+    public static final double FORTUNE_BUFF1_SHIELD = 0.15;         // [ВРЕМЕННО] -15% урона
+    public static final int FORTUNE_BUFF2_CHANCE = 15;
+    public static final double FORTUNE_BUFF2_HEAL = 0.40;
+    public static final double FORTUNE_BUFF2_SHIELD = 0.25;         // [ВРЕМЕННО] -25% урона
+    public static final int FORTUNE_BUFF3_CHANCE = 5;
+    public static final double FORTUNE_BUFF3_HEAL = 0.75;
+    public static final double FORTUNE_BUFF3_SHIELD = 0.35;         // [ВРЕМЕННО] -35% урона
+    // дебаффы: доля ТЕКУЩЕГО здоровья, которую теряешь (убить не могут), и откат всех способностей
+    public static final int FORTUNE_DEBUFF1_CHANCE = 30;
+    public static final double FORTUNE_DEBUFF1_LOSS = 0.25;
+    public static final int FORTUNE_DEBUFF2_CHANCE = 15;
+    public static final double FORTUNE_DEBUFF2_LOSS = 0.40;
+    public static final int FORTUNE_DEBUFF2_LOCK = 3 * 20;
+    public static final int FORTUNE_DEBUFF3_CHANCE = 5;
+    public static final double FORTUNE_DEBUFF3_LOSS = 0.70;
+    public static final int FORTUNE_DEBUFF3_LOCK = 6 * 20;
+
+    // ---------- Кровавый полугуль (самый сильный босс, своя арена) [СПЕКА] ----------
+    // Здоровье и урон втрое больше, чем у Пожирателя и Старшего следователя
+    public static final double HG_BOSS_HEALTH = 750.0;              // 3 x 250
+    public static final double HG_BOSS_ATTACK = 30.0;               // 3 x 10 (удар рукой-кагуне)
+    public static final float HG_BOSS_SPECIAL_MULT = 3.0F;          // особые атаки Пожирателя и следователя x3
+    public static final float HG_PHASE2_DAMAGE = 1.25F;             // вторая стадия: +25% урона,
+    public static final double HG_PHASE2_SPEED = 0.2;               // +20% скорости,
+    public static final double HG_PHASE2_COOLDOWN = 0.7;            // особые атаки чаще
+    public static final int HG_TRANSFORM_TICKS = 3 * 20;            // превращение: 3 с неуязвим и восстанавливает всё здоровье
+    public static final double HG_PER_PLAYER_HEALTH = 0.5;          // +50% здоровья за каждого игрока на сервере сверх первого (до 5)
+    public static final double HG_PER_PLAYER_DAMAGE = 0.2;          // +20% урона за каждого игрока сверх первого
+    public static final int HG_RESET_TICKS = 30 * 20;               // 30 с без игроков рядом — бой сбрасывается
+    public static final double HG_ARENA_RADIUS = 18.0;              // радиус арены
+    public static final int HG_RESPAWN_TICKS = 2 * 60 * 20;         // возрождение через 2 минуты
+    // дальние атаки и атаки по области (базовый урон, умножается на HG_BOSS_SPECIAL_MULT)
+    public static final float HG_SHARD_DAMAGE = 2.5F;               // залп осколков: 5 выстрелов
+    public static final int HG_SHARD_COOLDOWN = 7 * 20;
+    public static final float HG_SPEAR_DAMAGE = 9.0F;               // копьё-кагуне: пробивает всех на линии и блок
+    public static final double HG_SPEAR_RANGE = 30.0;
+    public static final int HG_SPEAR_COOLDOWN = 12 * 20;
+    public static final float HG_NOVA_DAMAGE = 7.0F;                // кровавая волна вокруг себя
+    public static final double HG_NOVA_RADIUS = 7.0;
+    public static final int HG_NOVA_COOLDOWN = 11 * 20;
+    public static final float HG_SPIKE_DAMAGE = 5.0F;               // шипы из земли под игроками
+    public static final double HG_SPIKE_RADIUS = 2.5;
+    public static final int HG_SPIKE_COOLDOWN = 14 * 20;
+    // свита
+    public static final int HG_MINION_LIMIT = 8;                    // не больше 8 полугулей сразу
+    // награды
+    public static final int HG_TOP_BLOOD = 10000;                   // двое, нанёсшие больше всего урона
+    public static final int HG_TOP_POINTS = 30;
+    public static final int HG_TOP_LEVELS = 3;
+    public static final int HG_OTHER_BLOOD = 1000;                  // остальные участники
+    public static final int HG_OTHER_POINTS = 5;
+    public static final int RESET_SEAL_PRICE = 5000;                // печать сброса навыков у торговца
+
+    // Личная репутация и репутация клана (от -100 до 100, начинаются с 0)
+    public static final int STANDING_HIGH = 40;                     // от 40 — высокая: бывают скидки
+    public static final int STANDING_LOW = -25;                     // до -25 — низкая: приходят волны NPC
+    public static final int STANDING_TRADE = 1;                     // сделка с торговцем: +1 тебе и клану...
+    public static final int STANDING_TRADE_DAILY = 10;              // ...не больше 10 сделок за игровые сутки
+    public static final int STANDING_BOSS = 10;                     // убил босса (любого): +10 тебе и клану
+    public static final int STANDING_RAID_BOSS = 20;                // Кровавый полугуль: +20 каждому участнику и его клану
+    public static final int STANDING_KILL_PEACEFUL = 15;            // убил мирного (житель, торговец, информатор): -15 тебе...
+    public static final int STANDING_KILL_PEACEFUL_CLAN = 10;       // ...и -10 клану
+    public static final int STANDING_DEATH = 2;                     // погиб: -2 тебе...
+    public static final int STANDING_DEATH_CLAN = 1;                // ...и -1 клану
+    // «Удачный день» у торговцев при высокой репутации
+    public static final int DEAL_CHANCE = 35;                       // своя высокая: шанс 35% в игровые сутки...
+    public static final int DEAL_PERCENT = 15;                      // ...скидка 15% в лавке торговца мода
+    public static final int DEAL_CHANCE_CLAN = 60;                  // своя и клана высокие: шанс 60%...
+    public static final int DEAL_PERCENT_CLAN = 25;                 // ...скидка 25% и «Герой деревни» у жителей
+    // Волны NPC за игроком с плохой репутацией: гули и агенты CCG вместе
+    public static final int WAVE_BIG_SIZE = 6;                      // большая волна: 6 (на сложной 8)
+    public static final int WAVE_SMALL_SIZE = 3;                    // маленькая: 3 (на сложной 4)
+    public static final int WAVE_BIG_INTERVAL = 15 * 60 * 20;       // большая примерно раз в 15 минут
+    public static final int WAVE_SMALL_INTERVAL = 20 * 60 * 20;     // маленькая примерно раз в 20 минут
+    public static final int WAVE_FIRST_DELAY = 3 * 60 * 20;         // первая — через ~3 минуты после падения репутации
+    public static final int WAVE_LIFETIME = 5 * 60 * 20;            // через 5 минут волна уходит
+    public static final double WAVE_FOLLOW_BONUS = 40.0;            // волна чует цель издалека (+40 блоков обзора)
+
+    // Передача силы в клане (плюсик в меню клана)
+    public static final int BOND_TICKS = 30 * 20;                   // сила и здоровье у получателя 30 секунд
+    public static final int BOND_COOLDOWN = 2 * 60 * 20;            // потом 2 минуты все участники без передачи
+    public static final int BOND_MAX_DONORS = 2;                    // одному игроку — не больше двух дарителей
+    public static final double BOND_HP_FIRST = 0.5;                 // первый даритель отдаёт половину своего здоровья,
+    public static final double BOND_WEAKEN_FIRST = 0.5;             // сам бьёт на 50% слабее,
+    public static final double BOND_BONUS_FIRST = 0.25;             // получатель бьёт на 25% сильнее
+    public static final double BOND_HP_SECOND = 0.25;               // второй даритель: четверть здоровья,
+    public static final double BOND_WEAKEN_SECOND = 0.25;           // сам на 25% слабее,
+    public static final double BOND_BONUS_SECOND = 0.125;           // получателю ещё +12,5% (всего +37,5%)
+
+    // Ядра гулей и улучшение квинке
+    public static final double CORE_1_CHANCE = 0.02;                // ядро I: 2% с обычных гулей и полугулей
+    public static final double CORE_2_CHANCE = 0.08;                // ядро II: 8% с Пожирателя
+    public static final double CORE_3_CHANCE = 0.10;                // ядро III: 10% у каждого из двух лучших по урону с Кровавого полугуля
+    public static final int[] CORE_PRICE = {300, 1500, 6000};       // продажа торговцу (купить ядро нельзя нигде)
+    public static final double[] QUINQUE_LEVEL_BONUS = {0.0, 0.15, 0.30, 0.50}; // урон квинке на уровнях 0-III
+    public static final int QUINQUE_LOCK_TICKS = 10 * 60 * 20;      // 10 минут после улучшения квинке только в инвентаре
+
+    // Кофейня
+    public static final double CAFE_RADIUS = 8.5;                   // мирная зона: квадрат 17 x 17 вокруг знака кофейни
+    public static final int CAFE_HEIGHT = 8;                        // и 8 блоков вверх
+    public static final int CAFE_CLOSE_TIME = 12000;                // закрывается на закате (время суток 12000)...
+    public static final int CAFE_WARNING_TICKS = 60 * 20;           // ...за минуту до этого таймер
+    public static final int CAFE_COFFEE_PRICE = 40;                 // цены в очках крови
+    public static final int CAFE_FLESH_PRICE = 60;
+    public static final int CAFE_FIGHT_TICKS = 60 * 20;
+
+    // Какудзя (гуль и полугуль): копится, когда поедаешь гулей
+    public static final int KAKUJA_UNLOCK = 100;                    // столько очков нужно, чтобы открыть форму
+    public static final int KAKUJA_BITE = 3;                        // укус гуля
+    public static final int KAKUJA_KILL_NPC = 2;                    // убил гуля или полугуля (NPC)
+    public static final int KAKUJA_KILL_PLAYER = 8;                 // убил игрока-гуля или полугуля
+    public static final int KAKUJA_KILL_BOSS = 15;                  // Пожиратель
+    public static final int KAKUJA_RAID_BOSS = 30;                  // Кровавый полугуль (участникам)
+    public static final int KAKUJA_TICKS = 30 * 20;                 // форма длится 30 секунд
+    public static final int KAKUJA_COOLDOWN = 5 * 60 * 20;          // откат 5 минут
+    public static final double KAKUJA_DAMAGE = 0.40;                // +40% урона
+    public static final double KAKUJA_DEFENSE = 0.30;               // -30% входящего урона
+    public static final double KAKUJA_SPEED = 0.20;                 // +20% скорости
+
+    // Ранги: агент CCG (звания) и гуль/полугуль (рейтинг опасности). У людей ранга нет
+    public static final int[] RANK_THRESHOLDS = {0, 50, 150, 350, 700, 1200};
+    public static final int RANK_KILL_NPC = 2;                      // враг-NPC (агент для гуля, гуль для агента)
+    public static final int RANK_KILL_PLAYER = 5;                   // игрок враждебной стороны
+    public static final int RANK_KILL_BOSS = 15;                    // Пожиратель / Старший следователь
+    public static final int RANK_RAID_BOSS = 30;                    // Кровавый полугуль (участникам)
+    public static final int RANK_QUEST = 10;                        // выполнил задание
+    public static final int RANK_CONTRACT = 8;                      // сдал контракт
+    public static final double RANK_DAMAGE_PER = 0.02;              // +2% урона за каждый ранг выше первого (до +10%)
+    public static final double RANK_BLOOD_PER = 0.05;               // +5% крови за убийства за каждый ранг (до +25%)             // драка игроков меньше минуты назад: в кофейне они не защищены друг от друга
 }

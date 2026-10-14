@@ -6,6 +6,8 @@ import com.tokyoghoulrpg.client.hud.HudOverlay;
 import com.tokyoghoulrpg.client.kagune.KaguneLayer;
 import com.tokyoghoulrpg.entity.CcgAgentNpc;
 import com.tokyoghoulrpg.entity.GhoulNpc;
+import com.tokyoghoulrpg.entity.HalfGhoulNpc;
+import com.tokyoghoulrpg.client.kagune.BossKaguneLayer;
 import com.tokyoghoulrpg.entity.InformantNpc;
 import com.tokyoghoulrpg.entity.TraderNpc;
 import com.tokyoghoulrpg.registry.ModEntities;
@@ -36,6 +38,12 @@ public final class ClientModEvents {
         event.register(KeyBindings.SKILL_TREE);
         event.register(KeyBindings.QUESTS);
         event.register(KeyBindings.CLAN);
+        event.register(KeyBindings.RETRIBUTION);
+        event.register(KeyBindings.CHARISMA);
+        event.register(KeyBindings.FORTUNE);
+        event.register(KeyBindings.KAKUJA);
+        event.register(KeyBindings.PROFILE);
+        event.register(KeyBindings.GRAB);
     }
 
     @SubscribeEvent
@@ -48,11 +56,21 @@ public final class ClientModEvents {
                 context -> new NpcRenderer<>(context, "trader", TraderNpc.VARIANTS));
         event.registerEntityRenderer(ModEntities.INFORMANT.get(),
                 context -> new NpcRenderer<>(context, "informant", InformantNpc.VARIANTS));
+        event.registerEntityRenderer(ModEntities.CAFE_OWNER.get(),
+                context -> new NpcRenderer<>(context, "cafe_owner", 1));
         // боссы: модель игрока в 1.23 раза крупнее (хитбокс 2.4 блока)
         event.registerEntityRenderer(ModEntities.GHOUL_BOSS.get(),
                 context -> new NpcRenderer<>(context, "ghoul_boss", 1, 1.23F));
         event.registerEntityRenderer(ModEntities.CCG_BOSS.get(),
                 context -> new NpcRenderer<>(context, "ccg_boss", 1, 1.23F));
+        event.registerEntityRenderer(ModEntities.HALF_GHOUL.get(),
+                context -> new NpcRenderer<>(context, "half_ghoul", HalfGhoulNpc.VARIANTS));
+        // Кровавый полугуль: в 1.33 раза крупнее игрока, кагуне на спине (во второй стадии — с венами ярости)
+        event.registerEntityRenderer(ModEntities.HALF_GHOUL_BOSS.get(), context -> {
+            NpcRenderer<com.tokyoghoulrpg.entity.HalfGhoulBoss> renderer = new NpcRenderer<>(context, "half_ghoul_boss", 1, 1.33F);
+            renderer.addLayer(new BossKaguneLayer(renderer));
+            return renderer;
+        });
     }
 
     /** Добавляем слой кагуне к отрисовке игроков: и к обычному скину, и к скину с тонкими руками. */

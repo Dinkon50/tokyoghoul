@@ -9,6 +9,8 @@ import net.minecraftforge.network.NetworkEvent;
 /** Действие в лавке: купить товар номер index или (index = -1) перейти к торговле за изумруды. */
 public class ShopActionC2S {
     public static final int EMERALD_TRADE = -1;
+    /** Продать торговцу все ядра гулей из инвентаря. */
+    public static final int SELL_CORES = -2;
 
     private final int entityId;
     private final int index;
@@ -36,6 +38,8 @@ public class ShopActionC2S {
             }
             if (msg.index == EMERALD_TRADE) {
                 ShopServer.openEmeraldTrade(player, msg.entityId);
+            } else if (msg.index == SELL_CORES) {
+                ShopServer.sellCores(player, msg.entityId);
             } else {
                 ShopServer.buy(player, msg.entityId, msg.index);
             }

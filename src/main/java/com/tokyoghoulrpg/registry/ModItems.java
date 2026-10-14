@@ -5,6 +5,8 @@ import com.tokyoghoulrpg.data.ClassChange;
 import com.tokyoghoulrpg.item.CoffeeItem;
 import com.tokyoghoulrpg.item.InjectionItem;
 import com.tokyoghoulrpg.item.QuinqueItem;
+import com.tokyoghoulrpg.item.RcCoreItem;
+import com.tokyoghoulrpg.item.SkillResetItem;
 import com.tokyoghoulrpg.item.QuinqueType;
 import com.tokyoghoulrpg.item.MaskItem;
 import com.tokyoghoulrpg.item.ModArmorMaterials;
@@ -13,6 +15,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraftforge.common.ForgeSpawnEggItem;
@@ -49,6 +52,18 @@ public final class ModItems {
     public static final RegistryObject<Item> QUINQUE_NARUKAMI = quinque(QuinqueType.NARUKAMI);
     public static final RegistryObject<Item> QUINQUE_JASON = quinque(QuinqueType.JASON);
 
+    // Печать сброса навыков: падает с возрождённого Кровавого полугуля, у торговца за 5000 крови
+    public static final RegistryObject<Item> SKILL_RESET_SEAL = ITEMS.register("skill_reset_seal",
+            () -> new SkillResetItem(new Item.Properties().stacksTo(16).rarity(Rarity.EPIC).fireResistant()));
+
+    // Ядра гулей: улучшают квинке (I -> II -> III). Только выбиваются, продаются торговцу
+    public static final RegistryObject<Item> RC_CORE_1 = ITEMS.register("rc_core_1",
+            () -> new RcCoreItem(1, new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> RC_CORE_2 = ITEMS.register("rc_core_2",
+            () -> new RcCoreItem(2, new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> RC_CORE_3 = ITEMS.register("rc_core_3",
+            () -> new RcCoreItem(3, new Item.Properties().stacksTo(16).rarity(Rarity.EPIC).fireResistant()));
+
     // Маски
     public static final RegistryObject<Item> MASK_FANG = mask("mask_fang");
     public static final RegistryObject<Item> MASK_BONE = mask("mask_bone");
@@ -78,6 +93,25 @@ public final class ModItems {
             () -> new ForgeSpawnEggItem(ModEntities.GHOUL_BOSS, 0x2A0A0E, 0xE0201E, new Item.Properties()));
     public static final RegistryObject<Item> CCG_BOSS_SPAWN_EGG = ITEMS.register("ccg_boss_spawn_egg",
             () -> new ForgeSpawnEggItem(ModEntities.CCG_BOSS, 0xF4F4F4, 0x1F4E9A, new Item.Properties()));
+    public static final RegistryObject<Item> HALF_GHOUL_SPAWN_EGG = ITEMS.register("half_ghoul_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.HALF_GHOUL, 0xD8D8DC, 0x8A0F1E, new Item.Properties()));
+    public static final RegistryObject<Item> HALF_GHOUL_BOSS_SPAWN_EGG = ITEMS.register("half_ghoul_boss_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.HALF_GHOUL_BOSS, 0x0E0B10, 0xE01530, new Item.Properties()));
+
+    // Алтарь арены: в творческом режиме можно поставить свою арену (босс появится, когда подойдёшь)
+    public static final RegistryObject<Item> ARENA_ALTAR = ITEMS.register("arena_altar",
+            () -> new BlockItem(ModBlocks.ARENA_ALTAR.get(), new Item.Properties().rarity(Rarity.EPIC)));
+
+    /** Ядро по качеству 1-3. */
+    public static Item core(int tier) {
+        return (tier <= 1 ? RC_CORE_1 : tier == 2 ? RC_CORE_2 : RC_CORE_3).get();
+    }
+
+    // Кофейня: хозяин и знак (в творческом режиме можно поставить свою кофейню)
+    public static final RegistryObject<Item> CAFE_OWNER_SPAWN_EGG = ITEMS.register("cafe_owner_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.CAFE_OWNER, 0x4A2E1A, 0xE8D8B8, new Item.Properties()));
+    public static final RegistryObject<Item> CAFE_SIGN = ITEMS.register("cafe_sign",
+            () -> new BlockItem(ModBlocks.CAFE_SIGN.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final List<RegistryObject<Item>> MASKS = List.of(MASK_FANG, MASK_BONE, MASK_CROW, MASK_ONI);
 

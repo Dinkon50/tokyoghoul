@@ -67,7 +67,8 @@ public final class DoubleJumpClient {
             return;
         }
         PlayerData data = PlayerData.get(player);
-        if (data == null || !data.hasChosenClass() || data.isLockedAt(player.level().getGameTime())) {
+        if (data == null || !data.hasChosenClass() || data.isLockedAt(player.level().getGameTime())
+                || data.isSilencedAt(player.level().getGameTime())) {
             pending = false;
             return;
         }

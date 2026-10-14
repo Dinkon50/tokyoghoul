@@ -44,7 +44,8 @@ public final class DifficultyScaling {
     /** NPC мода (и мирные: торговец, информатор). */
     public static boolean isModNpc(LivingEntity entity) {
         return entity instanceof GhoulNpc || entity instanceof CcgAgentNpc || entity instanceof BossMob
-                || entity instanceof TraderNpc || entity instanceof InformantNpc;
+                || entity instanceof TraderNpc || entity instanceof InformantNpc
+                || entity instanceof com.tokyoghoulrpg.entity.HalfGhoulNpc;
     }
 
     /** Враждебный или боевой моб: монстры Minecraft, гули, агенты CCG и боссы. */

@@ -27,6 +27,7 @@ public final class ClanManager {
     public static final int KICK = 6;
     public static final int GIVE_POINTS = 7;
     public static final int GIVE_BLOOD = 8;
+    public static final int GIVE_POWER = 9;
 
     public static final int NAME_MIN = 3;
     public static final int NAME_MAX = 16;
@@ -63,6 +64,16 @@ public final class ClanManager {
             }
             case KICK -> kick(player, data, clan, target);
             case GIVE_POINTS, GIVE_BLOOD -> give(player, clan, target, amount, action == GIVE_BLOOD);
+            case GIVE_POWER -> {
+                // передать силу и половину здоровья участнику своего клана, который в игре
+                ServerPlayer receiver = target == null ? null : server.getPlayerList().getPlayer(target);
+                if (clan != null && receiver != null && clan.members.containsKey(target)
+                        && !target.equals(player.getUUID())) {
+                    ClanBond.give(player, receiver);
+                } else if (clan != null && target != null && clan.members.containsKey(target)) {
+                    tell(player, "offline", clan.members.get(target));
+                }
+            }
             default -> {
             }
         }
@@ -186,9 +197,11 @@ public final class ClanManager {
         List<ClanStateS2C.Member> invites = new ArrayList<>();
         String name = "";
         UUID leader = null;
+        int reputation = 0;
         if (clan != null) {
             name = clan.name;
             leader = clan.leader;
+            reputation = clan.reputation;
             for (Map.Entry<UUID, String> entry : clan.members.entrySet()) {
                 boolean online = server.getPlayerList().getPlayer(entry.getKey()) != null;
                 members.add(new ClanStateS2C.Member(entry.getKey(), entry.getValue(), online));
@@ -207,7 +220,12 @@ public final class ClanManager {
             }
         }
         NetworkHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new ClanStateS2C(name, leader, members, candidates, invites));
+                new ClanStateS2C(name, leader, reputation, members, candidates, invites));
+    }
+
+    /** Обновить меню у всех участников клана, кто в игре (например, когда изменилась репутация клана). */
+    public static void refresh(MinecraftServer server, ClanData.Clan clan) {
+        refreshClan(server, clan);
     }
 
     /** Обновить меню у всех участников клана, кто в игре. */

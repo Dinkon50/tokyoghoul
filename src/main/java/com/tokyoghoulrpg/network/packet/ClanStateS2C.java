@@ -22,14 +22,17 @@ public class ClanStateS2C {
 
     public final String clanName;
     public final UUID leader;
+    /** Репутация клана (от -100 до 100). */
+    public final int reputation;
     public final List<Member> members;
     public final List<Member> candidates;
     public final List<Member> invites;
 
-    public ClanStateS2C(String clanName, UUID leader, List<Member> members, List<Member> candidates,
+    public ClanStateS2C(String clanName, UUID leader, int reputation, List<Member> members, List<Member> candidates,
                         List<Member> invites) {
         this.clanName = clanName;
         this.leader = leader;
+        this.reputation = reputation;
         this.members = members;
         this.candidates = candidates;
         this.invites = invites;
@@ -56,6 +59,7 @@ public class ClanStateS2C {
     public static void encode(ClanStateS2C msg, FriendlyByteBuf buf) {
         buf.writeUtf(msg.clanName, 32);
         buf.writeUUID(msg.leader == null ? NONE : msg.leader);
+        buf.writeVarInt(msg.reputation);
         writeList(buf, msg.members);
         writeList(buf, msg.candidates);
         writeList(buf, msg.invites);
@@ -64,10 +68,11 @@ public class ClanStateS2C {
     public static ClanStateS2C decode(FriendlyByteBuf buf) {
         String name = buf.readUtf(32);
         UUID leader = buf.readUUID();
+        int reputation = buf.readVarInt();
         List<Member> members = readList(buf);
         List<Member> candidates = readList(buf);
         List<Member> invites = readList(buf);
-        return new ClanStateS2C(name, NONE.equals(leader) ? null : leader, members, candidates, invites);
+        return new ClanStateS2C(name, NONE.equals(leader) ? null : leader, reputation, members, candidates, invites);
     }
 
     public static void handle(ClanStateS2C msg, Supplier<NetworkEvent.Context> ctx) {

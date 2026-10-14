@@ -33,6 +33,11 @@ public class CombatState {
     public long lastQuinqueAttack;
     public long lungeReady;
     public long blockStart = Long.MIN_VALUE / 2;
+    /** Особые способности: когда снова готовы. */
+    public long retributionReady;
+    public long charismaReady;
+    public long fortuneReady;
+    public long kakujaReady;
     public final List<ActiveAction> actions = new ArrayList<>();
 
     public boolean isDashing() {
@@ -76,6 +81,10 @@ public class CombatState {
         lastQuinqueAttack = 0L;
         lungeReady = 0L;
         blockStart = Long.MIN_VALUE / 2;
+        retributionReady = 0L;
+        charismaReady = 0L;
+        fortuneReady = 0L;
+        kakujaReady = 0L;
         actions.clear();
     }
 }

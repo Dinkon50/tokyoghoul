@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.event;
 
 import com.tokyoghoulrpg.TokyoGhoulRPG;
+import com.tokyoghoulrpg.clan.ClanBond;
 import com.tokyoghoulrpg.clan.ClanManager;
 import com.tokyoghoulrpg.combat.AbilityManager;
 import com.tokyoghoulrpg.data.KaguneVariant;
@@ -8,12 +9,14 @@ import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.data.PlayerDataProvider;
 import com.tokyoghoulrpg.network.NetworkHandler;
 import com.tokyoghoulrpg.network.packet.SelectClassC2S;
+import com.tokyoghoulrpg.rep.Standing;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.TradeWithVillagerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -48,6 +51,14 @@ public final class CommonEvents {
         event.getOriginal().invalidateCaps();
     }
 
+    /** Сделка с жителем, странствующим торговцем или торговцем мода (за изумруды): репутация растёт. */
+    @SubscribeEvent
+    public static void onTrade(TradeWithVillagerEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            Standing.onTrade(player);
+        }
+    }
+
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
@@ -76,6 +87,9 @@ public final class CommonEvents {
             if (data != null && !event.isEndConquered()) {
                 AbilityManager.applyClassStats(player, data, true);
             }
+            ClanBond.refreshDisplay(player);
+            // после возрождения у игрока новый номер сущности: ранг разослать заново
+            com.tokyoghoulrpg.rank.Ranks.forget(player);
             NetworkHandler.syncTo(player);
         }
     }
@@ -84,6 +98,7 @@ public final class CommonEvents {
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer tracker) {
             NetworkHandler.sendKaguneTo(tracker, target);
+            NetworkHandler.sendRankTo(tracker, target);
         }
     }
 

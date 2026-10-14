@@ -61,6 +61,24 @@ public final class ClientForgeEvents {
         while (KeyBindings.RAGE.consumeClick()) {
             sendAbility(mc, AbilityType.RAGE);
         }
+        while (KeyBindings.RETRIBUTION.consumeClick()) {
+            sendAbility(mc, AbilityType.RETRIBUTION);
+        }
+        while (KeyBindings.CHARISMA.consumeClick()) {
+            sendAbility(mc, AbilityType.CHARISMA);
+        }
+        while (KeyBindings.FORTUNE.consumeClick()) {
+            sendAbility(mc, AbilityType.FORTUNE);
+        }
+        while (KeyBindings.KAKUJA.consumeClick()) {
+            sendAbility(mc, AbilityType.KAKUJA);
+        }
+        while (KeyBindings.PROFILE.consumeClick()) {
+            if (mc.screen == null) {
+                mc.setScreen(new com.tokyoghoulrpg.client.screen.ProfileScreen());
+                NetworkHandler.CHANNEL.sendToServer(new com.tokyoghoulrpg.network.packet.RequestSyncC2S());
+            }
+        }
         while (KeyBindings.SKILL_TREE.consumeClick()) {
             if (mc.screen == null) {
                 mc.setScreen(new SkillTreeScreen());
@@ -126,6 +144,8 @@ public final class ClientForgeEvents {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientHooks.reset();
         KaguneClientState.clear();
+        com.tokyoghoulrpg.client.kagune.KaguneReach.clear();
+        com.tokyoghoulrpg.rank.Ranks.clearClient();
         blockHeld = false;
         barrageHeld = false;
     }

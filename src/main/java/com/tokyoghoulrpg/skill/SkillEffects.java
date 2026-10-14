@@ -186,7 +186,7 @@ public final class SkillEffects {
     }
 
     public static double grabRange(int level) {
-        return level >= 1 ? Balance.GRAB_RANGE_UPGRADED : Balance.GRAB_RANGE_BASE;
+        return Balance.GRAB_RANGE_BASE + Balance.GRAB_RANGE_PER_LEVEL * level;
     }
 
     public static int blockStun(int level) {
@@ -244,8 +244,14 @@ public final class SkillEffects {
     }
 
     /** Прибавка к максимальному здоровью в единицах здоровья (2 = 1 сердце). */
-    public static double humanVitality(int level) {
-        return Balance.HUMAN_VITALITY * level;
+    /** Ветка «Здоровье»: прибавка к максимуму здоровья (в единицах, 2 = одно сердце). */
+    public static double vitality(int level, boolean ghoul) {
+        return (ghoul ? Balance.GHOUL_VITALITY : Balance.HUMAN_VITALITY) * level;
+    }
+
+    /** Здоровье без прокачки: гуль и полугуль — 2 строки сердец (40), остальные — одна (20). */
+    public static double baseHealth(boolean ghoul) {
+        return 20.0 + (ghoul ? Balance.GHOUL_MAX_HEALTH_BONUS : 0.0);
     }
 
     public static double humanAttackSpeed(int level) {

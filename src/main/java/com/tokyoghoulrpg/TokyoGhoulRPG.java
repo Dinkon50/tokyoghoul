@@ -2,6 +2,7 @@ package com.tokyoghoulrpg;
 
 import com.tokyoghoulrpg.data.PlayerData;
 import com.tokyoghoulrpg.network.NetworkHandler;
+import com.tokyoghoulrpg.registry.ModBlocks;
 import com.tokyoghoulrpg.registry.ModCreativeTab;
 import com.tokyoghoulrpg.registry.ModEntities;
 import com.tokyoghoulrpg.registry.ModItems;
@@ -19,6 +20,8 @@ public class TokyoGhoulRPG {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(this::registerCapabilities);
         modBus.addListener(this::commonSetup);
+        ModBlocks.BLOCKS.register(modBus);
+        ModBlocks.BLOCK_ENTITIES.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModEntities.ENTITIES.register(modBus);
         ModCreativeTab.TABS.register(modBus);
