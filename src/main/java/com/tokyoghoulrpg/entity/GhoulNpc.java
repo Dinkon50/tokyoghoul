@@ -150,6 +150,7 @@ public class GhoulNpc extends Monster implements SkinVariant {
     protected void customServerAiStep() {
         super.customServerAiStep();
         Hunt.tick(this);
+        com.tokyoghoulrpg.world.HuntNight.tickMob(this);
     }
 
     @Override

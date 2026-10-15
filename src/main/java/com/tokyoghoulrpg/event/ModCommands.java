@@ -114,6 +114,32 @@ public final class ModCommands {
                                     KaguneVariant variant = KaguneVariant.byId(StringArgumentType.getString(ctx, "variant"));
                                     return (player, data) -> setVariant(data, player, variant);
                                 })))
+                .then(Commands.literal("type").requires(src -> src.hasPermission(OP))
+                        .then(withTarget(Commands.argument("type", StringArgumentType.word())
+                                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                                List.of("rinkaku", "ukaku", "koukaku", "bikaku"), builder)),
+                                ctx -> {
+                                    com.tokyoghoulrpg.data.KaguneType type = com.tokyoghoulrpg.data.KaguneType.byId(
+                                            StringArgumentType.getString(ctx, "type"));
+                                    return (player, data) -> {
+                                        if (!data.getPlayerClass().hasKagune() || type == com.tokyoghoulrpg.data.KaguneType.NONE) {
+                                            return Component.translatable("command.tokyoghoulrpg.type.fail");
+                                        }
+                                        data.setKaguneType(type);
+                                        return null;
+                                    };
+                                })))
+                .then(Commands.literal("tutorial").requires(src -> src.hasPermission(OP))
+                        .then(withTarget(Commands.literal("restart"), ctx -> (player, data) -> {
+                            data.setTutorial(0, false);
+                            return null;
+                        }))
+                        .then(withTarget(Commands.literal("skip"), ctx -> (player, data) -> {
+                            data.setTutorial(0, true);
+                            return null;
+                        })))
+                .then(Commands.literal("huntnight").requires(src -> src.hasPermission(OP))
+                        .executes(ModCommands::huntNight))
                 .then(Commands.literal("skills").requires(src -> src.hasPermission(OP))
                         .then(withTarget(Commands.literal("reset"), ctx -> ModCommands::resetSkills))
                         .then(withTarget(Commands.literal("unlockall"), ctx -> ModCommands::unlockAllSkills)))
@@ -288,8 +314,25 @@ public final class ModCommands {
     // Действия
     // ------------------------------------------------------------------
 
+    /** /tgrpg huntnight: перевести время мира на начало ближайшей «Ночи охоты» (сегодняшней, если она ещё не прошла). */
+    private static int huntNight(CommandContext<CommandSourceStack> ctx) {
+        net.minecraft.server.level.ServerLevel level = ctx.getSource().getServer().overworld();
+        long dayTime = level.getDayTime();
+        long day = Math.floorDiv(dayTime, 24000L);
+        int every = Balance.HUNT_NIGHT_EVERY_DAYS;
+        long target = day + Math.floorMod(every - 1 - day, every);
+        if (target == day && Math.floorMod(dayTime, 24000L) >= Balance.HUNT_NIGHT_END) {
+            target += every;
+        }
+        long time = target * 24000L + Balance.HUNT_NIGHT_START;
+        if (time > dayTime) {
+            level.setDayTime(time);
+        }
+        return 1;
+    }
+
     private static int help(CommandContext<CommandSourceStack> ctx) {
-        for (int i = 0; i <= 19; i++) {
+        for (int i = 0; i <= 22; i++) {
             final int line = i;
             ctx.getSource().sendSuccess(() -> Component.translatable("command.tokyoghoulrpg.help." + line), false);
         }
@@ -306,7 +349,9 @@ public final class ModCommands {
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.class",
                         Component.translatable(data.getPlayerClass().translationKey()),
                         Component.translatable(data.getKaguneVariant() == KaguneVariant.NONE
-                                ? "command.tokyoghoulrpg.info.no_variant" : data.getKaguneVariant().translationKey())))
+                                ? "command.tokyoghoulrpg.info.no_variant" : data.getKaguneVariant().translationKey()),
+                        Component.translatable(data.getKaguneType() == com.tokyoghoulrpg.data.KaguneType.NONE
+                                ? "command.tokyoghoulrpg.info.no_variant" : data.getKaguneType().translationKey())))
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.points",
                         data.getSkillPoints(), data.getBloodPoints()))
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.rage",

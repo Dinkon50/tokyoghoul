@@ -111,7 +111,10 @@ public final class SkillTree {
         CHARISMA("charisma", Tab.SPECIAL, 1, Balance.CHARISMA_COST, 1, 0xFFD133),
         FORTUNE("fortune", Tab.SPECIAL, 1, Balance.FORTUNE_COST, 1, 0x3CC878),
         // «Выдержка» у всех классов: оглушение короче (кроме оглушения за сломанный блок)
-        STUN_RESIST("stun_resist", Tab.SPECIAL, 3, Balance.COSTS_3, 1, 0xD8B070);
+        STUN_RESIST("stun_resist", Tab.SPECIAL, 3, Balance.COSTS_3, 1, 0xD8B070),
+        // «Добытчик»: больше очков крови за убийства; «Первая помощь»: аптечки сильнее и чаще
+        SCAVENGER("scavenger", Tab.SPECIAL, 3, Balance.COSTS_3, 1, 0xC04050),
+        FIRST_AID("first_aid", Tab.SPECIAL, 2, Balance.COSTS_2, 1, 0xE8E8E8);
 
         private final String id;
         private final Tab tab;
@@ -253,6 +256,9 @@ public final class SkillTree {
                 case Q_REACH -> Component.translatable(key, num(SkillEffects.qReach(level)));
                 case GHOUL_BANE -> Component.translatable(key, percent(SkillEffects.ghoulBane(level)));
                 case STUN_RESIST -> Component.translatable(key, percent(SkillEffects.stunResist(level)));
+                case SCAVENGER -> Component.translatable(key, percent(SkillEffects.scavenger(level)));
+                case FIRST_AID -> Component.translatable(key, percent(SkillEffects.firstAidHeal(level)),
+                        seconds(SkillEffects.medkitCooldown(level)));
                 case KAGUNE_GUARD -> Component.translatable(key, percent(SkillEffects.kaguneGuard(level)));
                 case RC_SUPPRESS -> Component.translatable(key, seconds(SkillEffects.rcSuppressTicks(level)));
                 case FIELD_MEDIC -> Component.translatable(key, num(SkillEffects.fieldMedic(level) / 2.0),

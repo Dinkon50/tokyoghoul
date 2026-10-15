@@ -134,11 +134,12 @@ public final class ClanBond {
             LINKS.put(to, link);
         }
         link.donors.add(from);
-        link.health += amount;
+        float gained = (float) (amount * Balance.BOND_HP_GAIN);    // получателю на 25% больше, чем отдал даритель
+        link.health += gained;
         link.bonus += bonus;
         link.end = now + Balance.BOND_TICKS;
         setMaxHealthBonus(receiver, RECEIVER_HP, link.health);
-        receiver.setHealth(Math.min(receiver.getMaxHealth(), receiver.getHealth() + amount));
+        receiver.setHealth(Math.min(receiver.getMaxHealth(), receiver.getHealth() + gained));
 
         updateDisplay(server, link);
         Effects.particles(donor, ParticleTypes.SMOKE, 20, 0.5, 0.02);
@@ -148,7 +149,8 @@ public final class ClanBond {
         Effects.sound(donor, SoundEvents.BEACON_DEACTIVATE, 0.8F, 1.2F);
         String hp = String.format(java.util.Locale.ROOT, "%.1f", amount / 2.0F);
         tell(donor, "given", receiver.getGameProfile().getName(), hp, Math.round(weaken * 100));
-        tell(receiver, second ? "received_more" : "received", donor.getGameProfile().getName(), hp,
+        tell(receiver, second ? "received_more" : "received", donor.getGameProfile().getName(),
+                String.format(java.util.Locale.ROOT, "%.1f", gained / 2.0F),
                 Math.round(link.bonus * 100));
     }
 

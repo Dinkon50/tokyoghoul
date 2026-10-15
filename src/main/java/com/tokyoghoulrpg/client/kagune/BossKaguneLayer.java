@@ -12,22 +12,29 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
  * Кагуне на спине Кровавого полугуля — та же модель и анимации, что у игрока-гуля.
  * Всегда выпущено; во второй стадии светятся вены ярости. Особые атаки босса проигрывают анимации ударов.
  */
-public class BossKaguneLayer extends RenderLayer<HalfGhoulBoss, PlayerModel<HalfGhoulBoss>> {
+public class BossKaguneLayer<T extends HalfGhoulBoss> extends RenderLayer<T, PlayerModel<T>> {
     private final KaguneRenderer renderer = new KaguneRenderer();
     private final KaguneVeinsRenderer veinsRenderer = new KaguneVeinsRenderer();
 
-    public BossKaguneLayer(RenderLayerParent<HalfGhoulBoss, PlayerModel<HalfGhoulBoss>> parent) {
+    private final KaguneVariant variant;
+
+    public BossKaguneLayer(RenderLayerParent<T, PlayerModel<T>> parent) {
+        this(parent, KaguneVariant.KANEKI);
+    }
+
+    public BossKaguneLayer(RenderLayerParent<T, PlayerModel<T>> parent, KaguneVariant variant) {
         super(parent);
+        this.variant = variant;
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, HalfGhoulBoss boss,
+    public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, T boss,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks,
                        float netHeadYaw, float headPitch) {
         if (boss.isInvisible()) {
             return;
         }
-        KaguneClientState.applyState(boss.getId(), true, KaguneVariant.KANEKI, boss.getPhase() == 2, false);
+        KaguneClientState.applyState(boss.getId(), true, variant, boss.getPhase() >= 2, false);
         KaguneAnimatable kagune = KaguneClientState.get(boss.getId());
         if (kagune == null) {
             return;

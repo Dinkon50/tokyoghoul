@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "tokyoghoulrpg:block/mask_workshop_top",
+    "side": "tokyoghoulrpg:block/mask_workshop_side",
+    "bottom": "tokyoghoulrpg:block/mask_workshop_bottom"
+  }
+}

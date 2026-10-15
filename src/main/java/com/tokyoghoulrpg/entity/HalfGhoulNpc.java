@@ -105,6 +105,7 @@ public class HalfGhoulNpc extends Monster implements SkinVariant {
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
+        com.tokyoghoulrpg.world.HuntNight.tickMob(this);
         if (owner == null || this.tickCount % 20 != 0 || !(this.level() instanceof ServerLevel level)) {
             return;
         }

@@ -89,6 +89,10 @@ public final class BossRewards {
         Standing.onBossKill(ranked, Balance.STANDING_RAID_BOSS);
         // ранг и Какудзя — всем, кто нанёс урон
         for (ServerPlayer player : ranked) {
+            PlayerData pd = PlayerData.get(player);
+            if (pd != null) {
+                pd.markBossKilled(4);
+            }
             com.tokyoghoulrpg.rank.Ranks.add(player, Balance.RANK_RAID_BOSS);
             com.tokyoghoulrpg.combat.Kakuja.gain(player, Balance.KAKUJA_RAID_BOSS);
         }

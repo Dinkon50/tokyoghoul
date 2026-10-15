@@ -27,6 +27,11 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     // Сохраняется в мире
     private PlayerClass playerClass = PlayerClass.NONE;
     private KaguneVariant kaguneVariant = KaguneVariant.NONE;
+    /** Тип кагуне (ринкаку, укаку, коукаку, бикаку): пассивный бонус. NONE — ещё не выбран. */
+    private KaguneType kaguneType = KaguneType.NONE;
+    /** Подсказки для новичков: какая сейчас и закончены ли (у персонажей из старых сохранений — закончены). */
+    private int tutorialStep = 0;
+    private boolean tutorialDone = false;
     private boolean kaguneActive = false;
     private int rage = 0;
     private int rageLevel = 0;
@@ -69,6 +74,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     /** Очки ранга: отдельно звание CCG и рейтинг гуля (при смене класса своё не теряется). */
     private int rankCcg = 0;
     private int rankGhoul = 0;
+    /** Побеждённые боссы: 1 — Пожиратель, 2 — Старший следователь, 4 — Кровавый полугуль. */
+    private int bossesKilled = 0;
     /** Для меню «Профиль»: клан игрока (сервер заполняет перед отправкой) и откаты способностей. */
     private String clanNameCache = "";
     private int clanRepCache = 0;
@@ -130,6 +137,27 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public void setKaguneVariant(KaguneVariant kaguneVariant) {
         this.kaguneVariant = kaguneVariant;
+    }
+
+    public KaguneType getKaguneType() {
+        return kaguneType;
+    }
+
+    public void setKaguneType(KaguneType kaguneType) {
+        this.kaguneType = kaguneType == null ? KaguneType.NONE : kaguneType;
+    }
+
+    public int getTutorialStep() {
+        return tutorialStep;
+    }
+
+    public boolean isTutorialDone() {
+        return tutorialDone;
+    }
+
+    public void setTutorial(int step, boolean done) {
+        this.tutorialStep = Math.max(0, step);
+        this.tutorialDone = done;
     }
 
     public boolean isKaguneActive() {
@@ -310,6 +338,14 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public boolean isKakujaActive(long now) {
         return kakujaEndTick > now;
+    }
+
+    public int getBossesKilled() {
+        return bossesKilled;
+    }
+
+    public void markBossKilled(int bit) {
+        this.bossesKilled |= bit;
     }
 
     public int getRankCcg() {
@@ -600,6 +636,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     public void reset() {
         playerClass = PlayerClass.NONE;
         kaguneVariant = KaguneVariant.NONE;
+        kaguneType = KaguneType.NONE;
+        tutorialStep = 0;
+        tutorialDone = false;
         kaguneActive = false;
         rage = 0;
         rageLevel = 0;
@@ -627,6 +666,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         kakujaEndTick = 0L;
         rankCcg = 0;
         rankGhoul = 0;
+        bossesKilled = 0;
         starterQuinque = false;
         finalQuinques = 0;
         questIndex = 0;
@@ -661,6 +701,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         CompoundTag tag = new CompoundTag();
         tag.putString("class", playerClass.id());
         tag.putString("kagune_variant", kaguneVariant.id());
+        tag.putString("kagune_type", kaguneType.id());
+        tag.putInt("tutorial_step", tutorialStep);
+        tag.putBoolean("tutorial_done", tutorialDone);
         tag.putBoolean("kagune_active", kaguneActive);
         tag.putInt("rage", rage);
         tag.putInt("rage_level", rageLevel);
@@ -687,6 +730,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putInt("kakuja_points", kakujaPoints);
         tag.putInt("rank_ccg", rankCcg);
         tag.putInt("rank_ghoul", rankGhoul);
+        tag.putInt("bosses_killed", bossesKilled);
         tag.putBoolean("starter_quinque", starterQuinque);
         tag.putInt("final_quinques", finalQuinques);
         tag.putInt("quest_index", questIndex);
@@ -751,6 +795,10 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     public void deserializeNBT(CompoundTag tag) {
         playerClass = PlayerClass.byId(tag.getString("class"));
         kaguneVariant = KaguneVariant.byId(tag.getString("kagune_variant"));
+        kaguneType = KaguneType.byId(tag.getString("kagune_type"));
+        // персонаж из сохранения, где подсказок ещё не было: он уже не новичок
+        tutorialStep = tag.getInt("tutorial_step");
+        tutorialDone = !tag.contains("tutorial_done") || tag.getBoolean("tutorial_done");
         kaguneActive = tag.getBoolean("kagune_active");
         setRage(tag.getInt("rage"));
         setRageLevel(tag.getInt("rage_level"));
@@ -781,6 +829,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         setKakujaPoints(tag.getInt("kakuja_points"));
         setRankCcg(tag.getInt("rank_ccg"));
         setRankGhoul(tag.getInt("rank_ghoul"));
+        bossesKilled = tag.getInt("bosses_killed");
         starterQuinque = tag.getBoolean("starter_quinque");
         setFinalQuinques(tag.getInt("final_quinques"));
         setQuestIndex(tag.getInt("quest_index"));

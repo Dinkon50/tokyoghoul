@@ -78,7 +78,7 @@ public class HalfGhoulBoss extends Monster implements BossMob {
     private static final EntityDataAccessor<Integer> PHASE =
             SynchedEntityData.defineId(HalfGhoulBoss.class, EntityDataSerializers.INT);
 
-    private final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
+    protected final ServerBossEvent bossEvent = new ServerBossEvent(this.getDisplayName(),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10);
     /** Урон по боссу от каждого игрока за весь бой (обе стадии). */
     private final Map<UUID, Float> damageBy = new HashMap<>();
@@ -112,9 +112,55 @@ public class HalfGhoulBoss extends Monster implements BossMob {
         this.entityData.define(PHASE, 1);
     }
 
-    /** 1 — первая стадия, 2 — вторая (после восстановления). */
+    /** 1 — первая стадия, 2 — вторая (после восстановления), у Алого Монарха есть и третья. */
     public int getPhase() {
         return this.entityData.get(PHASE);
+    }
+
+    // ------------------------------------------------------------------ то, что меняет Алый Монарх
+
+    /** Сколько стадий у босса. */
+    protected int maxPhase() {
+        return 2;
+    }
+
+    /** При какой доле здоровья переходит в следующую стадию (0 — только когда здоровье кончилось). */
+    protected float phaseThreshold() {
+        return 0.5F;
+    }
+
+    /** Часть ключей перевода: bossbar.tokyoghoulrpg.<ключ>.phase2 и message.tokyoghoulrpg.<ключ>.phase2. */
+    protected String phaseKey() {
+        return "half_ghoul_boss";
+    }
+
+    protected BossEvent.BossBarColor baseColor() {
+        return BossEvent.BossBarColor.PURPLE;
+    }
+
+    /** Во сколько раз сильнее обычный удар в этой стадии. */
+    protected double phaseDamage() {
+        return getPhase() >= 2 ? Balance.HG_PHASE2_DAMAGE : 1.0;
+    }
+
+    /** Прибавка к скорости в этой стадии. */
+    protected double phaseSpeed() {
+        return getPhase() >= 2 ? Balance.HG_PHASE2_SPEED : 0.0;
+    }
+
+    /** Ключ строки полосы здоровья для стадии (2, 3 ...). */
+    private Component phaseBarName() {
+        return Component.translatable("bossbar.tokyoghoulrpg." + phaseKey() + ".phase" + getPhase(), this.getDisplayName());
+    }
+
+    /** Смертельный удар: если есть ещё стадии — не умирает, а переходит в следующую. */
+    public boolean preventDeath() {
+        if (getPhase() >= maxPhase()) {
+            return false;
+        }
+        this.setHealth(1.0F);
+        nextPhase();
+        return true;
     }
 
     public boolean isTransforming() {
@@ -153,13 +199,13 @@ public class HalfGhoulBoss extends Monster implements BossMob {
 
     @Override
     public float damageMultiplier() {
-        return Balance.HG_BOSS_SPECIAL_MULT * (getPhase() == 2 ? Balance.HG_PHASE2_DAMAGE : 1.0F)
+        return Balance.HG_BOSS_SPECIAL_MULT * (float) phaseDamage()
                 * (float) (1.0 + Balance.HG_PER_PLAYER_DAMAGE * (players - 1));
     }
 
     @Override
     public double cooldownMultiplier() {
-        return getPhase() == 2 ? Balance.HG_PHASE2_COOLDOWN : 1.0;
+        return getPhase() >= 2 ? Balance.HG_PHASE2_COOLDOWN : 1.0;
     }
 
     @Override
@@ -177,9 +223,9 @@ public class HalfGhoulBoss extends Monster implements BossMob {
         if (Math.abs(newMax - oldMax) > 1.0E-3F && oldMax > 0.0F && this.isAlive()) {
             this.setHealth(Math.max(1.0F, health * newMax / oldMax));
         }
-        double damage = (getPhase() == 2 ? Balance.HG_PHASE2_DAMAGE : 1.0) * (1.0 + Balance.HG_PER_PLAYER_DAMAGE * (players - 1));
+        double damage = phaseDamage() * (1.0 + Balance.HG_PER_PLAYER_DAMAGE * (players - 1));
         set(Attributes.ATTACK_DAMAGE, DAMAGE_ID, damage - 1.0);
-        set(Attributes.MOVEMENT_SPEED, SPEED_ID, getPhase() == 2 ? Balance.HG_PHASE2_SPEED : 0.0);
+        set(Attributes.MOVEMENT_SPEED, SPEED_ID, phaseSpeed());
     }
 
     private void set(net.minecraft.world.entity.ai.attributes.Attribute attribute, UUID id, double amount) {
@@ -229,44 +275,49 @@ public class HalfGhoulBoss extends Monster implements BossMob {
         if (transformTicks > 0) {
             return;
         }
-        if (getPhase() == 1 && fraction <= 0.5F) {
-            startPhase2();
+        if (getPhase() < maxPhase() && phaseThreshold() > 0.0F && fraction <= phaseThreshold()) {
+            nextPhase();
             return;
         }
         // свита: 75% в первой стадии, 66% и 33% во второй (начало второй стадии — отдельно)
         if (getPhase() == 1 && summonStage == 0 && fraction <= 0.75F) {
             summonStage = 1;
             summon();
-        } else if (getPhase() == 2 && summonStage == 2 && fraction <= 0.66F) {
+        } else if (getPhase() >= 2 && summonStage == 2 && fraction <= 0.66F) {
             summonStage = 3;
             summon();
-        } else if (getPhase() == 2 && summonStage == 3 && fraction <= 0.33F) {
+        } else if (getPhase() >= 2 && summonStage == 3 && fraction <= 0.33F) {
             summonStage = 4;
             summon();
         }
-        if (getPhase() == 2 && this.tickCount % 4 == 0) {
+        if (getPhase() >= 2 && this.tickCount % 4 == 0) {
             Effects.particles(this, Effects.RAGE, 5, 0.6, 0.02);
         }
     }
 
-    /** Половина здоровья снесена: превращение, полное восстановление, вторая стадия. */
-    public void startPhase2() {
-        if (getPhase() == 2) {
+    /** Следующая стадия: превращение, полное восстановление, сильнее. */
+    public void nextPhase() {
+        if (getPhase() >= maxPhase()) {
             return;
         }
-        this.entityData.set(PHASE, 2);
+        this.entityData.set(PHASE, getPhase() + 1);
         transformTicks = Balance.HG_TRANSFORM_TICKS;
-        summonStage = Math.max(summonStage, 2);
+        summonStage = 2;                    // во второй и следующих стадиях снова зовёт свиту на 66% и 33%
         this.getNavigation().stop();
         this.bossEvent.setColor(BossEvent.BossBarColor.RED);
         this.bossEvent.setDarkenScreen(true);
-        this.bossEvent.setName(Component.translatable("bossbar.tokyoghoulrpg.half_ghoul_boss.phase2", this.getDisplayName()));
+        this.bossEvent.setName(phaseBarName());
         refreshScaling();
         Effects.sound(this, SoundEvents.WITHER_SPAWN, 1.5F, 0.8F);
         for (Player player : nearbyPlayers(48.0)) {
-            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.half_ghoul_boss.phase2"), true);
+            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg." + phaseKey() + ".phase" + getPhase()), true);
         }
         summon();
+    }
+
+    /** Совместимость: старое имя перехода во вторую стадию. */
+    public void startPhase2() {
+        nextPhase();
     }
 
     /** Превращение: стоит на месте, неуязвим, здоровье восполняется до конца. */
@@ -324,7 +375,7 @@ public class HalfGhoulBoss extends Monster implements BossMob {
         transformTicks = 0;
         summonStage = 0;
         damageBy.clear();
-        this.bossEvent.setColor(BossEvent.BossBarColor.PURPLE);
+        this.bossEvent.setColor(baseColor());
         this.bossEvent.setDarkenScreen(false);
         this.bossEvent.setName(this.getDisplayName());
         refreshScaling();
@@ -474,7 +525,7 @@ public class HalfGhoulBoss extends Monster implements BossMob {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.entityData.set(PHASE, Math.max(1, Math.min(2, tag.getInt("Phase"))));
+        this.entityData.set(PHASE, Math.max(1, Math.min(maxPhase(), tag.getInt("Phase"))));
         this.summonStage = tag.getInt("SummonStage");
         this.respawned = tag.getBoolean("Respawned");
         int[] a = tag.getIntArray("Arena");
@@ -485,10 +536,10 @@ public class HalfGhoulBoss extends Monster implements BossMob {
             CompoundTag e = list.getCompound(i);
             damageBy.put(e.getUUID("Player"), e.getFloat("Damage"));
         }
-        if (getPhase() == 2) {
+        if (getPhase() >= 2) {
             this.bossEvent.setColor(BossEvent.BossBarColor.RED);
             this.bossEvent.setDarkenScreen(true);
-            this.bossEvent.setName(Component.translatable("bossbar.tokyoghoulrpg.half_ghoul_boss.phase2", this.getDisplayName()));
+            this.bossEvent.setName(phaseBarName());
         } else if (this.hasCustomName()) {
             this.bossEvent.setName(this.getDisplayName());
         }

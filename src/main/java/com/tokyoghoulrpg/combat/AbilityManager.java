@@ -329,7 +329,7 @@ public final class AbilityManager {
 
     private static int dashTicks(PlayerData data) {
         return data.getPlayerClass().hasKagune()
-                ? SkillEffects.dashTicks(lvl(data, SkillTree.Branch.DASH))
+                ? SkillEffects.dashTicks(lvl(data, SkillTree.Branch.DASH)) + KaguneTypeBonus.extraDashTicks(data)
                 : Balance.DASH_TICKS;
     }
 
@@ -549,6 +549,10 @@ public final class AbilityManager {
         rewardLevels(player, data);
         applyClassStats(player, data, false);
         SpecialAbilities.tick(player, data, player.level().getGameTime());
+        // тип кагуне и надетая маска: постоянные бонусы
+        KaguneTypeBonus.tick(player, data);
+        com.tokyoghoulrpg.item.MaskEffects.tick(player, data);
+        com.tokyoghoulrpg.item.CcgSet.tick(player, data);
         Kakuja.tick(player, data, player.level().getGameTime());
         CcgRaids.tick(player, data);
         com.tokyoghoulrpg.rep.Standing.tick(player, data);
@@ -596,7 +600,7 @@ public final class AbilityManager {
         int regenLevel = SkillEffects.level(data, SkillTree.Branch.REGEN);
         if (regenLevel > 0 && player.isAlive() && player.getHealth() < player.getMaxHealth()
                 && now % Balance.SKILL_REGEN_INTERVAL == 0) {
-            player.heal(SkillEffects.regenAmount(regenLevel));
+            player.heal((float) (SkillEffects.regenAmount(regenLevel) * KaguneTypeBonus.regenFactor(data)));
         }
 
         // Ветка «Скорость»: постоянная прибавка к скорости ходьбы
@@ -799,7 +803,7 @@ public final class AbilityManager {
         if (ghoul && player.isAlive() && player.getHealth() < player.getMaxHealth()
                 && player.getFoodData().getFoodLevel() > 0
                 && player.level().getGameTime() % Balance.GHOUL_REGEN_INTERVAL == 0) {
-            player.heal(Balance.GHOUL_REGEN_AMOUNT);
+            player.heal((float) (Balance.GHOUL_REGEN_AMOUNT * KaguneTypeBonus.regenFactor(data)));
         }
     }
 

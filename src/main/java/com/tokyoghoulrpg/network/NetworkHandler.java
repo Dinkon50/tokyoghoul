@@ -32,7 +32,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "16";
+    private static final String PROTOCOL = "18";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -99,6 +99,19 @@ public final class NetworkHandler {
         CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.RequestSyncC2S.class,
                 com.tokyoghoulrpg.network.packet.RequestSyncC2S::encode, com.tokyoghoulrpg.network.packet.RequestSyncC2S::decode,
                 com.tokyoghoulrpg.network.packet.RequestSyncC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.SelectKaguneTypeC2S.class,
+                com.tokyoghoulrpg.network.packet.SelectKaguneTypeC2S::encode,
+                com.tokyoghoulrpg.network.packet.SelectKaguneTypeC2S::decode,
+                com.tokyoghoulrpg.network.packet.SelectKaguneTypeC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.TutorialC2S.class,
+                com.tokyoghoulrpg.network.packet.TutorialC2S::encode, com.tokyoghoulrpg.network.packet.TutorialC2S::decode,
+                com.tokyoghoulrpg.network.packet.TutorialC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.MaskWorkshopC2S.class,
+                com.tokyoghoulrpg.network.packet.MaskWorkshopC2S::encode, com.tokyoghoulrpg.network.packet.MaskWorkshopC2S::decode,
+                com.tokyoghoulrpg.network.packet.MaskWorkshopC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.FenceActionC2S.class,
+                com.tokyoghoulrpg.network.packet.FenceActionC2S::encode, com.tokyoghoulrpg.network.packet.FenceActionC2S::decode,
+                com.tokyoghoulrpg.network.packet.FenceActionC2S::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */

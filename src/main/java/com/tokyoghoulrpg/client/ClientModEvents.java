@@ -1,5 +1,7 @@
 package com.tokyoghoulrpg.client;
 
+import com.tokyoghoulrpg.entity.TestSubjectNpc;
+
 import com.tokyoghoulrpg.TokyoGhoulRPG;
 import com.tokyoghoulrpg.client.hud.BiteVignette;
 import com.tokyoghoulrpg.client.hud.HudOverlay;
@@ -58,6 +60,10 @@ public final class ClientModEvents {
                 context -> new NpcRenderer<>(context, "informant", InformantNpc.VARIANTS));
         event.registerEntityRenderer(ModEntities.CAFE_OWNER.get(),
                 context -> new NpcRenderer<>(context, "cafe_owner", 1));
+        event.registerEntityRenderer(ModEntities.TEST_SUBJECT.get(),
+                context -> new NpcRenderer<>(context, "test_subject", TestSubjectNpc.VARIANTS));
+        event.registerEntityRenderer(ModEntities.FENCE.get(),
+                context -> new NpcRenderer<>(context, "fence", 1));
         // боссы: модель игрока в 1.23 раза крупнее (хитбокс 2.4 блока)
         event.registerEntityRenderer(ModEntities.GHOUL_BOSS.get(),
                 context -> new NpcRenderer<>(context, "ghoul_boss", 1, 1.23F));
@@ -68,7 +74,13 @@ public final class ClientModEvents {
         // Кровавый полугуль: в 1.33 раза крупнее игрока, кагуне на спине (во второй стадии — с венами ярости)
         event.registerEntityRenderer(ModEntities.HALF_GHOUL_BOSS.get(), context -> {
             NpcRenderer<com.tokyoghoulrpg.entity.HalfGhoulBoss> renderer = new NpcRenderer<>(context, "half_ghoul_boss", 1, 1.33F);
-            renderer.addLayer(new BossKaguneLayer(renderer));
+            renderer.addLayer(new BossKaguneLayer<>(renderer));
+            return renderer;
+        });
+        // Алый Монарх: ещё крупнее, кагуне второго варианта (твоя модель «author»)
+        event.registerEntityRenderer(ModEntities.CRIMSON_MONARCH.get(), context -> {
+            NpcRenderer<com.tokyoghoulrpg.entity.CrimsonMonarch> renderer = new NpcRenderer<>(context, "crimson_monarch", 1, 1.4F);
+            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.AUTHOR));
             return renderer;
         });
     }
@@ -95,5 +107,6 @@ public final class ClientModEvents {
         // Красные края после укуса рисуются под всем интерфейсом, панель и хотбар остаются поверх
         event.registerBelowAll("bite_vignette", BiteVignette::render);
         event.registerAboveAll("hud", HudOverlay::render);
+        event.registerAboveAll("tutorial", HudOverlay::renderTutorial);
     }
 }

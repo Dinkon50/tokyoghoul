@@ -22,7 +22,8 @@ public final class RcSuppress {
     /** Гуль: NPC-гуль, Пожиратель, игрок-гуль или полугуль. */
     public static boolean isGhoul(LivingEntity entity) {
         if (entity instanceof GhoulNpc || entity instanceof GhoulBoss
-                || entity instanceof com.tokyoghoulrpg.entity.HalfGhoulNpc || entity instanceof com.tokyoghoulrpg.entity.HalfGhoulBoss) {
+                || entity instanceof com.tokyoghoulrpg.entity.HalfGhoulNpc || entity instanceof com.tokyoghoulrpg.entity.HalfGhoulBoss
+                || entity instanceof com.tokyoghoulrpg.entity.TestSubjectNpc) {
             return true;
         }
         if (entity instanceof Player player) {

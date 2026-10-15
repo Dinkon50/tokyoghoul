@@ -264,6 +264,18 @@ public final class SkillEffects {
     }
 
     /** «Выдержка»: насколько короче оглушение (0,2 / 0,35 / 0,5). */
+    public static double scavenger(int level) {
+        return Balance.SCAVENGER_BLOOD[Math.max(0, Math.min(Balance.SCAVENGER_BLOOD.length - 1, level))];
+    }
+
+    public static double firstAidHeal(int level) {
+        return Balance.FIRST_AID_HEAL[Math.max(0, Math.min(Balance.FIRST_AID_HEAL.length - 1, level))];
+    }
+
+    public static int medkitCooldown(int level) {
+        return Balance.FIRST_AID_COOLDOWN[Math.max(0, Math.min(Balance.FIRST_AID_COOLDOWN.length - 1, level))];
+    }
+
     public static double stunResist(int level) {
         return Balance.STUN_RESIST[Math.max(0, Math.min(Balance.STUN_RESIST.length - 1, level))];
     }

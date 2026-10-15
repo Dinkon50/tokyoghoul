@@ -24,7 +24,7 @@ import net.minecraft.world.item.ItemStack;
  */
 public class ProfileScreen extends Screen {
     private static final int WIDTH = 340;
-    private static final int HEIGHT = 236;
+    private static final int HEIGHT = 262;
     private static final int LINE = 12;
 
     public ProfileScreen() {
@@ -41,8 +41,29 @@ public class ProfileScreen extends Screen {
 
     @Override
     protected void init() {
+        int by = top() + HEIGHT - 24;
         addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.close"), b -> onClose())
-                .bounds(left() + WIDTH / 2 - 50, top() + HEIGHT - 24, 100, 18).build());
+                .bounds(left() + WIDTH / 2 - 50, by, 100, 18).build());
+        Minecraft mc = Minecraft.getInstance();
+        PlayerData data = mc.player == null ? null : PlayerData.get(mc.player);
+        // тип кагуне: выбрать или сменить
+        if (data != null && data.getPlayerClass().hasKagune()) {
+            addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.profile.type_button"),
+                    b -> Minecraft.getInstance().setScreen(new KaguneTypeScreen())).bounds(left() + 8, by, 100, 18).build());
+        }
+        // подсказки для новичков: пропустить, если идут, или посмотреть заново
+        if (data != null) {
+            boolean running = !data.isTutorialDone();
+            addRenderableWidget(Button.builder(Component.translatable(running
+                            ? "screen.tokyoghoulrpg.profile.tutorial_skip" : "screen.tokyoghoulrpg.profile.tutorial_restart"),
+                    b -> {
+                        com.tokyoghoulrpg.network.NetworkHandler.CHANNEL.sendToServer(
+                                new com.tokyoghoulrpg.network.packet.TutorialC2S(running
+                                        ? com.tokyoghoulrpg.network.packet.TutorialC2S.SKIP
+                                        : com.tokyoghoulrpg.network.packet.TutorialC2S.RESTART, 0));
+                        onClose();
+                    }).bounds(left() + WIDTH - 108, by, 100, 18).build());
+        }
     }
 
     private static String signed(int value) {
@@ -78,6 +99,13 @@ public class ProfileScreen extends Screen {
                     .append(Component.translatable(data.getKaguneVariant().translationKey()));
         }
         y = line(gfx, x, y, Component.translatable("screen.tokyoghoulrpg.profile.class", classLine), 0xE6E6E6);
+        if (cls.hasKagune()) {
+            com.tokyoghoulrpg.data.KaguneType type = data.getKaguneType();
+            y = line(gfx, x + 8, y, type == com.tokyoghoulrpg.data.KaguneType.NONE
+                    ? Component.translatable("screen.tokyoghoulrpg.profile.type_none")
+                    : Component.translatable("screen.tokyoghoulrpg.profile.type", Component.translatable(type.translationKey()),
+                    Component.translatable(type.translationKey() + ".short")), 0xFF8A8A);
+        }
 
         int ladder = Ranks.ladder(cls);
         if (ladder == Ranks.NONE) {
@@ -122,17 +150,31 @@ public class ProfileScreen extends Screen {
             quinque = Component.translatable("screen.tokyoghoulrpg.profile.no_quinque");
         }
         y = line(gfx, x, y, quinque, 0x7FD8E6);
+        // маска на лице
+        ItemStack head = mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+        if (head.getItem() instanceof com.tokyoghoulrpg.item.MaskItem mask) {
+            int tier = com.tokyoghoulrpg.item.MaskEffects.isMaster(head) ? 1 : 0;
+            Component effect = Component.translatable("item.tokyoghoulrpg.mask." + mask.kind().id() + ".effect",
+                    com.tokyoghoulrpg.item.MaskEffects.percent(mask.kind(), tier));
+            y = line(gfx, x, y, Component.translatable("screen.tokyoghoulrpg.profile.mask", head.getHoverName()), 0xD08A6A);
+            y = line(gfx, x + 8, y, cls.hasKagune() ? effect
+                    : Component.translatable("screen.tokyoghoulrpg.profile.mask_off"), 0x9A9A9A);
+        }
 
         if (cls.hasKagune()) {
             Component kakuja;
             if (data.isKakujaActive(now)) {
                 kakuja = Component.translatable("screen.tokyoghoulrpg.profile.kakuja_active",
                         (data.getKakujaEndTick() - now + 19) / 20);
-            } else if (data.getKakujaPoints() >= Balance.KAKUJA_UNLOCK) {
-                kakuja = Component.translatable("screen.tokyoghoulrpg.profile.kakuja_open");
             } else {
-                kakuja = Component.translatable("screen.tokyoghoulrpg.profile.kakuja_progress",
-                        data.getKakujaPoints(), Balance.KAKUJA_UNLOCK);
+                int stage = com.tokyoghoulrpg.combat.Kakuja.stage(data.getKakujaPoints());
+                int next = com.tokyoghoulrpg.combat.Kakuja.nextThreshold(stage);
+                Component stageText = Component.literal(stage == 0 ? "-" : com.tokyoghoulrpg.skill.SkillTree.roman(stage));
+                kakuja = next < 0
+                        ? Component.translatable("screen.tokyoghoulrpg.profile.kakuja_stage_max", stageText, data.getKakujaPoints(),
+                        Math.round(stage * Balance.KAKUJA_STAGE_DAMAGE * 100))
+                        : Component.translatable("screen.tokyoghoulrpg.profile.kakuja_stage", stageText,
+                        data.getKakujaPoints(), next, Math.round(stage * Balance.KAKUJA_STAGE_DAMAGE * 100));
             }
             line(gfx, x, y, kakuja, 0xE0203A);
         }
@@ -153,6 +195,14 @@ public class ProfileScreen extends Screen {
                     left2 > 0 ? 0xFF6A6A : 0x6EE07A, false);
             ry += LINE;
         }
+        // «Ночь охоты»
+        ry += 4;
+        int days = com.tokyoghoulrpg.world.HuntNight.daysUntil(mc.level);
+        Component hunt = com.tokyoghoulrpg.world.HuntNight.isActive(mc.level)
+                ? Component.translatable("screen.tokyoghoulrpg.profile.hunt_now")
+                : days == 0 ? Component.translatable("screen.tokyoghoulrpg.profile.hunt_tonight")
+                : Component.translatable("screen.tokyoghoulrpg.profile.hunt_days", days);
+        gfx.drawString(this.font, hunt, rx, ry, 0xE05050, false);
         super.render(gfx, mouseX, mouseY, partialTick);
     }
 

@@ -30,6 +30,7 @@ public class CcgEliteArmorItem extends ArmorItem {
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.tokyoghoulrpg.ccg_elite.tooltip").withStyle(ChatFormatting.AQUA));
+        CcgSet.tooltip(tooltip);
     }
 
     /** Раз в секунду: не-агент в этой броне — она переходит в инвентарь (или падает рядом, если места нет). */

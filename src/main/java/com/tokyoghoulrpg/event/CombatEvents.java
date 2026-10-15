@@ -289,6 +289,9 @@ public final class CombatEvents {
             if (data != null && data.getPlayerClass() == PlayerClass.HALF_GHOUL) {
                 amount *= (float) (1.0 + Balance.HALF_GHOUL_DAMAGE);
             }
+            // тип кагуне (бикаку) и маска (клыкастая)
+            amount *= (float) (com.tokyoghoulrpg.combat.KaguneTypeBonus.damageFactor(data)
+                    * com.tokyoghoulrpg.item.MaskEffects.damageFactor(attackingPlayer, data));
             // Какудзя и ранг
             if (data != null) {
                 amount *= (float) Kakuja.damageFactor(data, attackingPlayer.level().getGameTime());
@@ -344,6 +347,12 @@ public final class CombatEvents {
             amount *= (float) (1.0 - toughness);
             // Какудзя: броня из кагуне
             amount *= (float) Kakuja.defenseFactor(data, defendingPlayer.level().getGameTime());
+            // тип кагуне (коукаку, бикаку) и маска (костяная)
+            amount *= (float) (com.tokyoghoulrpg.combat.KaguneTypeBonus.defenseFactor(data)
+                    * com.tokyoghoulrpg.item.MaskEffects.defenseFactor(defendingPlayer, data));
+            // «Защита CCG»: полный комплект брони CCG на агенте, от гулей защищает сильнее
+            amount *= (float) com.tokyoghoulrpg.item.CcgSet.defenseFactor(defendingPlayer, data,
+                    attacker instanceof LivingEntity ghoulAttacker && RcSuppress.isGhoul(ghoulAttacker));
             // Защита от снарядов: часть веток «Защита» (гуль, полугуль) и «Стойкость» (человек, агент)
             if (event.getSource().is(DamageTypeTags.IS_PROJECTILE)) {
                 int guard = Math.max(SkillEffects.level(data, SkillTree.Branch.DEFENSE),
@@ -368,7 +377,10 @@ public final class CombatEvents {
 
         // Ветка «Вампиризм»: часть нанесённого урона возвращается здоровьем
         if (attacker instanceof ServerPlayer vampire && attacker != victim) {
-            double share = SkillEffects.vampirism(SkillEffects.level(PlayerData.get(vampire), SkillTree.Branch.VAMPIRISM));
+            PlayerData vampireData = PlayerData.get(vampire);
+            // ветка «Вампиризм» и маска демона складываются
+            double share = SkillEffects.vampirism(SkillEffects.level(vampireData, SkillTree.Branch.VAMPIRISM))
+                    + com.tokyoghoulrpg.item.MaskEffects.lifesteal(vampire, vampireData);
             if (share > 0.0 && vampire.isAlive()) {
                 vampire.heal((float) (amount * share));
             }
@@ -378,11 +390,9 @@ public final class CombatEvents {
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         // Кровавый полугуль в первой стадии не умирает: превращается и восстанавливает всё здоровье
-        if (event.getEntity() instanceof HalfGhoulBoss halfGhoulBoss && halfGhoulBoss.getPhase() == 1
-                && !event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+        if (event.getEntity() instanceof HalfGhoulBoss halfGhoulBoss
+                && !event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY) && halfGhoulBoss.preventDeath()) {
             event.setCanceled(true);
-            halfGhoulBoss.setHealth(1.0F);
-            halfGhoulBoss.startPhase2();
             return;
         }
         // Ветка «Второе дыхание»: смертельный удар оставляет 1 сердце, раз в 5 минут.
@@ -430,6 +440,12 @@ public final class CombatEvents {
             if (event.getEntity() instanceof CcgBoss) {
                 QuinqueReward.onCcgBossKilled(killerPlayer);
             }
+            // для финального босса: кого из боссов игрок уже победил
+            if (data != null && event.getEntity() instanceof GhoulBoss) {
+                data.markBossKilled(1);
+            } else if (data != null && event.getEntity() instanceof CcgBoss) {
+                data.markBossKilled(2);
+            }
             Reputation.onKill(killerPlayer, event.getEntity());
             // личная репутация и репутация клана: мирный — минус, босс — плюс
             Standing.onKill(killerPlayer, event.getEntity());
@@ -440,7 +456,10 @@ public final class CombatEvents {
             Ranks.onKill(killerPlayer, event.getEntity());
         }
         // Кровавый полугуль: награда по урону и таймер возрождения на арене
-        if (event.getEntity() instanceof HalfGhoulBoss defeated) {
+        if (event.getEntity() instanceof com.tokyoghoulrpg.entity.CrimsonMonarch monarch) {
+            // финальный босс: только очки крови, и весь сервер узнаёт о победе
+            com.tokyoghoulrpg.entity.MonarchRewards.give(monarch);
+        } else if (event.getEntity() instanceof HalfGhoulBoss defeated) {
             BossRewards.give(defeated);
             defeated.onDefeated();
         }
@@ -463,11 +482,23 @@ public final class CombatEvents {
      */
     private static void rewardKill(ServerPlayer killer, PlayerData data, LivingEntity victim) {
         double rank = 1.0 + SkillEffects.rankBloodBonus(SkillEffects.level(data, SkillTree.Branch.RANK))
-                + Ranks.bloodBonus(data);
-        int bossBlood = (int) Math.round(Balance.BLOOD_KILL_BOSS * rank);
-        int npcBlood = (int) Math.round(Balance.BLOOD_KILL_NPC * rank);
+                + Ranks.bloodBonus(data)
+                + SkillEffects.scavenger(SkillEffects.level(data, SkillTree.Branch.SCAVENGER));
+        // «Ночь охоты»: очки крови двойные
+        boolean huntNight = com.tokyoghoulrpg.world.HuntNight.isActive(killer.getServer());
+        int night = huntNight ? Balance.HUNT_NIGHT_REWARD : 1;
+        int bossBlood = (int) Math.round(Balance.BLOOD_KILL_BOSS * rank) * night;
+        int npcBlood = (int) Math.round(Balance.BLOOD_KILL_NPC * rank) * night;
         if (victim instanceof HalfGhoulBoss) {
             return;     // своя награда по урону: BossRewards
+        }
+        // ночной охотник: сверх крови ещё очко навыков
+        if (com.tokyoghoulrpg.world.HuntNight.isHunter(victim)) {
+            data.addBloodPoints(npcBlood);
+            int points = data.earnSkillPoints(Balance.HUNT_NIGHT_HUNTER_POINTS);
+            killer.displayClientMessage(Component.translatable("message.tokyoghoulrpg.hunt_night.kill", npcBlood, points), true);
+            NetworkHandler.syncTo(killer);
+            return;
         }
         if (victim instanceof BossMob) {
             data.addBloodPoints(bossBlood);
@@ -477,9 +508,11 @@ public final class CombatEvents {
             Effects.sound(killer, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
             NetworkHandler.syncTo(killer);
             QuestManager.progress(killer, Quest.Trigger.KILL_BOSS, 1);
-        } else if (victim instanceof GhoulNpc || victim instanceof CcgAgentNpc || victim instanceof HalfGhoulNpc) {
+        } else if (victim instanceof GhoulNpc || victim instanceof CcgAgentNpc || victim instanceof HalfGhoulNpc
+                || victim instanceof com.tokyoghoulrpg.entity.TestSubjectNpc) {
             data.addBloodPoints(npcBlood);
-            killer.displayClientMessage(Component.translatable("message.tokyoghoulrpg.kill_reward", npcBlood), true);
+            killer.displayClientMessage(Component.translatable(huntNight ? "message.tokyoghoulrpg.kill_reward_night"
+                    : "message.tokyoghoulrpg.kill_reward", npcBlood), true);
             NetworkHandler.syncTo(killer);
         }
     }

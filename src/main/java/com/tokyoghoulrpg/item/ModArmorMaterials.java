@@ -16,7 +16,8 @@ import net.minecraft.world.item.crafting.Ingredient;
  */
 public enum ModArmorMaterials implements ArmorMaterial {
     MASK("mask", 5, new int[] {1, 1, 1, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, () -> Ingredient.of(Items.BONE)),
-    GHOUL_CLOTH("ghoul_cloth", 7, new int[] {1, 2, 3, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, () -> Ingredient.of(Items.LEATHER)),
+    // одежда гуля сильнее кожи: почти как железо (железо 2/5/6), прочность как у железа, немного прочности брони
+    GHOUL_CLOTH("ghoul_cloth", 15, new int[] {2, 4, 5, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 1.0F, () -> Ingredient.of(Items.LEATHER)),
     CCG_UNIFORM("ccg_uniform", 15, new int[] {1, 4, 5, 2}, 12, SoundEvents.ARMOR_EQUIP_CHAIN, 0.0F, () -> Ingredient.of(Items.IRON_INGOT)),
     /**
      * Броня особого класса CCG — сильнее незеритовой (незерит: 3/6/8/3, прочность 3, отбрасывание 0,1, множитель 37).

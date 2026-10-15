@@ -8,6 +8,7 @@ import com.tokyoghoulrpg.entity.GhoulNpc;
 import com.tokyoghoulrpg.entity.HalfGhoulBoss;
 import com.tokyoghoulrpg.entity.HalfGhoulNpc;
 import com.tokyoghoulrpg.entity.CafeOwnerNpc;
+import com.tokyoghoulrpg.entity.CrimsonMonarch;
 import com.tokyoghoulrpg.entity.InformantNpc;
 import com.tokyoghoulrpg.entity.TraderNpc;
 import net.minecraft.world.entity.EntityType;
@@ -59,10 +60,24 @@ public final class ModEntities {
             () -> EntityType.Builder.of(HalfGhoulBoss::new, MobCategory.MONSTER)
                     .sized(0.8F, 2.6F).fireImmune().clientTrackingRange(12).build("half_ghoul_boss"));
 
+    /** Алый Монарх: финальный босс, призывается Алой короной. */
+    public static final RegistryObject<EntityType<CrimsonMonarch>> CRIMSON_MONARCH = ENTITIES.register("crimson_monarch",
+            () -> EntityType.Builder.of(CrimsonMonarch::new, MobCategory.MONSTER)
+                    .sized(0.8F, 2.7F).fireImmune().clientTrackingRange(12).build("crimson_monarch"));
+
     /** Хозяин кофейни: стоит за стойкой, продаёт кофе и мясо, даёт задания. */
     public static final RegistryObject<EntityType<CafeOwnerNpc>> CAFE_OWNER = ENTITIES.register("cafe_owner",
             () -> EntityType.Builder.of(CafeOwnerNpc::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F).clientTrackingRange(10).build("cafe_owner"));
+
+    /** Подопытный: враг из заброшенной лаборатории RC. */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.TestSubjectNpc>> TEST_SUBJECT =
+            ENTITIES.register("test_subject", () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.TestSubjectNpc::new,
+                    MobCategory.MONSTER).sized(0.6F, 1.95F).clientTrackingRange(8).build("test_subject"));
+    /** Скупщик: торговец с чёрного рынка. */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.FenceNpc>> FENCE = ENTITIES.register("fence",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.FenceNpc::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("fence"));
 
     private ModEntities() {
     }
@@ -77,11 +92,17 @@ public final class ModEntities {
         event.put(HALF_GHOUL.get(), HalfGhoulNpc.createAttributes().build());
         event.put(HALF_GHOUL_BOSS.get(), HalfGhoulBoss.createAttributes().build());
         event.put(CAFE_OWNER.get(), InformantNpc.createAttributes().build());
+        event.put(CRIMSON_MONARCH.get(), CrimsonMonarch.createMonarchAttributes().build());
+        event.put(TEST_SUBJECT.get(), com.tokyoghoulrpg.entity.TestSubjectNpc.createAttributes().build());
+        event.put(FENCE.get(), InformantNpc.createAttributes().build());
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {
         event.register(GHOUL.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Monster::checkMonsterSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        // подопытные появляются только в лабораториях (поверх их поселяет постройка), при любом свете
+        event.register(TEST_SUBJECT.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkAnyLightMonsterSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(CCG_AGENT.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Mob::checkMobSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(TRADER.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,

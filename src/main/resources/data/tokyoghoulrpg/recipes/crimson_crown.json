@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IGI",
+    "GNG",
+    "IGI"
+  ],
+  "key": {
+    "I": {
+      "item": "tokyoghoulrpg:rc_steel_ingot"
+    },
+    "G": {
+      "item": "minecraft:gold_block"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    }
+  },
+  "result": {
+    "item": "tokyoghoulrpg:crimson_crown",
+    "count": 1
+  }
+}

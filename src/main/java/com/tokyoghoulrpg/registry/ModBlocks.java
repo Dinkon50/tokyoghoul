@@ -59,6 +59,11 @@ public final class ModBlocks {
                     .sound(SoundType.DEEPSLATE),
                     net.minecraft.util.valueproviders.UniformInt.of(4, 8)));
 
+    /** Мастерская масок: верстак мастера, где маски делают на заказ за очки крови. */
+    public static final RegistryObject<Block> MASK_WORKSHOP = BLOCKS.register("mask_workshop",
+            () -> new com.tokyoghoulrpg.world.MaskWorkshopBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD).strength(2.5F).sound(SoundType.WOOD)));
+
     private ModBlocks() {
     }
 }

@@ -13,6 +13,9 @@ import net.minecraft.nbt.CompoundTag;
 public final class ClientHooks {
     private static boolean pendingClassSelection = false;
     private static boolean pendingVariantSelection = false;
+    /** Выбор типа кагуне предлагается один раз за вход в мир (потом — из «Профиля»). */
+    private static boolean typeAsked = false;
+    private static int typeDelay = 0;
 
     private ClientHooks() {
     }
@@ -44,6 +47,22 @@ public final class ClientHooks {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getEntity(entityId) instanceof net.minecraft.world.entity.player.Player player) {
             player.refreshDisplayName();
+        }
+    }
+
+    /** Лавка Скупщика (ПКМ по нему). */
+    public static void openFence(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            mc.setScreen(new com.tokyoghoulrpg.client.screen.FenceScreen(entityId));
+        }
+    }
+
+    /** Меню мастерской масок (ПКМ по блоку). */
+    public static void openMaskWorkshop(net.minecraft.core.BlockPos pos) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            mc.setScreen(new com.tokyoghoulrpg.client.screen.MaskWorkshopScreen(pos));
         }
     }
 
@@ -85,10 +104,27 @@ public final class ClientHooks {
                 mc.setScreen(new ClassSelectionScreen(data.getPlayerClass()));
             }
         }
+        // Гуль или полугуль без типа кагуне (новый персонаж или из старого сохранения): предложить выбрать
+        PlayerData own = mc.player == null ? null : PlayerData.get(mc.player);
+        boolean needType = own != null && own.getPlayerClass().hasKagune()
+                && own.getKaguneVariant() != com.tokyoghoulrpg.data.KaguneVariant.NONE
+                && own.getKaguneType() == com.tokyoghoulrpg.data.KaguneType.NONE;
+        if (!typeAsked && needType && mc.screen == null && mc.level != null) {
+            if (++typeDelay >= 40) {
+                typeAsked = true;
+                mc.setScreen(new com.tokyoghoulrpg.client.screen.KaguneTypeScreen());
+            }
+        } else if (!needType) {
+            typeDelay = 0;
+        }
+        TutorialClient.tick(mc);
     }
 
     public static void reset() {
         pendingClassSelection = false;
         pendingVariantSelection = false;
+        typeAsked = false;
+        typeDelay = 0;
+        TutorialClient.reset();
     }
 }

@@ -166,7 +166,7 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
     /** Агенты не исчезают, когда игрок уходит далеко. Кроме отрядов из рейда и волн: те уходят. */
     @Override
     public boolean removeWhenFarAway(double distance) {
-        return raider || Hunt.isHunter(this);
+        return raider || Hunt.isHunter(this) || com.tokyoghoulrpg.world.HuntNight.isHunter(this);
     }
 
     /** Агент из волны уходит, когда цель пропала или прошло 5 минут. */
@@ -174,6 +174,7 @@ public class CcgAgentNpc extends PathfinderMob implements SkinVariant {
     protected void customServerAiStep() {
         super.customServerAiStep();
         Hunt.tick(this);
+        com.tokyoghoulrpg.world.HuntNight.tickMob(this);
     }
 
     @Override

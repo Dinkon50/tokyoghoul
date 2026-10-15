@@ -54,7 +54,7 @@ public class CcgBoss extends PathfinderMob implements BossMob {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 220.0)
+                .add(Attributes.MAX_HEALTH, 320.0)          // второй по силе: больше Пожирателя (250)
                 .add(Attributes.ATTACK_DAMAGE, 3.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.33)
                 .add(Attributes.FOLLOW_RANGE, 32.0)
@@ -72,6 +72,10 @@ public class CcgBoss extends PathfinderMob implements BossMob {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new ChargeStrikeGoal(this, CcgBoss::ally));
         this.goalSelector.addGoal(1, new SpinSweepGoal(this, CcgBoss::ally));
+        // больше атак: прыжок с ударом, электрический выпад квинке, удар молнии
+        this.goalSelector.addGoal(1, new com.tokyoghoulrpg.entity.goal.LeapSlamGoal(this, CcgBoss::ally));
+        this.goalSelector.addGoal(1, new com.tokyoghoulrpg.entity.goal.QuinqueThrustGoal(this, CcgBoss::ally));
+        this.goalSelector.addGoal(1, new com.tokyoghoulrpg.entity.goal.ThunderStrikeGoal(this, CcgBoss::ally));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.1, true));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.7));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 12.0F));
@@ -93,12 +97,13 @@ public class CcgBoss extends PathfinderMob implements BossMob {
         return result;
     }
 
-    /** Меч и форма. Вызывается и при появлении, и на первом тике: босс из постройки тоже будет с оружием. */
+    /** Квинке IXA в руках и форма. Вызывается и при появлении, и на первом тике (старые боссы с мечом тоже получат квинке). */
     private void equip() {
-        if (this.getItemBySlot(EquipmentSlot.MAINHAND).isEmpty()) {
-            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_SWORD));
+        if (!(this.getItemBySlot(EquipmentSlot.MAINHAND).getItem() instanceof com.tokyoghoulrpg.item.QuinqueItem)) {
+            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(com.tokyoghoulrpg.registry.ModItems.QUINQUE_IXA.get()));
         }
-        this.setDropChance(EquipmentSlot.MAINHAND, 0.25F);
+        // квинке с него не падает: Narukami и IXA — награда за финальное задание агента
+        this.setDropChance(EquipmentSlot.MAINHAND, 0.0F);
         this.equipped = true;
     }
 

@@ -30,7 +30,7 @@ public class SpikeRainGoal extends BossSkillGoal {
 
     @Override
     protected boolean ready(LivingEntity target) {
-        return mob instanceof HalfGhoulBoss boss && boss.getPhase() == 2 && mob.distanceTo(target) <= 24.0;
+        return mob instanceof HalfGhoulBoss boss && boss.getPhase() >= 2 && mob.distanceTo(target) <= 24.0;
     }
 
     @Override

@@ -103,6 +103,40 @@ public final class HudOverlay {
 
         // Под панелью: особые ауры и «тишина», сколько секунд осталось
         int ty = PANEL_Y + panelH + 3;
+        // Стадия Какудзя: название и полоска до следующей стадии (гуль и полугуль)
+        if (ghoul && data.getKakujaPoints() > 0) {
+            int points = data.getKakujaPoints();
+            int stage = com.tokyoghoulrpg.combat.Kakuja.stage(points);
+            int next = com.tokyoghoulrpg.combat.Kakuja.nextThreshold(stage);
+            int prev = stage == 0 ? 0 : com.tokyoghoulrpg.combat.Balance.KAKUJA_STAGES[stage - 1];
+            Component label = stage == 0
+                    ? Component.translatable("hud.tokyoghoulrpg.kakuja_stage_none")
+                    : Component.translatable("hud.tokyoghoulrpg.kakuja_stage", com.tokyoghoulrpg.skill.SkillTree.roman(stage));
+            float pulse = stage >= 3 ? 0.8F + 0.2F * Mth.sin((now + partialTick) * 0.12F) : 1.0F;
+            gfx.drawString(font, label, PANEL_X + 2, ty, scale(0xFFE0203A, pulse) & 0xFFFFFF, true);
+            int barX = PANEL_X + 4 + font.width(label) + 4;
+            int barW = Math.max(30, PANEL_X + PANEL_W - barX);
+            float fill = next < 0 ? 1.0F : (points - prev) / (float) Math.max(1, next - prev);
+            drawBar(gfx, barX, ty + 2, barW, fill, next < 0 ? 0xFFFF2040 : 0xFF9A1020, 0xFF240810);
+            ty += 10;
+        }
+        // «Облик гуля»: полный комплект одежды гуля и маска
+        if (com.tokyoghoulrpg.item.MaskEffects.fullSet(player, data)) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.ghoul_set"), PANEL_X + 2, ty, 0xD04050, true);
+            ty += 10;
+        }
+        // «Защита CCG»: полный комплект брони CCG на агенте
+        if (com.tokyoghoulrpg.item.CcgSet.fullSet(player, data)) {
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.ccg_set"), PANEL_X + 2, ty, 0x3FD8C0, true);
+            ty += 10;
+        }
+        // «Ночь охоты»: красная надпись, пока идёт
+        if (com.tokyoghoulrpg.world.HuntNight.isActive(mc.level)) {
+            float pulse = 0.75F + 0.25F * Mth.sin((now + partialTick) * 0.15F);
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.hunt_night"), PANEL_X + 2, ty,
+                    scale(0xFFFF3030, pulse) & 0xFFFFFF, true);
+            ty += 10;
+        }
         if (data.isRetributionActive(now)) {
             gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.retribution", secondsLeft(data.getRetributionEndTick(), now)),
                     PANEL_X + 2, ty, 0xB070FF, true);
@@ -141,6 +175,14 @@ public final class HudOverlay {
             gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.bond_cooldown",
                     secondsLeft(data.getBondCooldownEnd(), now)), PANEL_X + 2, ty, 0x8A8A8A, true);
         }
+    }
+
+    /** Отдельный слой поверх всего: подсказки для новичков. */
+    public static void renderTutorial(ForgeGui gui, GuiGraphics gfx, float partialTick, int screenWidth, int screenHeight) {
+        if (Minecraft.getInstance().options.hideGui) {
+            return;
+        }
+        com.tokyoghoulrpg.client.TutorialClient.render(gfx, screenWidth, screenHeight);
     }
 
     private static int secondsLeft(long end, long now) {

@@ -71,20 +71,22 @@ public final class ModItems {
     public static final RegistryObject<Item> MASK_ONI = mask("mask_oni");
 
     // Одежда гуля
-    public static final RegistryObject<Item> GHOUL_COAT = armor("ghoul_coat", ModArmorMaterials.GHOUL_CLOTH, ArmorItem.Type.CHESTPLATE);
-    public static final RegistryObject<Item> GHOUL_PANTS = armor("ghoul_pants", ModArmorMaterials.GHOUL_CLOTH, ArmorItem.Type.LEGGINGS);
-    public static final RegistryObject<Item> GHOUL_BOOTS = armor("ghoul_boots", ModArmorMaterials.GHOUL_CLOTH, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> GHOUL_COAT = ghoulCloth("ghoul_coat", ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> GHOUL_PANTS = ghoulCloth("ghoul_pants", ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> GHOUL_BOOTS = ghoulCloth("ghoul_boots", ArmorItem.Type.BOOTS);
 
     // Форма CCG
-    public static final RegistryObject<Item> CCG_COAT = armor("ccg_coat", ModArmorMaterials.CCG_UNIFORM, ArmorItem.Type.CHESTPLATE);
-    public static final RegistryObject<Item> CCG_PANTS = armor("ccg_pants", ModArmorMaterials.CCG_UNIFORM, ArmorItem.Type.LEGGINGS);
-    public static final RegistryObject<Item> CCG_BOOTS = armor("ccg_boots", ModArmorMaterials.CCG_UNIFORM, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> CCG_COAT = ccgUniform("ccg_coat", ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> CCG_PANTS = ccgUniform("ccg_pants", ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> CCG_BOOTS = ccgUniform("ccg_boots", ArmorItem.Type.BOOTS);
 
     // RC-сталь: редкая руда -> сырая RC-сталь -> слиток (печь или плавильня). Из слитков — броня особого класса
     public static final RegistryObject<Item> RC_STEEL_ORE = ITEMS.register("rc_steel_ore",
             () -> new BlockItem(ModBlocks.RC_STEEL_ORE.get(), new Item.Properties()));
     public static final RegistryObject<Item> DEEPSLATE_RC_STEEL_ORE = ITEMS.register("deepslate_rc_steel_ore",
             () -> new BlockItem(ModBlocks.DEEPSLATE_RC_STEEL_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> MASK_WORKSHOP = ITEMS.register("mask_workshop",
+            () -> new BlockItem(ModBlocks.MASK_WORKSHOP.get(), new Item.Properties()));
     public static final RegistryObject<Item> RAW_RC_STEEL = ITEMS.register("raw_rc_steel",
             () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> RC_STEEL_INGOT = ITEMS.register("rc_steel_ingot",
@@ -114,6 +116,19 @@ public final class ModItems {
     public static final RegistryObject<Item> HALF_GHOUL_BOSS_SPAWN_EGG = ITEMS.register("half_ghoul_boss_spawn_egg",
             () -> new ForgeSpawnEggItem(ModEntities.HALF_GHOUL_BOSS, 0x0E0B10, 0xE01530, new Item.Properties()));
 
+    public static final RegistryObject<Item> TEST_SUBJECT_SPAWN_EGG = ITEMS.register("test_subject_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.TEST_SUBJECT, 0xD8D4CC, 0x2FB8A8, new Item.Properties()));
+    public static final RegistryObject<Item> FENCE_SPAWN_EGG = ITEMS.register("fence_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.FENCE, 0x2B2622, 0xB08A3A, new Item.Properties()));
+
+    // Аптечка, дымовая шашка, записи лаборатории
+    public static final RegistryObject<Item> MEDKIT = ITEMS.register("medkit",
+            () -> new com.tokyoghoulrpg.item.MedkitItem(new Item.Properties().stacksTo(16)));
+    public static final RegistryObject<Item> SMOKE_BOMB = ITEMS.register("smoke_bomb",
+            () -> new com.tokyoghoulrpg.item.SmokeBombItem(new Item.Properties().stacksTo(8)));
+    public static final RegistryObject<Item> LAB_NOTES = ITEMS.register("lab_notes",
+            () -> new com.tokyoghoulrpg.item.LabNotesItem(new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON)));
+
     // Алтарь арены: в творческом режиме можно поставить свою арену (босс появится, когда подойдёшь)
     public static final RegistryObject<Item> ARENA_ALTAR = ITEMS.register("arena_altar",
             () -> new BlockItem(ModBlocks.ARENA_ALTAR.get(), new Item.Properties().rarity(Rarity.EPIC)));
@@ -122,6 +137,12 @@ public final class ModItems {
     public static Item core(int tier) {
         return (tier <= 1 ? RC_CORE_1 : tier == 2 ? RC_CORE_2 : RC_CORE_3).get();
     }
+
+    // Алый Монарх: корона для призыва и яйцо (творческий режим)
+    public static final RegistryObject<Item> CRIMSON_CROWN = ITEMS.register("crimson_crown",
+            () -> new com.tokyoghoulrpg.item.CrimsonCrownItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+    public static final RegistryObject<Item> CRIMSON_MONARCH_SPAWN_EGG = ITEMS.register("crimson_monarch_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.CRIMSON_MONARCH, 0x1A0508, 0xD4A030, new Item.Properties()));
 
     // Кофейня: хозяин и знак (в творческом режиме можно поставить свою кофейню)
     public static final RegistryObject<Item> CAFE_OWNER_SPAWN_EGG = ITEMS.register("cafe_owner_spawn_egg",
@@ -141,6 +162,14 @@ public final class ModItems {
 
     private static RegistryObject<Item> mask(String name) {
         return ITEMS.register(name, () -> new MaskItem(name, new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> ghoulCloth(String name, ArmorItem.Type type) {
+        return ITEMS.register(name, () -> new com.tokyoghoulrpg.item.GhoulClothItem(type, new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> ccgUniform(String name, ArmorItem.Type type) {
+        return ITEMS.register(name, () -> new com.tokyoghoulrpg.item.CcgUniformItem(type, new Item.Properties()));
     }
 
     private static RegistryObject<Item> eliteArmor(String name, ArmorItem.Type type) {

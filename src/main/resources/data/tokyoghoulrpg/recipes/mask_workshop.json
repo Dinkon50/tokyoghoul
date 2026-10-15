@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BLB",
+    "PCP",
+    "PPP"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "C": {
+      "item": "minecraft:crafting_table"
+    }
+  },
+  "result": {
+    "item": "tokyoghoulrpg:mask_workshop",
+    "count": 1
+  }
+}

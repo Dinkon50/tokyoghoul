@@ -34,7 +34,7 @@ public final class Balance {
     // ---------- Барраж (K) ----------
     public static final double BARRAGE_WIDTH = 3.0;                 // [СПЕКА] ширина области
     public static final double BARRAGE_LENGTH = 3.0;                // [ТВОЁ] длина области вперёд: 2 блока по спеке + 1
-    public static final float BARRAGE_DAMAGE_PER_HIT = 0.5F;        // [ВРЕМЕННО] 32 удара = 16 урона
+    public static final float BARRAGE_DAMAGE_PER_HIT = 0.6F;        // 32 удара = 19,2 урона (было 0,5 = 16)
     public static final int BARRAGE_COOLDOWN = 10 * 20;             // [ВРЕМЕННО] считается с момента, когда серия закончилась
     public static final int BARRAGE_HIT_STUN = 5;                   // [ВРЕМЕННО] сколько тиков цель стоит после попадания (удары идут через 2-3 тика)
     public static final double BARRAGE_USER_SPEED_FACTOR = 0.5;     // [ВРЕМЕННО] скорость атакующего во время серии
@@ -110,6 +110,13 @@ public final class Balance {
     public static final double HARD_SKILL_COST_FACTOR = 1.5;        // навыки в 1,5 раза дороже (округление вверх)
     // Игроки на сервере (нормальная и сложная): каждый игрок сверх первого, но не больше пяти игроков всего
     public static final int PLAYER_SCALING_CAP = 5;
+    // Старший следователь (второй по силе босс): квинке IXA в руках и особые атаки
+    public static final float CCG_BOSS_THRUST_DAMAGE = 9.0F;        // «Разряд квинке»: линия до 14 блоков
+    public static final double CCG_BOSS_THRUST_RANGE = 14.0;
+    public static final int CCG_BOSS_THRUST_COOLDOWN = 9 * 20;
+    public static final float CCG_BOSS_THUNDER_DAMAGE = 8.0F;       // «Удар молнии»: три круга у цели
+    public static final double CCG_BOSS_THUNDER_RADIUS = 2.5;
+    public static final int CCG_BOSS_THUNDER_COOLDOWN = 13 * 20;
     public static final double BOSS_HEALTH_BUFF = 1.25;             // все боссы мода: +25% здоровья
     public static final double BOSS_DAMAGE_BUFF = 1.15;             // ...и +15% урона (удары и особые атаки)
     public static final double PER_PLAYER_HEALTH = 0.15;            // +15% здоровья враждебным мобам за игрока
@@ -183,7 +190,7 @@ public final class Balance {
     public static final int QUINQUE_STRONG_COOLDOWN = 2 * 20;       // откат 2 с, не меньше
     public static final int QUINQUE_FLURRY_HITS = 10;               // K: 10 ударов...
     public static final int QUINQUE_FLURRY_INTERVAL = 3;            // ...каждые 3 тика (1,5 с)
-    public static final float QUINQUE_FLURRY_MULT = 0.35F;          // каждый удар 35% урона квинке
+    public static final float QUINQUE_FLURRY_MULT = 0.40F;          // каждый удар 40% урона квинке (было 35%)
     public static final double QUINQUE_FLURRY_WIDTH = 2.5;
     public static final int QUINQUE_FLURRY_COOLDOWN = 8 * 20;       // откат 8 с после конца серии
     public static final int QUINQUE_PARRY_WINDOW = 10;              // L: парирование, если блок поставлен за 0,5 с до удара
@@ -217,7 +224,7 @@ public final class Balance {
     public static final double Q_REACH_PER_LEVEL = 0.5;             // «Длина квинке»: +0,5 блока ко всем ударам
     public static final double NARUKAMI_BOLT_RANGE = 16.0;
     // Финальное задание агента: Старший следователь отдаёт квинке [ТВОЁ]
-    public static final double FINAL_NARUKAMI_CHANCE = 0.8;         // 80% Narukami, 20% IXA
+    public static final double FINAL_NARUKAMI_CHANCE = 0.7;         // 70% Narukami (послабее), 30% IXA (сильнее)
     public static final int FINAL_BLOOD_MIN = 500;                  // награда: 500-1000 очков крови
     public static final int FINAL_BLOOD_MAX = 1000;           // Narukami: разряд летит на 16 блоков
     public static final int QUINQUE_RELEASE_GAIN = 5;               // J: +5 к шкале за каждое попадание по гулю (20 ударов)
@@ -237,7 +244,7 @@ public final class Balance {
     public static final int SKILL_BITE_STUN = 10;                   // +0,5 с обездвиживания
     public static final int SKILL_BITE_COOLDOWN = 20;               // -1 с отката (10 → 7 с)
     // Барраж, за уровень
-    public static final float SKILL_BARRAGE_DAMAGE = 0.1F;          // +0,1 урона за удар (0,5 → 0,8)
+    public static final float SKILL_BARRAGE_DAMAGE = 0.1F;          // +0,1 урона за удар (0,6 → 0,9)
     public static final int SKILL_BARRAGE_COOLDOWN = 30;            // -1,5 с отката (10 → 5,5 с)
     public static final double SKILL_BARRAGE_WIDTH = 1.0;           // на III уровне область шире на 1 блок (3 → 4)
     // Рывок: откат не меняется и никогда не меньше 2 секунд [ТВОЁ]
@@ -400,6 +407,15 @@ public final class Balance {
     public static final int HG_OTHER_POINTS = 5;
     public static final int RESET_SEAL_PRICE = 5000;                // печать сброса навыков у торговца
 
+    // Алый Монарх — финальный босс, сильнее Кровавого полугуля
+    public static final double MONARCH_HEALTH = 1000.0;             // на каждую из трёх стадий (полугуль 750 и полторы стадии)
+    public static final double MONARCH_ATTACK = 40.0;               // удар (полугуль 30)
+    public static final float MONARCH_SPECIAL_MULT = 4.0F;          // особые атаки x4 (у полугуля x3)
+    public static final double MONARCH_PHASE_DAMAGE = 0.25;         // +25% урона за каждую стадию после первой
+    public static final double MONARCH_PHASE_SPEED = 0.12;          // +12% скорости за каждую стадию после первой
+    public static final double[] MONARCH_COOLDOWN = {0.85, 0.65, 0.5}; // особые атаки чаще по стадиям
+    public static final int MONARCH_BLOOD = 25000;                  // награда: только очки крови, каждому, кто нанёс урон
+
     // Личная репутация и репутация клана (от -100 до 100, начинаются с 0)
     public static final int STANDING_HIGH = 40;                     // от 40 — высокая: бывают скидки
     public static final int STANDING_LOW = -25;                     // до -25 — низкая: приходят волны NPC
@@ -431,10 +447,11 @@ public final class Balance {
     public static final int BOND_MAX_DONORS = 2;                    // одному игроку — не больше двух дарителей
     public static final double BOND_HP_FIRST = 0.5;                 // первый даритель отдаёт половину своего здоровья,
     public static final double BOND_WEAKEN_FIRST = 0.5;             // сам бьёт на 50% слабее,
-    public static final double BOND_BONUS_FIRST = 0.25;             // получатель бьёт на 25% сильнее
+    public static final double BOND_BONUS_FIRST = 0.30;             // получатель бьёт на 30% сильнее
     public static final double BOND_HP_SECOND = 0.25;               // второй даритель: четверть здоровья,
     public static final double BOND_WEAKEN_SECOND = 0.25;           // сам на 25% слабее,
-    public static final double BOND_BONUS_SECOND = 0.125;           // получателю ещё +12,5% (всего +37,5%)
+    public static final double BOND_HP_GAIN = 1.25;                  // получатель получает на четверть больше здоровья, чем отдал даритель
+    public static final double BOND_BONUS_SECOND = 0.15;            // получателю ещё +15% (всего +45%)
 
     // Ядра гулей и улучшение квинке
     public static final double CORE_1_CHANCE = 0.02;                // ядро I: 2% с обычных гулей и полугулей
@@ -484,4 +501,89 @@ public final class Balance {
     public static final int RANK_CONTRACT = 8;                      // сдал контракт
     public static final double RANK_DAMAGE_PER = 0.02;              // +2% урона за каждый ранг выше первого (до +10%)
     public static final double RANK_BLOOD_PER = 0.05;               // +5% крови за убийства за каждый ранг (до +25%)             // драка игроков меньше минуты назад: в кофейне они не защищены друг от друга
+
+    // Тип кагуне (гуль и полугуль): у каждого свой пассивный бонус
+    public static final int KAGUNE_TYPE_CHANGE_COST = 2000;         // первый выбор бесплатно, сменить — 2000 очков крови
+    public static final double RINKAKU_REGEN = 0.6;                 // ринкаку: регенерация гуля и ветка «Регенерация» +60%
+    public static final double UKAKU_SPEED = 0.08;                  // укаку: +8% скорости...
+    public static final int UKAKU_DASH_TICKS = 1;                   // ...и рывок длиннее (+0,85 блока)
+    public static final double KOUKAKU_DEFENSE = 0.10;              // коукаку: -10% входящего урона...
+    public static final double KOUKAKU_KNOCKBACK = 0.20;            // ...и меньше отбрасывания
+    public static final double BIKAKU_DAMAGE = 0.05;                // бикаку: понемногу всего: +5% урона,
+    public static final double BIKAKU_DEFENSE = 0.05;               // -5% входящего урона
+    public static final double BIKAKU_SPEED = 0.03;                 // и +3% скорости
+
+    // Маски (только гуль и полугуль): обычная / работа мастера (из мастерской масок)
+    public static final double[] MASK_FANG_DAMAGE = {0.06, 0.10};   // клыкастая: урон
+    public static final double[] MASK_BONE_DEFENSE = {0.06, 0.10};  // костяная: меньше входящего урона
+    public static final double[] MASK_CROW_SPEED = {0.06, 0.10};    // маска ворона: скорость
+    public static final double[] MASK_ONI_LIFESTEAL = {0.04, 0.07}; // маска демона: часть урона возвращается здоровьем
+    public static final int MASK_PRICE = 300;                       // мастерская: обычная маска за очки крови
+    public static final int MASK_MASTER_PRICE = 1500;               // маска на заказ (работа мастера)
+    public static final double MASK_WORKSHOP_REACH = 6.0;           // как близко нужно стоять к мастерской
+
+    // «Ночь охоты»: каждую третью ночь по миру бродят усиленные отряды CCG и стаи гулей
+    public static final int HUNT_NIGHT_EVERY_DAYS = 3;              // раз в 3 игровых дня (третья ночь: дни 3, 6, 9...)
+    public static final int HUNT_NIGHT_START = 13000;               // ночь: время суток 13000...
+    public static final int HUNT_NIGHT_END = 23000;                 // ...до 23000 (рассвет)
+    public static final int HUNT_NIGHT_WARNING = 12000;             // на закате предупреждение
+    public static final int HUNT_NIGHT_GROUP_INTERVAL = 90 * 20;    // рядом с каждым игроком группа примерно раз в 1,5 минуты
+    public static final int HUNT_NIGHT_FIRST_DELAY = 15 * 20;       // первая — через 15 секунд после начала ночи
+    public static final int HUNT_NIGHT_GROUP_SIZE = 3;              // 3 в группе (на сложной 4)
+    public static final int HUNT_NIGHT_MAX_NEAR = 8;                // больше 8 ночных охотников рядом с игроком не будет
+    public static final double HUNT_NIGHT_HEALTH = 0.50;            // ночные охотники: +50% здоровья,
+    public static final double HUNT_NIGHT_DAMAGE = 0.25;            // +25% урона,
+    public static final double HUNT_NIGHT_SPEED = 0.10;             // +10% скорости,
+    public static final double HUNT_NIGHT_FOLLOW = 16.0;            // чуют на 16 блоков дальше
+    public static final double HUNT_NIGHT_LEADER_CHANCE = 0.25;     // в стае гулей вожак-полугуль с шансом 25%
+    public static final double HUNT_NIGHT_ENEMY_SIDE = 0.65;        // чаще приходит сторона, враждебная игроку
+    public static final int HUNT_NIGHT_REWARD = 2;                  // очки крови за NPC и боссов в эту ночь x2
+    public static final int HUNT_NIGHT_HUNTER_POINTS = 1;           // и за каждого ночного охотника ещё очко навыков
+
+    // Подсказки для новичков
+    public static final int TUTORIAL_HINT_TICKS = 9 * 20;           // каждая подсказка видна 9 секунд (пока открыт экран, время стоит)
+
+    // «Облик гуля»: полный комплект одежды гуля + любая маска (только гуль и полугуль)
+    public static final double GHOUL_SET_DAMAGE = 0.10;             // +10% урона
+    public static final double GHOUL_SET_DEFENSE = 0.10;            // -10% входящего урона
+    public static final double GHOUL_SET_SPEED = 0.05;              // +5% скорости
+    // плюс ночное зрение; складывается с эффектом самой маски
+
+    // «Защита CCG»: агент CCG в полном комплекте брони CCG (форма или особый класс, можно вперемешку)
+    public static final double CCG_SET_DEFENSE = 0.05;              // -5% входящего урона от всего
+    public static final double CCG_SET_GHOUL_DEFENSE = 0.05;        // и ещё -5% от гулей (итого около -10%)
+
+    // Подопытный (лаборатория RC): неудачный эксперимент, нападает на всех
+    public static final double SUBJECT_HEALTH = 36.0;
+    public static final double SUBJECT_DAMAGE = 6.0;
+    public static final double SUBJECT_SPEED = 0.32;
+    public static final float SUBJECT_INFECT_CHANCE = 0.25F;        // удар: шанс «RC-заражения» (слабость и голод на 4 с)
+    public static final int SUBJECT_INFECT_TICKS = 4 * 20;
+    public static final float SUBJECT_NOTES_CHANCE = 0.08F;         // шанс выпасть записям лаборатории
+
+    // Новые предметы
+    public static final float MEDKIT_HEAL = 8.0F;                   // аптечка: 4 сердца сразу...
+    public static final int MEDKIT_REGEN_TICKS = 5 * 20;            // ...и Регенерация I на 5 с
+    public static final int MEDKIT_COOLDOWN = 10 * 20;              // откат 10 с
+    public static final double SMOKE_RADIUS = 6.0;                  // дымовая шашка: радиус облака
+    public static final int SMOKE_BLIND_TICKS = 4 * 20;             // враги слепнут и теряют тебя из виду на 4 с
+    public static final int SMOKE_INVIS_TICKS = 4 * 20;             // ты невидим и быстрее 4 с
+    public static final int SMOKE_COOLDOWN = 20 * 20;               // откат 20 с
+    public static final int LAB_NOTES_POINTS = 2;                   // записи лаборатории: 2 очка навыков (x1,5, кроме полугуля)
+
+    // Скупщик (чёрный рынок): покупает добычу за очки крови и продаёт аптечки и шашки
+    public static final int FENCE_MEDKIT_PRICE = 120;
+    public static final int FENCE_SMOKE_PRICE = 200;
+
+    // Новые ветки (вкладка «Особые», у всех классов)
+    public static final double[] SCAVENGER_BLOOD = {0.0, 0.10, 0.20, 0.30};   // «Добытчик»: больше крови за убийства
+    public static final double[] FIRST_AID_HEAL = {0.0, 0.25, 0.50};          // «Первая помощь»: аптечка лечит больше...
+    public static final int[] FIRST_AID_COOLDOWN = {10 * 20, 7 * 20, 5 * 20}; // ...и откат меньше
+
+    // Стадии Какудзя: чем больше гулей съел, тем сильнее (и это видно — аура, глаза, частицы)
+    public static final int[] KAKUJA_STAGES = {25, 50, 100, 200, 350};   // I, II, III (форма открыта), IV, V
+    public static final double KAKUJA_STAGE_DAMAGE = 0.03;          // +3% урона за стадию (на V +15%), всегда
+    public static final double KAKUJA_STAGE_DEFENSE = 0.02;         // -2% входящего урона за стадию (на V -10%), всегда
+    public static final double KAKUJA_FORM_STAGE_BONUS = 0.05;      // форма на IV и V: ещё +5% урона и защиты за стадию
+    public static final int KAKUJA_FORM_STAGE_TICKS = 5 * 20;       // и на 5 с дольше за стадию
 }

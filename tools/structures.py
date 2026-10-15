@@ -4,6 +4,8 @@
   ghoul_hideout — разрушенное логово гулей: глубинносланцевые руины, паутина, кости, кровь на полу.
   half_ghoul_arena — круглая арена Кровавого полугуля: алтарь в центре, колонны, сундуки с редкой добычей.
   cafe          — кофейня: мирная зона, стойка с хозяином, столики, кухня; открыта днём.
+  rc_lab        — заброшенная лаборатория RC: камеры, колбы, архив с добычей, подопытные.
+  black_market  — чёрный рынок: Скупщик, торговец, мастерская масок.
 Запуск: python3 structures.py <папка data/tokyoghoulrpg/structures> [имена построек]
 """
 import os
@@ -430,6 +432,9 @@ def cafe():
         b.set(12, y, 13, "bookshelf")
         b.set(13, y, 13, "bookshelf")
     b.set(13, 1, 10, "lectern", facing="west", has_book="false", powered="false")
+    # мастерская масок у восточной стены, в зале для гостей
+    b.set(13, 1, 6, "tokyoghoulrpg:mask_workshop")
+    b.set(13, 2, 6, "potted_wither_rose")
     # два столика со стульями у витрин и скамья у боковой стены
     for tx in (3, 11):
         b.set(tx, 0, 3, "brown_wool")
@@ -444,11 +449,175 @@ def cafe():
     return b
 
 
+def rc_lab():
+    """
+    Заброшенная лаборатория RC 17 x 9 x 15. Вход с севера (z = 0). Бетонный корпус с выбитыми окнами
+    и частично обвалившейся крышей. Вдоль восточной стены три камеры за решёткой (одна взломана),
+    в зале столы с колбами и котлами, по центру две колбы-резервуара с бирюзовым светом,
+    у задней стены архив: книжные шкафы и сундуки с добычей. Внутри трое подопытных.
+    """
+    W, H, D = 17, 9, 15
+    b = Build(W, H, D, 8410)
+    rng = b.rng
+    for x in range(W):
+        for z in range(D):
+            b.set(x, 0, z, rng.choice(["light_gray_concrete", "light_gray_concrete", "gray_concrete",
+                                       "cracked_stone_bricks", "andesite"]))
+    # стены: белый бетон, низ серый; углы — колонны
+    for y in range(1, 6):
+        for x in range(W):
+            for z in (0, D - 1):
+                b.set(x, y, z, "gray_concrete" if y == 1 else "white_concrete")
+        for z in range(D):
+            for x in (0, W - 1):
+                b.set(x, y, z, "gray_concrete" if y == 1 else "white_concrete")
+    for x, z in ((0, 0), (W - 1, 0), (0, D - 1), (W - 1, D - 1)):
+        for y in range(1, 7):
+            b.set(x, y, z, "polished_andesite")
+    # выбитые окна: где-то стекло, где-то пусто
+    for x in (3, 4, 12, 13):
+        for y in (2, 3):
+            b.set(x, y, 0, "white_stained_glass_pane" if rng.random() < 0.4 else "air")
+    for z in (4, 5, 9, 10):
+        for y in (2, 3):
+            b.set(0, y, z, "white_stained_glass_pane" if rng.random() < 0.4 else "air")
+    # вход: двойная дверь выбита
+    for x in (7, 8, 9):
+        for y in (1, 2, 3):
+            b.set(x, y, 0, "air")
+    b.set(7, 4, 0, "iron_bars"); b.set(9, 4, 0, "iron_bars")
+    # крыша: бетон с провалами
+    for x in range(W):
+        for z in range(D):
+            if rng.random() < 0.22 and 2 < x < W - 3 and 2 < z < D - 3:
+                continue
+            b.set(x, 6, z, "light_gray_concrete")
+    # камеры у восточной стены: решётки, внутри кровать-нары
+    for cz in (2, 6, 10):
+        for z in range(cz, cz + 3):
+            b.set(12, 1, z, "iron_bars"); b.set(12, 2, z, "iron_bars"); b.set(12, 3, z, "iron_bars")
+        for x in range(12, W - 1):
+            for y in (1, 2, 3):
+                b.set(x, y, cz + 3, "white_concrete")
+        b.set(15, 1, cz + 1, "smooth_stone_slab", type="bottom", waterlogged="false")
+        b.set(15, 1, cz, "chain", axis="y", waterlogged="false")
+    for y in (1, 2):                                    # взломанная камера
+        b.set(12, y, 7, "air")
+    b.set(13, 1, 7, "iron_bars")
+    # колбы-резервуары в центре
+    for tx, tz in ((5, 6), (8, 6)):
+        b.set(tx, 1, tz, "polished_andesite")
+        b.set(tx, 2, tz, "cyan_stained_glass")
+        b.set(tx, 3, tz, "sea_lantern" if tx == 5 else "cyan_stained_glass")
+        b.set(tx, 4, tz, "polished_andesite")
+    b.set(8, 2, 6, "air"); b.set(8, 1, 6, "cyan_carpet")    # разбитая колба
+    # столы с колбами и котлами
+    for x in range(2, 6):
+        b.set(x, 1, 10, "white_concrete")
+    b.set(2, 2, 10, "brewing_stand", has_bottle_0="true", has_bottle_1="false", has_bottle_2="true")
+    b.set(4, 2, 10, "potted_wither_rose")
+    b.set(5, 1, 3, "cauldron"); b.set(6, 1, 3, "water_cauldron", level="1")
+    b.set(2, 1, 3, "lectern", facing="east", has_book="false", powered="false")
+    # архив у задней стены
+    for x in (2, 3, 4, 5):
+        for y in (1, 2):
+            b.set(x, y, D - 2, "bookshelf")
+    b.chest(6, 1, D - 2, "north", "rc_lab")
+    b.chest(10, 1, D - 2, "north", "rc_lab")
+    # кровь, бирюзовые пятна RC, паутина
+    for _ in range(10):
+        x, z = rng.randint(1, 11), rng.randint(1, D - 3)
+        if b.get(x, 1, z) == "minecraft:air":
+            b.set(x, 1, z, rng.choice(["red_carpet", "cyan_carpet", "red_carpet"]))
+    for _ in range(8):
+        x, y, z = rng.randint(1, 11), rng.randint(3, 5), rng.randint(1, D - 2)
+        if b.get(x, y, z) == "minecraft:air":
+            b.set(x, y, z, "cobweb")
+    # свет: редкие лампы
+    for x, z in ((3, 7), (10, 4), (9, 11)):
+        b.set(x, 5, z, "sea_lantern")
+    # свободное место вокруг обитателей
+    for mx, mz in ((7, 9), (10, 3), (13, 7)):
+        for x in range(mx - 1, mx + 2):
+            for z in range(mz - 1, mz + 2):
+                if 0 < x < W - 1 and 0 < z < D - 1:
+                    for y in range(1, 4):
+                        if b.get(x, y, z) in ("minecraft:cobweb", "minecraft:red_carpet", "minecraft:cyan_carpet"):
+                            b.set(x, y, z, "air")
+    b.mob(7, 1, 9, "test_subject", 0)
+    b.mob(10, 1, 3, "test_subject", 1)
+    b.mob(13, 1, 7, "test_subject", 0)
+    return b
+
+
+def black_market():
+    """
+    Чёрный рынок 13 x 7 x 11. Открытый с севера навес на тёмных колоннах. Слева лавка Скупщика
+    за прилавком, справа прилавок торговца, у задней стены мастерская масок и бочки с товаром.
+    Над прилавками — полосатые навесы, свет — фонари.
+    """
+    W, H, D = 13, 7, 11
+    b = Build(W, H, D, 9520)
+    rng = b.rng
+    for x in range(W):
+        for z in range(D):
+            b.set(x, 0, z, rng.choice(["cobblestone", "stone_bricks", "cracked_stone_bricks", "mossy_cobblestone",
+                                       "stone_bricks"]))
+    # задняя и боковые стены из чёрного камня, перед открыт
+    for y in range(1, 5):
+        for x in range(W):
+            b.set(x, y, D - 1, "polished_blackstone_bricks")
+        for z in range(D):
+            b.set(0, y, z, "polished_blackstone_bricks")
+            b.set(W - 1, y, z, "polished_blackstone_bricks")
+    for x in (0, 4, 8, W - 1):
+        for y in range(1, 5):
+            b.set(x, y, 0, "polished_blackstone")
+    # крыша
+    for x in range(W):
+        for z in range(D):
+            b.set(x, 5, z, "dark_oak_planks")
+    for x in range(W):
+        b.set(x, 6, 0, "dark_oak_slab", type="bottom", waterlogged="false")
+    # лавка Скупщика: прилавок слева
+    for z in range(3, 8):
+        b.set(3, 1, z, "spruce_planks")
+    b.set(3, 2, 4, "lantern", hanging="false", waterlogged="false")
+    b.set(3, 2, 6, "chest", facing="east", type="single", waterlogged="false")
+    for z in range(2, 9):
+        b.set(1, 4, z, "red_wool" if z % 2 == 0 else "black_wool")
+        b.set(2, 4, z, "red_wool" if z % 2 == 0 else "black_wool")
+    b.set(1, 1, 8, "barrel", facing="up", open="false")
+    b.set(1, 1, 3, "barrel", facing="up", open="false")
+    b.mob(2, 1, 5, "fence", 0)
+    # прилавок торговца справа
+    for z in range(3, 8):
+        b.set(9, 1, z, "spruce_planks")
+    b.set(9, 2, 3, "potted_dead_bush")
+    b.set(9, 2, 7, "lantern", hanging="false", waterlogged="false")
+    for z in range(2, 9):
+        b.set(10, 4, z, "white_wool" if z % 2 == 0 else "black_wool")
+        b.set(11, 4, z, "white_wool" if z % 2 == 0 else "black_wool")
+    b.set(11, 1, 8, "barrel", facing="up", open="false")
+    b.mob(10, 1, 5, "trader", 1)
+    # задняя стена: мастерская масок, бочки, сундук с добычей
+    b.set(6, 1, D - 2, "tokyoghoulrpg:mask_workshop")
+    b.set(5, 1, D - 2, "barrel", facing="up", open="false")
+    b.set(7, 1, D - 2, "barrel", facing="up", open="false")
+    b.set(5, 2, D - 2, "barrel", facing="up", open="false")
+    b.chest(7, 2, D - 2, "north", "black_market")
+    for x, z in ((6, 3), (6, 7), (2, 1), (10, 1)):
+        b.set(x, 4, z, "lantern", hanging="true", waterlogged="false")
+    for x in (5, 6, 7):
+        b.set(x, 1, 1, "brown_carpet")
+    return b
+
+
 if __name__ == "__main__":
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
     only = set(sys.argv[2:])
-    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe)):
+    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe), ("rc_lab", rc_lab), ("black_market", black_market)):
         if only and name not in only:
             continue
         info = build().save(os.path.join(out, name + ".nbt"))

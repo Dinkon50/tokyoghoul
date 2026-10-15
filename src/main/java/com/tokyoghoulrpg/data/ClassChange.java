@@ -109,6 +109,7 @@ public final class ClassChange {
         boolean chooseVariant = false;
         if (!target.hasKagune()) {
             data.setKaguneVariant(KaguneVariant.NONE);
+            data.setKaguneType(KaguneType.NONE);
             data.setRage(0);
         } else if (!old.hasKagune() || data.getKaguneVariant() == KaguneVariant.NONE) {
             data.setKaguneVariant(KaguneVariant.NONE);
