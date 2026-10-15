@@ -117,8 +117,8 @@ public final class Balance {
     public static final float CCG_BOSS_THUNDER_DAMAGE = 8.0F;       // «Удар молнии»: три круга у цели
     public static final double CCG_BOSS_THUNDER_RADIUS = 2.5;
     public static final int CCG_BOSS_THUNDER_COOLDOWN = 13 * 20;
-    public static final double BOSS_HEALTH_BUFF = 1.25;             // все боссы мода: +25% здоровья
-    public static final double BOSS_DAMAGE_BUFF = 1.15;             // ...и +15% урона (удары и особые атаки)
+    public static final double BOSS_HEALTH_BUFF = 1.40;             // все боссы мода: +40% здоровья (было +25%)
+    public static final double BOSS_DAMAGE_BUFF = 1.25;             // ...и +25% урона (было +15%; удары и особые атаки)
     public static final double PER_PLAYER_HEALTH = 0.15;            // +15% здоровья враждебным мобам за игрока
     public static final double PER_PLAYER_DAMAGE = 0.05;            // +5% их урона за игрока
 

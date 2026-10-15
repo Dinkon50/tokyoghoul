@@ -10,20 +10,21 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 
 /**
- * Материалы масок и одежды. По твоей просьбе они не сильнее обычного снаряжения:
- * маски как кожаный шлем, одежда гуля чуть лучше кожи, форма CCG как кольчуга.
+ * Материалы масок и одежды. Прочность (второе число) у всех намного выше незерита (37):
+ * маска 60, одежда гуля и форма CCG 75 (в 2 раза дольше незерита), броня особого класса 110 (в 3 раза).
+ * Защита: маска как кожаный шлем, одежда гуля почти как железо, форма CCG как кольчуга.
  * Порядок защиты в массивах: ботинки, штаны, нагрудник, шлем.
  */
 public enum ModArmorMaterials implements ArmorMaterial {
-    MASK("mask", 5, new int[] {1, 1, 1, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, () -> Ingredient.of(Items.BONE)),
+    MASK("mask", 60, new int[] {1, 1, 1, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, () -> Ingredient.of(Items.BONE)),
     // одежда гуля сильнее кожи: почти как железо (железо 2/5/6), прочность как у железа, немного прочности брони
-    GHOUL_CLOTH("ghoul_cloth", 15, new int[] {2, 4, 5, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 1.0F, () -> Ingredient.of(Items.LEATHER)),
-    CCG_UNIFORM("ccg_uniform", 15, new int[] {1, 4, 5, 2}, 12, SoundEvents.ARMOR_EQUIP_CHAIN, 0.0F, () -> Ingredient.of(Items.IRON_INGOT)),
+    GHOUL_CLOTH("ghoul_cloth", 75, new int[] {2, 4, 5, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 1.0F, () -> Ingredient.of(Items.LEATHER)),
+    CCG_UNIFORM("ccg_uniform", 75, new int[] {1, 4, 5, 2}, 12, SoundEvents.ARMOR_EQUIP_CHAIN, 0.0F, () -> Ingredient.of(Items.IRON_INGOT)),
     /**
      * Броня особого класса CCG — сильнее незеритовой (незерит: 3/6/8/3, прочность 3, отбрасывание 0,1, множитель 37).
      * Носить может только агент CCG.
      */
-    CCG_ELITE("ccg_elite", 45, new int[] {4, 7, 9, 4}, 18, SoundEvents.ARMOR_EQUIP_NETHERITE, 4.0F,
+    CCG_ELITE("ccg_elite", 110, new int[] {4, 7, 9, 4}, 18, SoundEvents.ARMOR_EQUIP_NETHERITE, 4.0F,
             () -> Ingredient.of(com.tokyoghoulrpg.registry.ModItems.RC_STEEL_INGOT.get()), 0.15F);
 
     /** Базовая прочность по слотам, как у ванильных материалов: ботинки, штаны, нагрудник, шлем. */
