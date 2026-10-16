@@ -203,6 +203,11 @@ public class ProfileScreen extends Screen {
                 : days == 0 ? Component.translatable("screen.tokyoghoulrpg.profile.hunt_tonight")
                 : Component.translatable("screen.tokyoghoulrpg.profile.hunt_days", days);
         gfx.drawString(this.font, hunt, rx, ry, 0xE05050, false);
+        ry += LINE;
+        if (data.getDailyStreak() > 0) {
+            gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.profile.daily", data.getDailyStreak(),
+                    com.tokyoghoulrpg.rep.DailyReward.cycleDay(data.getDailyStreak())), rx, ry, 0xE0C060, false);
+        }
         super.render(gfx, mouseX, mouseY, partialTick);
     }
 

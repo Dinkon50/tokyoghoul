@@ -776,5 +776,18 @@
   "hud.tokyoghoulrpg.kakuja_stage": "Какудзя %s",
   "hud.tokyoghoulrpg.kakuja_stage_none": "Какудзя",
   "screen.tokyoghoulrpg.profile.kakuja_stage": "Какудзя %s: %s / %s, урон +%s%%",
-  "screen.tokyoghoulrpg.profile.kakuja_stage_max": "Какудзя %s (макс.): %s, урон +%s%%"
+  "screen.tokyoghoulrpg.profile.kakuja_stage_max": "Какудзя %s (макс.): %s, урон +%s%%",
+  "message.tokyoghoulrpg.daily.reward": "Ежедневная награда: день серии %s (круг %s/7): +%s очков крови",
+  "message.tokyoghoulrpg.daily.reward_points": "Ежедневная награда: день серии %s (круг %s/7): +%s очков крови, +%s очков навыков",
+  "message.tokyoghoulrpg.daily.item": " и %s",
+  "message.tokyoghoulrpg.daily.items": " и %s, %s",
+  "message.tokyoghoulrpg.daily.week": "Неделя подряд! Круг наград начинается снова — серия продолжается.",
+  "screen.tokyoghoulrpg.profile.daily": "Вход подряд: %s дн. (круг %s/7)",
+  "entity.tokyoghoulrpg.mercenary": "Наёмник",
+  "entity.tokyoghoulrpg.mercenary.of": "Наёмник %s",
+  "item.tokyoghoulrpg.merc_contract": "Контракт наёмника",
+  "item.tokyoghoulrpg.merc_contract.tooltip": "ПКМ: нанять наёмника на %s минут. Ходит за тобой и бьёт твоих врагов",
+  "message.tokyoghoulrpg.mercenary.hired": "Наёмник нанят на %s минут. Он защитит тебя и будет бить тех, кого бьёшь ты.",
+  "message.tokyoghoulrpg.mercenary.left": "Контракт закончился: наёмник ушёл.",
+  "message.tokyoghoulrpg.mercenary.died": "Твой наёмник погиб."
 }

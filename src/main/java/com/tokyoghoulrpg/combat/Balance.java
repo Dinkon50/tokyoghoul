@@ -586,4 +586,20 @@ public final class Balance {
     public static final double KAKUJA_STAGE_DEFENSE = 0.02;         // -2% входящего урона за стадию (на V -10%), всегда
     public static final double KAKUJA_FORM_STAGE_BONUS = 0.05;      // форма на IV и V: ещё +5% урона и защиты за стадию
     public static final int KAKUJA_FORM_STAGE_TICKS = 5 * 20;       // и на 5 с дольше за стадию
+
+    // Ежедневная награда за вход: день серии 1-7 (дальше по кругу, но день 7 повторяется каждую неделю)
+    public static final int[] DAILY_BLOOD = {100, 150, 200, 300, 400, 500, 800};
+    public static final int[] DAILY_POINTS = {0, 0, 1, 0, 1, 0, 2};           // очки навыков (x1,5, кроме полугуля)
+    public static final int DAILY_MEDKITS_DAY = 4;                             // на 4-й день ещё аптечка
+    public static final int DAILY_SMOKE_DAY = 7;                               // на 7-й день — дымовая шашка и аптечка
+
+    // Наёмник (контракт у Скупщика): помощник на время
+    public static final int MERC_CONTRACT_PRICE = 500;              // цена контракта в очках крови
+    public static final int MERC_TICKS = 10 * 60 * 20;              // служит 10 минут
+    public static final double MERC_HEALTH = 40.0;
+    public static final double MERC_DAMAGE = 7.0;
+    public static final double MERC_ARMOR = 6.0;
+    public static final double MERC_SPEED = 0.32;
+    public static final double MERC_TELEPORT = 20.0;                // отстал дальше 20 блоков — догоняет телепортом
+    public static final float MERC_REGEN = 1.0F;                    // лечится на полсердца раз в 3 секунды вне боя
 }

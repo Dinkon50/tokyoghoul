@@ -79,6 +79,11 @@ public final class ModEntities {
             () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.FenceNpc::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F).clientTrackingRange(10).build("fence"));
 
+    /** Наёмник: нанимается контрактом у Скупщика. */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.MercenaryNpc>> MERCENARY = ENTITIES.register("mercenary",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.MercenaryNpc::new, MobCategory.MISC)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("mercenary"));
+
     private ModEntities() {
     }
 
@@ -95,6 +100,7 @@ public final class ModEntities {
         event.put(CRIMSON_MONARCH.get(), CrimsonMonarch.createMonarchAttributes().build());
         event.put(TEST_SUBJECT.get(), com.tokyoghoulrpg.entity.TestSubjectNpc.createAttributes().build());
         event.put(FENCE.get(), InformantNpc.createAttributes().build());
+        event.put(MERCENARY.get(), com.tokyoghoulrpg.entity.MercenaryNpc.createAttributes().build());
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {

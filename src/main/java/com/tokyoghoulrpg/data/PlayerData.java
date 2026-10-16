@@ -32,6 +32,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     /** Подсказки для новичков: какая сейчас и закончены ли (у персонажей из старых сохранений — закончены). */
     private int tutorialStep = 0;
     private boolean tutorialDone = false;
+    /** Ежедневная награда: в какой день (номер дня по реальному календарю) выдана последняя и сколько дней подряд. */
+    private long dailyDay = -1L;
+    private int dailyStreak = 0;
     private boolean kaguneActive = false;
     private int rage = 0;
     private int rageLevel = 0;
@@ -149,6 +152,19 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public int getTutorialStep() {
         return tutorialStep;
+    }
+
+    public long getDailyDay() {
+        return dailyDay;
+    }
+
+    public int getDailyStreak() {
+        return dailyStreak;
+    }
+
+    public void setDaily(long day, int streak) {
+        this.dailyDay = day;
+        this.dailyStreak = Math.max(0, streak);
     }
 
     public boolean isTutorialDone() {
@@ -639,6 +655,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         kaguneType = KaguneType.NONE;
         tutorialStep = 0;
         tutorialDone = false;
+        dailyDay = -1L;
+        dailyStreak = 0;
         kaguneActive = false;
         rage = 0;
         rageLevel = 0;
@@ -704,6 +722,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putString("kagune_type", kaguneType.id());
         tag.putInt("tutorial_step", tutorialStep);
         tag.putBoolean("tutorial_done", tutorialDone);
+        tag.putLong("daily_day", dailyDay);
+        tag.putInt("daily_streak", dailyStreak);
         tag.putBoolean("kagune_active", kaguneActive);
         tag.putInt("rage", rage);
         tag.putInt("rage_level", rageLevel);
@@ -799,6 +819,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         // персонаж из сохранения, где подсказок ещё не было: он уже не новичок
         tutorialStep = tag.getInt("tutorial_step");
         tutorialDone = !tag.contains("tutorial_done") || tag.getBoolean("tutorial_done");
+        dailyDay = tag.contains("daily_day") ? tag.getLong("daily_day") : -1L;
+        dailyStreak = tag.getInt("daily_streak");
         kaguneActive = tag.getBoolean("kagune_active");
         setRage(tag.getInt("rage"));
         setRageLevel(tag.getInt("rage_level"));

@@ -32,7 +32,8 @@ public final class FenceShop {
 
     public static final List<Offer> SELLS = List.of(
             new Offer(() -> ModItems.MEDKIT.get(), Balance.FENCE_MEDKIT_PRICE),
-            new Offer(() -> ModItems.SMOKE_BOMB.get(), Balance.FENCE_SMOKE_PRICE));
+            new Offer(() -> ModItems.SMOKE_BOMB.get(), Balance.FENCE_SMOKE_PRICE),
+            new Offer(() -> ModItems.MERC_CONTRACT.get(), Balance.MERC_CONTRACT_PRICE));
 
     /** Что он покупает и сколько крови даёт за штуку. */
     public static final List<Offer> BUYS = List.of(

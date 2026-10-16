@@ -105,6 +105,7 @@ public final class CombatEvents {
         RcSuppress.clear();
         Silence.clear();
         ClanBond.clear();
+        com.tokyoghoulrpg.entity.MercenaryNpc.clear();
     }
 
     @SubscribeEvent

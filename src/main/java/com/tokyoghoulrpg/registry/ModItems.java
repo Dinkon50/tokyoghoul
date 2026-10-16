@@ -126,6 +126,8 @@ public final class ModItems {
             () -> new com.tokyoghoulrpg.item.MedkitItem(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SMOKE_BOMB = ITEMS.register("smoke_bomb",
             () -> new com.tokyoghoulrpg.item.SmokeBombItem(new Item.Properties().stacksTo(8)));
+    public static final RegistryObject<Item> MERC_CONTRACT = ITEMS.register("merc_contract",
+            () -> new com.tokyoghoulrpg.item.MercContractItem(new Item.Properties().stacksTo(4).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> LAB_NOTES = ITEMS.register("lab_notes",
             () -> new com.tokyoghoulrpg.item.LabNotesItem(new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON)));
 

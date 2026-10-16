@@ -556,6 +556,10 @@ public final class AbilityManager {
         Kakuja.tick(player, data, player.level().getGameTime());
         CcgRaids.tick(player, data);
         com.tokyoghoulrpg.rep.Standing.tick(player, data);
+        // ежедневная награда: через 2 секунды после входа и потом раз в минуту (вдруг наступила полночь)
+        if (player.tickCount % 1200 == 40) {
+            com.tokyoghoulrpg.rep.DailyReward.check(player);
+        }
         QuinqueReward.giveStarter(player, data);
         // Двойной прыжок снова доступен на земле, в воде и на лестнице
         if (player.onGround() || player.isInWater() || player.onClimbable()) {

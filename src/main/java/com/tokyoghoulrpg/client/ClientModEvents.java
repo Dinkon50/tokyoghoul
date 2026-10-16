@@ -64,6 +64,8 @@ public final class ClientModEvents {
                 context -> new NpcRenderer<>(context, "test_subject", TestSubjectNpc.VARIANTS));
         event.registerEntityRenderer(ModEntities.FENCE.get(),
                 context -> new NpcRenderer<>(context, "fence", 1));
+        event.registerEntityRenderer(ModEntities.MERCENARY.get(),
+                context -> new NpcRenderer<>(context, "mercenary", 1));
         // боссы: модель игрока в 1.23 раза крупнее (хитбокс 2.4 блока)
         event.registerEntityRenderer(ModEntities.GHOUL_BOSS.get(),
                 context -> new NpcRenderer<>(context, "ghoul_boss", 1, 1.23F));
