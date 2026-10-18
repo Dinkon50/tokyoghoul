@@ -113,6 +113,10 @@ public final class ClanGuards {
         }
     }
 
+    private static void fail(ServerPlayer player, String key, Object... args) {
+        player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg." + key, args).withStyle(ChatFormatting.RED));
+    }
+
     /** Свободное место рядом со знаменем (2 блока в сторону), иначе прямо над знаменем. */
     private static BlockPos spot(ServerLevel level, BlockPos flag) {
         int[][] offsets = {{2, 0}, {-2, 0}, {0, 2}, {0, -2}, {2, 2}, {-2, -2}, {2, -2}, {-2, 2}};

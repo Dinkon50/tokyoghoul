@@ -241,7 +241,7 @@ public final class ClanBank {
         }
     }
 
-    private static Component describe(String key, Request r) {
+    private static net.minecraft.network.chat.MutableComponent describe(String key, Request r) {
         return Component.translatable(key, r.name(), r.points(), r.blood());
     }
 
