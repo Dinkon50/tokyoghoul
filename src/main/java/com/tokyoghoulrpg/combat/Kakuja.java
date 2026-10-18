@@ -110,6 +110,7 @@ public final class Kakuja {
 
     /** Новая стадия: вспышка, рёв, надпись крупно на экране; о стадии V — всему серверу. */
     private static void stageUp(ServerPlayer player, PlayerData data, int stage) {
+        com.tokyoghoulrpg.rep.Achievements.atLeast(player, "kakuja_stage", stage);
         String roman = com.tokyoghoulrpg.skill.SkillTree.roman(stage);
         player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(5, 50, 15));
         player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(

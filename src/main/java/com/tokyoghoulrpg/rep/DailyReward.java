@@ -44,6 +44,7 @@ public final class DailyReward {
         }
         int streak = last == today - 1 ? data.getDailyStreak() + 1 : 1;
         data.setDaily(today, streak);
+        Achievements.atLeast(player, "daily_streak", streak);
         int day = cycleDay(streak);
         int blood = Balance.DAILY_BLOOD[day - 1];
         data.addBloodPoints(blood);

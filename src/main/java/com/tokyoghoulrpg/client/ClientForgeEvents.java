@@ -73,6 +73,13 @@ public final class ClientForgeEvents {
         while (KeyBindings.KAKUJA.consumeClick()) {
             sendAbility(mc, AbilityType.KAKUJA);
         }
+        while (KeyBindings.MARKET.consumeClick()) {
+            if (mc.screen == null) {
+                mc.setScreen(new com.tokyoghoulrpg.client.screen.MarketScreen());
+                NetworkHandler.CHANNEL.sendToServer(new com.tokyoghoulrpg.network.packet.MarketActionC2S(
+                        com.tokyoghoulrpg.market.Market.OPEN, 0, 0, false));
+            }
+        }
         while (KeyBindings.PROFILE.consumeClick()) {
             if (mc.screen == null) {
                 mc.setScreen(new com.tokyoghoulrpg.client.screen.ProfileScreen());

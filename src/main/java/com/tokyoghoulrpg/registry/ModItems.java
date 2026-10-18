@@ -85,6 +85,8 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.RC_STEEL_ORE.get(), new Item.Properties()));
     public static final RegistryObject<Item> DEEPSLATE_RC_STEEL_ORE = ITEMS.register("deepslate_rc_steel_ore",
             () -> new BlockItem(ModBlocks.DEEPSLATE_RC_STEEL_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> CLAN_BANNER = ITEMS.register("clan_banner",
+            () -> new BlockItem(ModBlocks.CLAN_BANNER.get(), new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> MASK_WORKSHOP = ITEMS.register("mask_workshop",
             () -> new BlockItem(ModBlocks.MASK_WORKSHOP.get(), new Item.Properties()));
     public static final RegistryObject<Item> RAW_RC_STEEL = ITEMS.register("raw_rc_steel",
@@ -130,6 +132,12 @@ public final class ModItems {
             () -> new com.tokyoghoulrpg.item.MercContractItem(new Item.Properties().stacksTo(4).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> LAB_NOTES = ITEMS.register("lab_notes",
             () -> new com.tokyoghoulrpg.item.LabNotesItem(new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON)));
+    /** Книга новичка: подсказки по игре. */
+    public static final RegistryObject<Item> GUIDE_BOOK = ITEMS.register("guide_book",
+            () -> new com.tokyoghoulrpg.item.GuideBookItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
+    /** Редкий кагуне: только с аукциона чёрного рынка. */
+    public static final RegistryObject<Item> RARE_KAGUNE = ITEMS.register("rare_kagune",
+            () -> new com.tokyoghoulrpg.item.RareKaguneItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 
     // Алтарь арены: в творческом режиме можно поставить свою арену (босс появится, когда подойдёшь)
     public static final RegistryObject<Item> ARENA_ALTAR = ITEMS.register("arena_altar",

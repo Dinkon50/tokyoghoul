@@ -307,6 +307,7 @@ public final class AbilityManager {
             state.dashReady = now + dashCooldown(data);
         }
         state.actions.add(new Actions.Dash(direction.normalize(), dashTicks(data)));
+        Combos.onDash(player);
         Effects.sound(player, SoundEvents.ENDER_DRAGON_FLAP, 0.35F, 1.9F);
         Effects.particles(player, ParticleTypes.CLOUD, 6, 0.3, 0.02);
         if (data.isKaguneActive()) {
@@ -553,6 +554,7 @@ public final class AbilityManager {
         KaguneTypeBonus.tick(player, data);
         com.tokyoghoulrpg.item.MaskEffects.tick(player, data);
         com.tokyoghoulrpg.item.CcgSet.tick(player, data);
+        com.tokyoghoulrpg.clan.ClanPerks.tick(player);
         Kakuja.tick(player, data, player.level().getGameTime());
         CcgRaids.tick(player, data);
         com.tokyoghoulrpg.rep.Standing.tick(player, data);
@@ -604,7 +606,8 @@ public final class AbilityManager {
         int regenLevel = SkillEffects.level(data, SkillTree.Branch.REGEN);
         if (regenLevel > 0 && player.isAlive() && player.getHealth() < player.getMaxHealth()
                 && now % Balance.SKILL_REGEN_INTERVAL == 0) {
-            player.heal((float) (SkillEffects.regenAmount(regenLevel) * KaguneTypeBonus.regenFactor(data)));
+            player.heal((float) (SkillEffects.regenAmount(regenLevel) * KaguneTypeBonus.regenFactor(data)
+                    * com.tokyoghoulrpg.world.BloodRain.regenFactor(player, data)));
         }
 
         // Ветка «Скорость»: постоянная прибавка к скорости ходьбы
@@ -807,7 +810,8 @@ public final class AbilityManager {
         if (ghoul && player.isAlive() && player.getHealth() < player.getMaxHealth()
                 && player.getFoodData().getFoodLevel() > 0
                 && player.level().getGameTime() % Balance.GHOUL_REGEN_INTERVAL == 0) {
-            player.heal((float) (Balance.GHOUL_REGEN_AMOUNT * KaguneTypeBonus.regenFactor(data)));
+            player.heal((float) (Balance.GHOUL_REGEN_AMOUNT * KaguneTypeBonus.regenFactor(data)
+                    * com.tokyoghoulrpg.world.BloodRain.regenFactor(player, data)));
         }
     }
 

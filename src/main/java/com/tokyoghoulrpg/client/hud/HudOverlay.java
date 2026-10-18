@@ -130,6 +130,14 @@ public final class HudOverlay {
             gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.ccg_set"), PANEL_X + 2, ty, 0x3FD8C0, true);
             ty += 10;
         }
+        // война кланов: враг, счёт, сколько осталось
+        if (!data.getWarEnemy().isEmpty() && data.getWarEndTick() > now) {
+            int secs = secondsLeft(data.getWarEndTick(), now);
+            gfx.drawString(font, Component.translatable("hud.tokyoghoulrpg.war", data.getWarEnemy(), data.getWarOur(),
+                    data.getWarTheir(), data.getWarTarget(), secs / 60, String.format("%02d", secs % 60)),
+                    PANEL_X + 2, ty, 0xFF4040, true);
+            ty += 10;
+        }
         // «Ночь охоты»: красная надпись, пока идёт
         if (com.tokyoghoulrpg.world.HuntNight.isActive(mc.level)) {
             float pulse = 0.75F + 0.25F * Mth.sin((now + partialTick) * 0.15F);

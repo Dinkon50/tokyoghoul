@@ -84,6 +84,11 @@ public final class ModEntities {
             () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.MercenaryNpc::new, MobCategory.MISC)
                     .sized(0.6F, 1.95F).clientTrackingRange(10).build("mercenary"));
 
+    /** Страж территории клана: нанимается главой из казны. */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.GuardNpc>> GUARD = ENTITIES.register("guard",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.GuardNpc::new, MobCategory.MISC)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("guard"));
+
     private ModEntities() {
     }
 
@@ -101,6 +106,7 @@ public final class ModEntities {
         event.put(TEST_SUBJECT.get(), com.tokyoghoulrpg.entity.TestSubjectNpc.createAttributes().build());
         event.put(FENCE.get(), InformantNpc.createAttributes().build());
         event.put(MERCENARY.get(), com.tokyoghoulrpg.entity.MercenaryNpc.createAttributes().build());
+        event.put(GUARD.get(), com.tokyoghoulrpg.entity.GuardNpc.createAttributes().build());
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {

@@ -27,6 +27,9 @@ public class ProfileScreen extends Screen {
     private static final int HEIGHT = 262;
     private static final int LINE = 12;
 
+    /** Первый клик по «Престиж» — просьба подтвердить, второй — престиж. */
+    private boolean prestigeConfirm = false;
+
     public ProfileScreen() {
         super(Component.translatable("screen.tokyoghoulrpg.profile.title"));
     }
@@ -42,10 +45,37 @@ public class ProfileScreen extends Screen {
     @Override
     protected void init() {
         int by = top() + HEIGHT - 24;
+        addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.profile.achievements"),
+                b -> Minecraft.getInstance().setScreen(new AchievementsScreen())).bounds(left() + WIDTH - 94, top() + 4, 88, 14).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.close"), b -> onClose())
                 .bounds(left() + WIDTH / 2 - 50, by, 100, 18).build());
         Minecraft mc = Minecraft.getInstance();
         PlayerData data = mc.player == null ? null : PlayerData.get(mc.player);
+        // престиж: только на высшем ранге; нужно нажать дважды (подтверждение)
+        if (data != null && Ranks.ladder(data.getPlayerClass()) != Ranks.NONE) {
+            String block = Ranks.prestigeBlock(data);
+            Button prestige = Button.builder(Component.translatable(prestigeConfirm
+                            ? "screen.tokyoghoulrpg.profile.prestige_confirm" : "screen.tokyoghoulrpg.profile.prestige"),
+                    b -> {
+                        if (!prestigeConfirm) {
+                            prestigeConfirm = true;
+                            rebuildWidgets();
+                            return;
+                        }
+                        prestigeConfirm = false;
+                        com.tokyoghoulrpg.network.NetworkHandler.CHANNEL.sendToServer(
+                                new com.tokyoghoulrpg.network.packet.PrestigeC2S());
+                        onClose();
+                    })
+                    .bounds(left() + 6, top() + 4, 88, 14)
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(block == null
+                            ? Component.translatable("screen.tokyoghoulrpg.profile.prestige_tip", Ranks.prestige(data) + 1,
+                            Balance.PRESTIGE_REWARD_BLOOD * (Ranks.prestige(data) + 1), Balance.PRESTIGE_REWARD_POINTS)
+                            : Component.translatable("message.tokyoghoulrpg." + block)))
+                    .build();
+            prestige.active = block == null;
+            addRenderableWidget(prestige);
+        }
         // тип кагуне: выбрать или сменить
         if (data != null && data.getPlayerClass().hasKagune()) {
             addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.profile.type_button"),
@@ -99,6 +129,10 @@ public class ProfileScreen extends Screen {
                     .append(Component.translatable(data.getKaguneVariant().translationKey()));
         }
         y = line(gfx, x, y, Component.translatable("screen.tokyoghoulrpg.profile.class", classLine), 0xE6E6E6);
+        if (!data.getTitle().isEmpty()) {
+            y = line(gfx, x, y, Component.translatable("screen.tokyoghoulrpg.profile.title_line",
+                    Component.translatable("achievement.tokyoghoulrpg." + data.getTitle() + ".title")), 0xFFD700);
+        }
         if (cls.hasKagune()) {
             com.tokyoghoulrpg.data.KaguneType type = data.getKaguneType();
             y = line(gfx, x + 8, y, type == com.tokyoghoulrpg.data.KaguneType.NONE
@@ -121,6 +155,12 @@ public class ProfileScreen extends Screen {
                     : Component.translatable("screen.tokyoghoulrpg.profile.rank_next", points, next), 0x9A9A9A);
             y = line(gfx, x + 8, y, Component.translatable("screen.tokyoghoulrpg.profile.rank_bonus",
                     Math.round(Ranks.damageBonus(data) * 100), Math.round(Ranks.bloodBonus(data) * 100)), 0x9A9A9A);
+            int prestige = Ranks.prestige(data);
+            if (prestige > 0) {
+                y = line(gfx, x + 8, y, Component.translatable("screen.tokyoghoulrpg.profile.prestige_line",
+                        Ranks.stars(prestige), Balance.PRESTIGE_MAX, Math.round(Balance.PRESTIGE_DEFENSE * prestige * 100)),
+                        0xFFD27A);
+            }
         }
         y = line(gfx, x, y, Component.translatable("screen.tokyoghoulrpg.profile.health",
                 Math.round(mc.player.getHealth()), Math.round(mc.player.getMaxHealth())), 0xFF6A6A);

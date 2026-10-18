@@ -120,7 +120,10 @@ public final class ClanBond {
             return;
         }
         double weaken = second ? Balance.BOND_WEAKEN_SECOND : Balance.BOND_WEAKEN_FIRST;
-        double bonus = second ? Balance.BOND_BONUS_SECOND : Balance.BOND_BONUS_FIRST;
+        // «Узы силы» (умение клана): бонус получателя больше
+        int bondSkill = ClanPerks.skill(donor, ClanPerks.Skill.BOND);
+        double bonus = (second ? Balance.BOND_BONUS_SECOND : Balance.BOND_BONUS_FIRST)
+                * (1.0 + ClanPerks.Skill.BOND.value(bondSkill));
 
         // даритель: здоровье уходит сразу, и максимум ниже, чтобы оно не восстановилось за эти 30 секунд
         donor.setHealth(Math.max(1.0F, donor.getHealth() - amount));
@@ -134,7 +137,8 @@ public final class ClanBond {
             LINKS.put(to, link);
         }
         link.donors.add(from);
-        float gained = (float) (amount * Balance.BOND_HP_GAIN);    // получателю на 25% больше, чем отдал даритель
+        // получателю на 25% больше, чем отдал даритель, и ещё +10% за уровень «Уз силы»
+        float gained = (float) (amount * (Balance.BOND_HP_GAIN + ClanPerks.BOND_HP_PER_LEVEL * bondSkill));
         link.health += gained;
         link.bonus += bonus;
         link.end = now + Balance.BOND_TICKS;
@@ -190,7 +194,11 @@ public final class ClanBond {
 
     /** Связь закончилась: снять здоровье и силу, всем участникам 2 минуты отката. */
     private static void finish(MinecraftServer server, Link link, long now) {
-        long until = now + Balance.BOND_COOLDOWN;
+        // откат короче с «Узами силы» (клан у всех участников связи один)
+        ServerPlayer receiverPlayer = server.getPlayerList().getPlayer(link.receiver);
+        int bondSkill = receiverPlayer == null ? 0 : ClanPerks.skill(receiverPlayer, ClanPerks.Skill.BOND);
+        int cooldown = ClanPerks.BOND_COOLDOWN[Math.max(0, Math.min(ClanPerks.SKILL_MAX, bondSkill))];
+        long until = now + cooldown;
         List<UUID> all = new ArrayList<>(link.donors);
         all.add(link.receiver);
         for (UUID id : all) {
@@ -211,7 +219,7 @@ public final class ClanBond {
                 data.setBond(0L, 0.0, until);
                 NetworkHandler.syncTo(player);
             }
-            tell(player, "ended", Balance.BOND_COOLDOWN / 20 / 60);
+            tell(player, "ended", cooldown / 20);
         }
     }
 

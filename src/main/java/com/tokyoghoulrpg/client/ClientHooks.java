@@ -59,6 +59,10 @@ public final class ClientHooks {
     }
 
     /** Меню мастерской масок (ПКМ по блоку). */
+    public static void openGuide() {
+        Minecraft.getInstance().setScreen(new com.tokyoghoulrpg.client.screen.GuideScreen());
+    }
+
     public static void openMaskWorkshop(net.minecraft.core.BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null) {

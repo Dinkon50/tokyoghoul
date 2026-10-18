@@ -92,6 +92,7 @@ public final class QuestManager {
             int blood = quest.bloodReward(player.getRandom());
             int points = data.earnSkillPoints(quest.reward());
             data.addBloodPoints(blood);
+            com.tokyoghoulrpg.clan.ClanBank.tax(player, blood, points);
             data.setQuestIndex(data.getQuestIndex() + 1);
             com.tokyoghoulrpg.rank.Ranks.add(player, com.tokyoghoulrpg.combat.Balance.RANK_QUEST);
             if (!ModCommands.isSilent()) {

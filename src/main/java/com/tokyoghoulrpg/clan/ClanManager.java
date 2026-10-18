@@ -28,6 +28,25 @@ public final class ClanManager {
     public static final int GIVE_POINTS = 7;
     public static final int GIVE_BLOOD = 8;
     public static final int GIVE_POWER = 9;
+    public static final int DONATE = 10;
+    public static final int UPGRADE = 11;
+    public static final int STORAGE = 12;
+    public static final int BUY_SKILL = 13;
+    public static final int BANK_PUT_POINTS = 14;
+    public static final int BANK_PUT_BLOOD = 15;
+    public static final int BANK_TAKE_POINTS = 16;
+    public static final int BANK_TAKE_BLOOD = 17;
+    public static final int BANK_APPROVE = 18;
+    public static final int BANK_DECLINE = 19;
+    public static final int DECLARE_WAR = 20;
+    public static final int LAND_SELL = 21;
+    public static final int LAND_CANCEL = 22;
+    public static final int LAND_BUY = 23;
+    public static final int LAND_UPGRADE = 24;
+    public static final int HOME = 25;
+    public static final int ALLY = 26;
+    public static final int ALLY_BREAK = 27;
+    public static final int HIRE_GUARD = 28;
 
     public static final int NAME_MIN = 3;
     public static final int NAME_MAX = 16;
@@ -56,6 +75,10 @@ public final class ClanManager {
             }
             case LEAVE -> {
                 if (clan != null) {
+                    if (clan.members.size() <= 1) {
+                        // последний уходит — клан распущен, вещи со склада достаются ему
+                        returnStorage(player, clan);
+                    }
                     data.removeMember(clan, player.getUUID());
                     tell(player, "left", clan.name);
                     notifyMembers(server, clan, "member_left", player.getGameProfile().getName());
@@ -63,6 +86,53 @@ public final class ClanManager {
                 }
             }
             case KICK -> kick(player, data, clan, target);
+            case DONATE -> donate(player, data, clan, amount);
+            case BUY_SKILL -> buySkill(player, data, clan, amount);
+            case LAND_SELL -> LandSale.sell(player, data, clan, text, amount);
+            case LAND_CANCEL -> LandSale.cancel(player, data, clan, text);
+            case LAND_UPGRADE -> ClanTerritory.upgrade(player, data, clan, text);
+            case HOME -> {
+                ClanTerritory.home(player);
+                return;
+            }
+            case ALLY, ALLY_BREAK -> {
+                ClanData.Clan other = target == null ? null : data.byId(target);
+                if (action == ALLY) {
+                    ClanAlliances.propose(player, data, clan, other);
+                } else {
+                    ClanAlliances.breakAlliance(player, data, clan, other);
+                }
+                if (other != null) {
+                    refreshClan(server, other);
+                }
+            }
+            case HIRE_GUARD -> ClanGuards.hire(player, data, clan);
+            case LAND_BUY -> {
+                ClanData.Clan seller = target == null ? null : data.byId(target);
+                LandSale.buy(player, data, clan, target, text);
+                if (seller != null) {
+                    refreshClan(server, seller);
+                }
+            }
+            case DECLARE_WAR -> {
+                ClanData.Clan target2 = target == null ? null : data.byId(target);
+                if (clan != null && player.getUUID().equals(clan.leader) && target2 != null) {
+                    ClanWars.declare(player, data, clan, target2);
+                    refreshClan(server, clan);
+                    refreshClan(server, target2);
+                    return;
+                }
+            }
+            case BANK_PUT_POINTS, BANK_PUT_BLOOD -> ClanBank.deposit(player, data, clan, amount, action == BANK_PUT_POINTS);
+            case BANK_TAKE_POINTS, BANK_TAKE_BLOOD -> ClanBank.request(player, data, clan, amount, action == BANK_TAKE_POINTS);
+            case BANK_APPROVE, BANK_DECLINE -> ClanBank.decide(player, data, clan, amount, action == BANK_APPROVE);
+            case UPGRADE -> upgrade(player, data, clan);
+            case STORAGE -> {
+                if (clan != null) {
+                    openStorage(player, data, clan);
+                    return;     // открылся склад: меню клана закрылось само
+                }
+            }
             case GIVE_POINTS, GIVE_BLOOD -> give(player, clan, target, amount, action == GIVE_BLOOD);
             case GIVE_POWER -> {
                 // передать силу и половину здоровья участнику своего клана, который в игре
@@ -76,6 +146,10 @@ public final class ClanManager {
             }
             default -> {
             }
+        }
+        if (clan != null && action >= BANK_PUT_POINTS && action <= BANK_DECLINE) {
+            refreshClan(server, clan);
+            return;
         }
         sendState(player);
     }
@@ -94,6 +168,15 @@ public final class ClanManager {
         }
         data.create(name, player.getUUID(), player.getGameProfile().getName());
         tell(player, "created", name);
+        // знамя клана — сразу главе: поставь его, и вокруг будет территория (приват) клана
+        net.minecraft.world.item.ItemStack banner = new net.minecraft.world.item.ItemStack(
+                com.tokyoghoulrpg.registry.ModItems.CLAN_BANNER.get());
+        if (!player.getInventory().add(banner)) {
+            player.drop(banner, false);
+        }
+        player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.territory.banner_given")
+                .withStyle(net.minecraft.ChatFormatting.GOLD));
+        com.tokyoghoulrpg.rep.Achievements.add(player, "clan_founded", 1);
     }
 
     private static void invite(ServerPlayer player, ClanData data, ClanData.Clan clan, UUID target) {
@@ -147,6 +230,123 @@ public final class ClanManager {
         refreshClan(player.getServer(), clan);
     }
 
+    /** Вложить очки крови в казну клана. */
+    private static void donate(ServerPlayer player, ClanData data, ClanData.Clan clan, int amount) {
+        PlayerData pd = PlayerData.get(player);
+        if (clan == null || pd == null || amount <= 0) {
+            return;
+        }
+        if (amount > pd.getBloodPoints()) {
+            tell(player, "not_enough");
+            return;
+        }
+        pd.addBloodPoints(-amount);
+        clan.treasury = (int) Math.min(Integer.MAX_VALUE, (long) clan.treasury + amount);
+        data.setDirty();
+        NetworkHandler.syncTo(player);
+        notifyMembers(player.getServer(), clan, "donated", player.getGameProfile().getName() + " (+" + amount + ")");
+        refreshClan(player.getServer(), clan);
+    }
+
+    /** Глава: новый уровень клана за очки из казны. */
+    private static void upgrade(ServerPlayer player, ClanData data, ClanData.Clan clan) {
+        if (clan == null || !player.getUUID().equals(clan.leader) || clan.level >= ClanPerks.MAX_LEVEL) {
+            return;
+        }
+        int cost = ClanPerks.COST[clan.level + 1];
+        if (clan.treasury < cost) {
+            tell(player, "treasury_low", cost);
+            return;
+        }
+        clan.treasury -= cost;
+        clan.level++;
+        data.setDirty();
+        for (UUID uuid : clan.members.keySet()) {
+            ServerPlayer member = player.getServer().getPlayerList().getPlayer(uuid);
+            if (member != null) {
+                member.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.clan.level_up", clan.name, clan.level)
+                        .withStyle(net.minecraft.ChatFormatting.GOLD));
+                com.tokyoghoulrpg.combat.Effects.sound(member, net.minecraft.sounds.SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
+                ClanPerks.tick(member);
+            }
+        }
+        // максимальный уровень — узнаёт весь сервер
+        if (clan.level >= ClanPerks.MAX_LEVEL) {
+            Component news = Component.translatable("message.tokyoghoulrpg.clan.max_level", clan.name, clan.level)
+                    .withStyle(net.minecraft.ChatFormatting.GOLD, net.minecraft.ChatFormatting.BOLD);
+            for (ServerPlayer p : player.getServer().getPlayerList().getPlayers()) {
+                p.sendSystemMessage(news);
+                com.tokyoghoulrpg.combat.Effects.sound(p, net.minecraft.sounds.SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 0.8F);
+            }
+        }
+        refreshClan(player.getServer(), clan);
+    }
+
+    /** Глава: следующий уровень умения клана (номер умения в amount) за очки из казны. */
+    private static void buySkill(ServerPlayer player, ClanData data, ClanData.Clan clan, int index) {
+        ClanPerks.Skill[] all = ClanPerks.Skill.values();
+        if (clan == null || !player.getUUID().equals(clan.leader) || index < 0 || index >= all.length) {
+            return;
+        }
+        ClanPerks.Skill skill = all[index];
+        int next = clan.skills[index] + 1;
+        if (next > ClanPerks.SKILL_MAX) {
+            return;
+        }
+        if (clan.level < next + 1) {
+            tell(player, "skill_needs_level", next + 1);
+            return;
+        }
+        int cost = skill.cost(next);
+        if (clan.treasury < cost) {
+            tell(player, "treasury_low", cost);
+            return;
+        }
+        clan.treasury -= cost;
+        clan.skills[index] = next;
+        data.setDirty();
+        for (UUID uuid : clan.members.keySet()) {
+            ServerPlayer member = player.getServer().getPlayerList().getPlayer(uuid);
+            if (member != null) {
+                member.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.clan.skill_up",
+                        Component.translatable("clan_skill.tokyoghoulrpg." + skill.id()),
+                        com.tokyoghoulrpg.skill.SkillTree.roman(next)).withStyle(net.minecraft.ChatFormatting.GOLD));
+            }
+        }
+        refreshClan(player.getServer(), clan);
+    }
+
+    /** Склад клана: сундук на 3-6 рядов (по уровню), общий для всех участников. */
+    private static void openStorage(ServerPlayer player, ClanData data, ClanData.Clan clan) {
+        int rows = ClanPerks.STORAGE_ROWS[Math.max(1, Math.min(ClanPerks.MAX_LEVEL, clan.level))];
+        net.minecraft.world.inventory.MenuType<?> type = switch (rows) {
+            case 3 -> net.minecraft.world.inventory.MenuType.GENERIC_9x3;
+            case 4 -> net.minecraft.world.inventory.MenuType.GENERIC_9x4;
+            case 5 -> net.minecraft.world.inventory.MenuType.GENERIC_9x5;
+            default -> net.minecraft.world.inventory.MenuType.GENERIC_9x6;
+        };
+        UUID clanId = clan.id;
+        player.openMenu(new net.minecraft.world.SimpleMenuProvider((id, inventory, p) ->
+                new net.minecraft.world.inventory.ChestMenu(type, id, inventory, clan.storage, rows) {
+                    @Override
+                    public boolean stillValid(net.minecraft.world.entity.player.Player who) {
+                        // выгнали из клана или клан распущен — склад закрывается
+                        ClanData.Clan now = data.clanOf(who.getUUID());
+                        return now != null && now.id.equals(clanId);
+                    }
+                }, Component.translatable("screen.tokyoghoulrpg.clan.storage_title", clan.name)));
+    }
+
+    /** Клан распускается: вещи со склада — последнему участнику (что не влезло, падает рядом). */
+    private static void returnStorage(ServerPlayer player, ClanData.Clan clan) {
+        for (int slot = 0; slot < clan.storage.getContainerSize(); slot++) {
+            net.minecraft.world.item.ItemStack stack = clan.storage.removeItemNoUpdate(slot);
+            if (!stack.isEmpty() && !player.getInventory().add(stack)) {
+                player.drop(stack, false);
+            }
+        }
+    }
+
     /** Передать участнику своего клана очки навыков или очки крови. */
     private static void give(ServerPlayer player, ClanData.Clan clan, UUID target, int amount, boolean blood) {
         if (clan == null || target == null || target.equals(player.getUUID()) || !clan.members.containsKey(target)
@@ -198,10 +398,20 @@ public final class ClanManager {
         String name = "";
         UUID leader = null;
         int reputation = 0;
+        int level = 0;
+        int treasury = 0;
+        int[] skills = new int[ClanPerks.Skill.values().length];
+        int bankPoints = 0;
+        List<ClanBank.Request> requests = new ArrayList<>();
         if (clan != null) {
+            skills = clan.skills.clone();
+            bankPoints = clan.bankPoints;
+            requests.addAll(clan.requests);
             name = clan.name;
             leader = clan.leader;
             reputation = clan.reputation;
+            level = clan.level;
+            treasury = clan.treasury;
             for (Map.Entry<UUID, String> entry : clan.members.entrySet()) {
                 boolean online = server.getPlayerList().getPlayer(entry.getKey()) != null;
                 members.add(new ClanStateS2C.Member(entry.getKey(), entry.getValue(), online));
@@ -220,7 +430,94 @@ public final class ClanManager {
             }
         }
         NetworkHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new ClanStateS2C(name, leader, reputation, members, candidates, invites));
+                new ClanStateS2C(name, leader, reputation, level, treasury, skills, bankPoints, requests, members, candidates,
+                        invites));
+        if (clan != null) {
+            NetworkHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), info(server, data, clan));
+        }
+    }
+
+    /** Задания, войны, рейтинг, территория — для меню развития клана. */
+    private static com.tokyoghoulrpg.network.packet.ClanInfoS2C info(MinecraftServer server, ClanData data, ClanData.Clan clan) {
+        ClanQuests.ensure(clan);
+        data.setDirty();
+        List<com.tokyoghoulrpg.network.packet.ClanInfoS2C.Quest> quests = new ArrayList<>();
+        for (int i = 0; i < clan.quests.length; i++) {
+            ClanQuests.Kind kind = ClanQuests.kind(clan.quests[i]);
+            quests.add(new com.tokyoghoulrpg.network.packet.ClanInfoS2C.Quest(kind.ordinal(), clan.questProgress[i],
+                    ClanQuests.target(kind, clan.members.size()), kind.daily()));
+        }
+        List<com.tokyoghoulrpg.network.packet.ClanInfoS2C.WarTarget> targets = new ArrayList<>();
+        java.util.Map<UUID, String> reasons = ClanWars.reasons(server, clan);
+        for (ClanData.Clan other : data.all()) {
+            if (other == clan) {
+                continue;
+            }
+            String reason = reasons.get(other.id);
+            targets.add(new com.tokyoghoulrpg.network.packet.ClanInfoS2C.WarTarget(other.id, other.name, other.level,
+                    other.members.size(), reason == null ? "" : reason, ClanWars.protectedMinutes(other),
+                    ClanAlliances.state(clan, other)));
+        }
+        List<com.tokyoghoulrpg.network.packet.ClanInfoS2C.Rating> rating = new ArrayList<>();
+        for (ClanData.Clan c : ClanRating.ranked(server)) {
+            if (rating.size() >= 10) {
+                break;
+            }
+            rating.add(new com.tokyoghoulrpg.network.packet.ClanInfoS2C.Rating(c.name, c.level, c.members.size(), c.warWins,
+                    ClanRating.score(c), c == clan));
+        }
+        ClanWars.War war = ClanWars.warFor(data, clan.id);
+        String enemy = "";
+        int our = 0;
+        int their = 0;
+        if (war != null) {
+            boolean isA = war.a.equals(ClanWars.sideOf(data, war, clan.id));
+            enemy = isA ? war.nameB : war.nameA;
+            our = isA ? war.scoreA : war.scoreB;
+            their = isA ? war.scoreB : war.scoreA;
+        }
+        // «x y z|сколько территорий|максимум» (пусто — территорий нет)
+        String territory = "-|0|" + ClanTerritory.maxTerritories(clan) + "|" + ClanTerritory.mainSize(clan);
+        int count = ClanTerritory.territoryCount(clan);
+        if (count > 0) {
+            String own = "-";
+            if (ClanTerritory.hasFlag(clan)) {
+                net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.of(clan.flagPos);
+                own = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+            }
+            territory = own + "|" + count + "|" + ClanTerritory.maxTerritories(clan) + "|" + ClanTerritory.mainSize(clan);
+        }
+        int income = (ClanTerritory.hasFlag(clan) ? ClanTerritory.INCOME_PER_LEVEL * clan.level : 0)
+                + clan.captured.size() * ClanTerritory.INCOME_PER_LEVEL * clan.level / 2;
+        long bossMinutes = Math.max(0L, (clan.bossCooldownUntil - System.currentTimeMillis() + 59_999) / 60_000);
+        return new com.tokyoghoulrpg.network.packet.ClanInfoS2C(quests, targets, rating, enemy, our, their, clan.warWins,
+                clan.warLosses, ClanWars.protectedMinutes(clan), territory, income,
+                bossMinutes, lands(server, clan), offers(data, clan));
+    }
+
+    private static List<com.tokyoghoulrpg.network.packet.ClanInfoS2C.Land> lands(MinecraftServer server, ClanData.Clan clan) {
+        List<com.tokyoghoulrpg.network.packet.ClanInfoS2C.Land> list = new ArrayList<>();
+        for (String key : ClanTerritory.flags(clan)) {
+            boolean main = !clan.captured.contains(key);
+            list.add(new com.tokyoghoulrpg.network.packet.ClanInfoS2C.Land(key, LandSale.place(key), main,
+                    clan.forSale.getOrDefault(key, 0), ClanTerritory.size(clan, key), ClanTerritory.upgradeCost(clan, key),
+                    ClanGuards.count(server, clan, key)));
+        }
+        return list;
+    }
+
+    private static List<com.tokyoghoulrpg.network.packet.ClanInfoS2C.LandOffer> offers(ClanData data, ClanData.Clan clan) {
+        List<com.tokyoghoulrpg.network.packet.ClanInfoS2C.LandOffer> list = new ArrayList<>();
+        for (ClanData.Clan other : data.all()) {
+            if (other == clan) {
+                continue;
+            }
+            for (java.util.Map.Entry<String, Integer> e : other.forSale.entrySet()) {
+                list.add(new com.tokyoghoulrpg.network.packet.ClanInfoS2C.LandOffer(other.id, other.name, e.getKey(),
+                        LandSale.place(e.getKey()), e.getValue()));
+            }
+        }
+        return list;
     }
 
     /** Обновить меню у всех участников клана, кто в игре (например, когда изменилась репутация клана). */
@@ -256,6 +553,9 @@ public final class ClanManager {
         MinecraftServer server = player.getServer();
         if (server != null) {
             ClanData.get(server).rename(player.getUUID(), player.getGameProfile().getName());
+            ClanBank.onLogin(player);
+            com.tokyoghoulrpg.market.Market.onLogin(player);
+            ClanWars.onLogin(player);
         }
     }
 }

@@ -602,4 +602,46 @@ public final class Balance {
     public static final double MERC_SPEED = 0.32;
     public static final double MERC_TELEPORT = 20.0;                // отстал дальше 20 блоков — догоняет телепортом
     public static final float MERC_REGEN = 1.0F;                    // лечится на полсердца раз в 3 секунды вне боя
+
+    // ---- Стражи территории клана (0.55.0) ----
+    public static final int GUARD_PRICE = 2000;                     // из казны клана (кровь банка)
+    public static final int GUARD_PER_TERRITORY = 2;
+    public static final double GUARD_HEALTH = 60.0;
+    public static final double GUARD_DAMAGE = 8.0;
+    public static final double GUARD_ARMOR = 8.0;
+    public static final double GUARD_SPEED = 0.3;
+    public static final float GUARD_REGEN = 2.0F;                   // сердце раз в 3 секунды вне боя
+    public static final long GUARD_GRUDGE_MS = 60_000L;             // помнит обидчика клана минуту
+
+    // ---- Кровавый дождь (0.56.0) ----
+    public static final double BLOOD_RAIN_CHANCE = 0.05;            // шанс каждый новый игровой день
+    public static final int BLOOD_RAIN_TICKS = 5 * 60 * 20;         // идёт 5 минут
+    public static final double BLOOD_RAIN_REGEN = 0.5;              // регенерация гулей и полугулей +50%
+    // ---- Аукцион кагуне на чёрном рынке (0.56.0) ----
+    public static final long KAGUNE_AUCTION_EVERY_MS = 45L * 60 * 1000;   // раз в 45 минут, если кто-то в игре
+    public static final int KAGUNE_AUCTION_MINUTES = 10;
+    public static final int KAGUNE_AUCTION_START = 1000;            // стартовая ставка
+    public static final int RARE_KAGUNE_KAKUJA = 40;                // гулю: +40 очков Какудзя
+    public static final int RARE_KAGUNE_POINTS = 5;                 // и +5 очков навыков
+    public static final int RARE_KAGUNE_POINTS_HUMAN = 12;          // не гулю: +12 очков навыков
+
+    // ---- Книга новичка (0.57.0) ----
+    public static final int GUIDE_PROTECT_TICKS = 30 * 60 * 20;    // 30 минут игры книгу нельзя потерять
+
+    // ---- Престиж (0.58.0): высший ранг → сброс ранга, постоянный бонус и значок ★ ----
+    public static final int PRESTIGE_MAX = 5;
+    public static final double PRESTIGE_DAMAGE = 0.02;              // +2% урона за уровень престижа (до +10%)
+    public static final double PRESTIGE_DEFENSE = 0.01;             // -1% получаемого урона за уровень (до -5%)
+    public static final double PRESTIGE_BLOOD = 0.05;               // +5% крови за убийства за уровень (до +25%)
+    public static final int PRESTIGE_REWARD_BLOOD = 1000;           // награда: 1000 x новый уровень престижа
+    public static final int PRESTIGE_REWARD_POINTS = 10;            // и 10 очков навыков
+    // ---- Комбо-удары (0.58.0) ----
+    public static final int COMBO_WINDOW = 30;                      // между нажатиями не больше 1,5 с
+    public static final int COMBO_COOLDOWN = 100;                   // после комбо 5 с до следующего
+    public static final double COMBO_RUSH_MULT = 1.2;               // «Разрыв»: каждому на пути 120% удара
+    public static final double COMBO_RUSH_LENGTH = 5.0;
+    public static final double COMBO_CRUSH_MULT = 1.5;              // «Сокрушение»: сильный удар x1,5 и оглушение
+    public static final int COMBO_CRUSH_STUN = 40;
+    public static final double COMBO_WAVE_MULT = 0.6;               // «Ударная волна»: 60% удара всем вокруг
+    public static final double COMBO_WAVE_RADIUS = 3.5;
 }

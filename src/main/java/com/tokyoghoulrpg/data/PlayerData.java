@@ -35,6 +35,10 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     /** Ежедневная награда: в какой день (номер дня по реальному календарю) выдана последняя и сколько дней подряд. */
     private long dailyDay = -1L;
     private int dailyStreak = 0;
+    /** Достижения: счётчики (убийства, продажи...), полученные достижения и выбранный титул. */
+    private final Map<String, Integer> stats = new HashMap<>();
+    private final Set<String> achievements = new LinkedHashSet<>();
+    private String title = "";
     private boolean kaguneActive = false;
     private int rage = 0;
     private int rageLevel = 0;
@@ -77,6 +81,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     /** Очки ранга: отдельно звание CCG и рейтинг гуля (при смене класса своё не теряется). */
     private int rankCcg = 0;
     private int rankGhoul = 0;
+    /** Престиж (0-5) по званиям CCG и по рейтингу гулей — копятся отдельно. */
+    private int prestigeCcg = 0;
+    private int prestigeGhoul = 0;
     /** Побеждённые боссы: 1 — Пожиратель, 2 — Старший следователь, 4 — Кровавый полугуль. */
     private int bossesKilled = 0;
     /** Для меню «Профиль»: клан игрока (сервер заполняет перед отправкой) и откаты способностей. */
@@ -113,6 +120,12 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     private long bondEndTick = 0L;
     private double bondPower = 0.0;
     private long bondCooldownEnd = 0L;
+    /** Война клана (только для показа): враг, счёт свой / чужой, сколько нужно для победы, до какого тика. */
+    private String warEnemy = "";
+    private int warOur = 0;
+    private int warTheir = 0;
+    private int warTarget = 0;
+    private long warEndTick = 0L;
 
     // Только сервер
     private final CombatState combat = new CombatState();
@@ -152,6 +165,62 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public int getTutorialStep() {
         return tutorialStep;
+    }
+
+    public void setWar(String enemy, int our, int their, int target, long endTick) {
+        this.warEnemy = enemy == null ? "" : enemy;
+        this.warOur = our;
+        this.warTheir = their;
+        this.warTarget = target;
+        this.warEndTick = endTick;
+    }
+
+    public String getWarEnemy() {
+        return warEnemy;
+    }
+
+    public int getWarOur() {
+        return warOur;
+    }
+
+    public int getWarTheir() {
+        return warTheir;
+    }
+
+    public int getWarTarget() {
+        return warTarget;
+    }
+
+    public long getWarEndTick() {
+        return warEndTick;
+    }
+
+    public int getStat(String key) {
+        return stats.getOrDefault(key, 0);
+    }
+
+    public void setStat(String key, int value) {
+        stats.put(key, Math.max(0, value));
+    }
+
+    public boolean hasAchievement(String id) {
+        return achievements.contains(id);
+    }
+
+    public void addAchievement(String id) {
+        achievements.add(id);
+    }
+
+    public int achievementCount() {
+        return achievements.size();
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title == null ? "" : title;
     }
 
     public long getDailyDay() {
@@ -378,6 +447,22 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public void setRankGhoul(int points) {
         this.rankGhoul = Math.max(0, points);
+    }
+
+    public int getPrestigeCcg() {
+        return prestigeCcg;
+    }
+
+    public void setPrestigeCcg(int level) {
+        this.prestigeCcg = Math.max(0, Math.min(com.tokyoghoulrpg.combat.Balance.PRESTIGE_MAX, level));
+    }
+
+    public int getPrestigeGhoul() {
+        return prestigeGhoul;
+    }
+
+    public void setPrestigeGhoul(int level) {
+        this.prestigeGhoul = Math.max(0, Math.min(com.tokyoghoulrpg.combat.Balance.PRESTIGE_MAX, level));
     }
 
     public void setClanCache(String name, int reputation) {
@@ -657,6 +742,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tutorialDone = false;
         dailyDay = -1L;
         dailyStreak = 0;
+        stats.clear();
+        achievements.clear();
+        title = "";
         kaguneActive = false;
         rage = 0;
         rageLevel = 0;
@@ -684,6 +772,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         kakujaEndTick = 0L;
         rankCcg = 0;
         rankGhoul = 0;
+        prestigeCcg = 0;
+        prestigeGhoul = 0;
         bossesKilled = 0;
         starterQuinque = false;
         finalQuinques = 0;
@@ -724,6 +814,17 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putBoolean("tutorial_done", tutorialDone);
         tag.putLong("daily_day", dailyDay);
         tag.putInt("daily_streak", dailyStreak);
+        CompoundTag statTag = new CompoundTag();
+        for (Map.Entry<String, Integer> e : stats.entrySet()) {
+            statTag.putInt(e.getKey(), e.getValue());
+        }
+        tag.put("stats", statTag);
+        ListTag achList = new ListTag();
+        for (String a : achievements) {
+            achList.add(StringTag.valueOf(a));
+        }
+        tag.put("achievements", achList);
+        tag.putString("title", title);
         tag.putBoolean("kagune_active", kaguneActive);
         tag.putInt("rage", rage);
         tag.putInt("rage_level", rageLevel);
@@ -750,6 +851,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putInt("kakuja_points", kakujaPoints);
         tag.putInt("rank_ccg", rankCcg);
         tag.putInt("rank_ghoul", rankGhoul);
+        tag.putInt("prestige_ccg", prestigeCcg);
+        tag.putInt("prestige_ghoul", prestigeGhoul);
         tag.putInt("bosses_killed", bossesKilled);
         tag.putBoolean("starter_quinque", starterQuinque);
         tag.putInt("final_quinques", finalQuinques);
@@ -791,6 +894,11 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putLong("bond_cooldown", bondCooldownEnd);
         tag.putLong("kakuja_end", kakujaEndTick);
         tag.putString("clan_name", clanNameCache);
+        tag.putString("war_enemy", warEnemy);
+        tag.putInt("war_our", warOur);
+        tag.putInt("war_their", warTheir);
+        tag.putInt("war_target", warTarget);
+        tag.putLong("war_end", warEndTick);
         tag.putInt("clan_rep", clanRepCache);
         CompoundTag cd = new CompoundTag();
         cd.putLong("bite", combat.biteReady);
@@ -821,6 +929,17 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tutorialDone = !tag.contains("tutorial_done") || tag.getBoolean("tutorial_done");
         dailyDay = tag.contains("daily_day") ? tag.getLong("daily_day") : -1L;
         dailyStreak = tag.getInt("daily_streak");
+        stats.clear();
+        CompoundTag statTag = tag.getCompound("stats");
+        for (String key : statTag.getAllKeys()) {
+            stats.put(key, statTag.getInt(key));
+        }
+        achievements.clear();
+        ListTag achList = tag.getList("achievements", Tag.TAG_STRING);
+        for (int i = 0; i < achList.size(); i++) {
+            achievements.add(achList.getString(i));
+        }
+        title = tag.getString("title");
         kaguneActive = tag.getBoolean("kagune_active");
         setRage(tag.getInt("rage"));
         setRageLevel(tag.getInt("rage_level"));
@@ -851,6 +970,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         setKakujaPoints(tag.getInt("kakuja_points"));
         setRankCcg(tag.getInt("rank_ccg"));
         setRankGhoul(tag.getInt("rank_ghoul"));
+        setPrestigeCcg(tag.getInt("prestige_ccg"));
+        setPrestigeGhoul(tag.getInt("prestige_ghoul"));
         bossesKilled = tag.getInt("bosses_killed");
         starterQuinque = tag.getBoolean("starter_quinque");
         setFinalQuinques(tag.getInt("final_quinques"));
@@ -891,6 +1012,11 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         bondCooldownEnd = tag.getLong("bond_cooldown");
         kakujaEndTick = tag.getLong("kakuja_end");
         clanNameCache = tag.getString("clan_name");
+        warEnemy = tag.getString("war_enemy");
+        warOur = tag.getInt("war_our");
+        warTheir = tag.getInt("war_their");
+        warTarget = tag.getInt("war_target");
+        warEndTick = tag.getLong("war_end");
         clanRepCache = tag.getInt("clan_rep");
         cooldownsCache.clear();
         CompoundTag cd = tag.getCompound("cooldowns");

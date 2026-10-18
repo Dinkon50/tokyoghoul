@@ -61,6 +61,7 @@ public final class BossRewards {
             if (i < 2) {
                 data.addBloodPoints(Balance.HG_TOP_BLOOD);
                 int points = data.earnSkillPoints(Balance.HG_TOP_POINTS);
+                com.tokyoghoulrpg.clan.ClanBank.tax(player, Balance.HG_TOP_BLOOD, points);
                 player.giveExperienceLevels(Balance.HG_TOP_LEVELS);
                 Item quinque = rareQuinque(player);
                 give(player, new ItemStack(quinque));
@@ -80,6 +81,7 @@ public final class BossRewards {
             } else {
                 data.addBloodPoints(Balance.HG_OTHER_BLOOD);
                 int points = data.earnSkillPoints(Balance.HG_OTHER_POINTS);
+                com.tokyoghoulrpg.clan.ClanBank.tax(player, Balance.HG_OTHER_BLOOD, points);
                 player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.half_ghoul_boss.other",
                         place, dealt, Balance.HG_OTHER_BLOOD, points));
             }
@@ -92,6 +94,8 @@ public final class BossRewards {
             PlayerData pd = PlayerData.get(player);
             if (pd != null) {
                 pd.markBossKilled(4);
+                com.tokyoghoulrpg.rep.Achievements.add(player, "boss_kills", 1);
+                com.tokyoghoulrpg.clan.ClanQuests.progress(player, com.tokyoghoulrpg.clan.ClanQuests.Kind.KILL_BOSS, 1);
             }
             com.tokyoghoulrpg.rank.Ranks.add(player, Balance.RANK_RAID_BOSS);
             com.tokyoghoulrpg.combat.Kakuja.gain(player, Balance.KAKUJA_RAID_BOSS);

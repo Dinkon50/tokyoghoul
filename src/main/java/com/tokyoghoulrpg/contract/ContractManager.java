@@ -101,6 +101,7 @@ public final class ContractManager {
         int blood = contract.bloodFor(data);
         data.addBloodPoints(blood);
         int points = data.earnSkillPoints(contract.points());
+        com.tokyoghoulrpg.clan.ClanBank.tax(player, blood, points);
         data.setContract(null, 0);
         data.setContractDoneDay(day(player));
         player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.contract_done",

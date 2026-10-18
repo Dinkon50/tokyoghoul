@@ -40,6 +40,7 @@ public final class ClientModEvents {
         event.register(KeyBindings.SKILL_TREE);
         event.register(KeyBindings.QUESTS);
         event.register(KeyBindings.CLAN);
+        event.register(KeyBindings.MARKET);
         event.register(KeyBindings.RETRIBUTION);
         event.register(KeyBindings.CHARISMA);
         event.register(KeyBindings.FORTUNE);
@@ -66,6 +67,8 @@ public final class ClientModEvents {
                 context -> new NpcRenderer<>(context, "fence", 1));
         event.registerEntityRenderer(ModEntities.MERCENARY.get(),
                 context -> new NpcRenderer<>(context, "mercenary", 1));
+        event.registerEntityRenderer(ModEntities.GUARD.get(),
+                context -> new NpcRenderer<>(context, "guard", 1));
         // боссы: модель игрока в 1.23 раза крупнее (хитбокс 2.4 блока)
         event.registerEntityRenderer(ModEntities.GHOUL_BOSS.get(),
                 context -> new NpcRenderer<>(context, "ghoul_boss", 1, 1.23F));

@@ -6,6 +6,7 @@
   cafe          — кофейня: мирная зона, стойка с хозяином, столики, кухня; открыта днём.
   rc_lab        — заброшенная лаборатория RC: камеры, колбы, архив с добычей, подопытные.
   black_market  — чёрный рынок: Скупщик, торговец, мастерская масок.
+  subway        — заброшенное метро: павильон, спуск, лабиринт с ловушками, зал мини-босса.
 Запуск: python3 structures.py <папка data/tokyoghoulrpg/structures> [имена построек]
 """
 import os
@@ -27,6 +28,8 @@ class Build:
         self.block_nbt = {}
         self.entities = []
         self.rng = random.Random(seed)
+        # True — незаданные клетки не пишутся (остаётся земля/камень мира, как structure_void)
+        self.void_unset = False
 
     def set(self, x, y, z, name, **props):
         assert 0 <= x < self.w and 0 <= y < self.h and 0 <= z < self.d, (x, y, z)
@@ -51,7 +54,7 @@ class Build:
         for half, dy in (("lower", 0), ("upper", 1)):
             self.set(x, y + dy, z, name, facing=facing, half=half, hinge=hinge, open="false", powered="false")
 
-    def mob(self, x, y, z, entity, variant=0, hand=None, armor=(None, None, None, None), drop_head=0.085):
+    def mob(self, x, y, z, entity, variant=0, hand=None, armor=(None, None, None, None), drop_head=0.085, extra=None):
         """Моб с готовым снаряжением: так он одет, даже если игра не вызовет finalizeSpawn."""
         def stack(item):
             if item is None:
@@ -68,6 +71,8 @@ class Build:
                                            Tag(FLOAT, drop_head)], item_type=FLOAT),
             "Rotation": Tag(LIST, [Tag(FLOAT, float(self.rng.randint(0, 359))), Tag(FLOAT, 0.0)], item_type=FLOAT),
         }
+        if extra:
+            tag.update(extra)
         self.entities.append({
             "pos": Tag(LIST, [Tag(DOUBLE, x + 0.5), Tag(DOUBLE, float(y)), Tag(DOUBLE, z + 0.5)], item_type=DOUBLE),
             "blockPos": Tag(LIST, [Tag(INT, x), Tag(INT, y), Tag(INT, z)], item_type=INT),
@@ -81,6 +86,8 @@ class Build:
         for y in range(self.h):
             for z in range(self.d):
                 for x in range(self.w):
+                    if self.void_unset and (x, y, z) not in self.blocks:
+                        continue
                     key = self.blocks.get((x, y, z), ("minecraft:air", ()))
                     if key not in index:
                         index[key] = len(palette)
@@ -613,11 +620,204 @@ def black_market():
     return b
 
 
+def subway():
+    """
+    Заброшенное метро (катакомбы) 29 x 19 x 31. На поверхности — павильон входа (y 13-18),
+    от него лестница в тоннеле уходит на 13 блоков вниз. Внизу лабиринт 7 x 6 клеток (коридоры 3 x 4)
+    с рельсами, ловушками (нажимные плиты + раздатчики со стрелами, магма), паутиной и гулями.
+    В дальнем углу — зал 11 x 12, где ждёт мини-босс «Хозяин тоннелей», и сундуки с добычей.
+    Незаданные клетки не трогаются: вокруг остаётся камень мира.
+    """
+    W, H, D = 29, 19, 31
+    b = Build(W, H, D, 5560)
+    b.void_unset = True
+    rng = b.rng
+    wall = ["stone_bricks", "stone_bricks", "cracked_stone_bricks", "mossy_stone_bricks", "deepslate_tiles"]
+    floor = ["polished_deepslate", "polished_deepslate", "cracked_deepslate_tiles", "gravel"]
+    # оболочка лабиринта: z 5..30, y 0..5 — сплошная, потом вырезаем
+    for x in range(W):
+        for z in range(5, D):
+            b.set(x, 0, z, rng.choice(floor))
+            for y in range(1, 5):
+                b.set(x, y, z, rng.choice(wall))
+            b.set(x, 5, z, "deepslate_bricks")
+    CX, CZ = 7, 6
+
+    def cell(i, j):
+        return 1 + 4 * i, 6 + 4 * j      # левый-верхний угол открытой части 3 x 3
+
+    boss = {(i, j) for i in (4, 5, 6) for j in (3, 4, 5)}
+
+    def carve(x0, z0, x1, z1):
+        for x in range(x0, x1 + 1):
+            for z in range(z0, z1 + 1):
+                for y in range(1, 5):
+                    b.set(x, y, z, "air")
+
+    for i in range(CX):
+        for j in range(CZ):
+            x, z = cell(i, j)
+            carve(x, z, x + 2, z + 2)
+    # лабиринт: обход в глубину по клеткам вне зала
+    seen = {(0, 0)}
+    stack = [(0, 0)]
+    links = set()
+    while stack:
+        i, j = stack[-1]
+        nxt = [(i + di, j + dj) for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1))
+               if 0 <= i + di < CX and 0 <= j + dj < CZ and (i + di, j + dj) not in seen and (i + di, j + dj) not in boss]
+        if not nxt:
+            stack.pop()
+            continue
+        n = rng.choice(nxt)
+        seen.add(n)
+        links.add(frozenset(((i, j), n)))
+        stack.append(n)
+    # пара лишних проходов, чтобы были петли
+    for _ in range(4):
+        i, j = rng.randrange(CX - 1), rng.randrange(CZ)
+        if (i, j) not in boss and (i + 1, j) not in boss:
+            links.add(frozenset(((i, j), (i + 1, j))))
+
+    def open_between(a, c):
+        (i1, j1), (i2, j2) = sorted((a, c))
+        x, z = cell(i1, j1)
+        if i2 > i1:
+            carve(x + 3, z, x + 3, z + 2)
+        else:
+            carve(x, z + 3, x + 2, z + 3)
+
+    for link in links:
+        open_between(*tuple(link))
+    # зал босса: всё внутри x 17..27, z 18..29
+    carve(17, 18, 27, 29)
+    for x in range(17, 28):
+        for z in range(18, 30):
+            b.set(x, 0, z, "polished_blackstone_bricks" if (x + z) % 2 else "polished_deepslate")
+    open_between((3, 4), (4, 4))                 # единственная дверь в зал (с запада)
+    b.set(16, 4, 22, "chain", axis="y", waterlogged="false")
+    for px, pz in ((19, 20), (25, 20), (19, 27), (25, 27)):
+        for y in range(1, 5):
+            b.set(px, y, pz, "polished_basalt", axis="y")
+    for x, z in ((22, 19), (22, 28)):
+        b.set(x, 4, z, "lantern", hanging="true", waterlogged="false")
+    b.chest(26, 1, 29, "west", "subway")
+    b.chest(18, 1, 29, "east", "subway")
+    for _ in range(8):
+        x, z = rng.randint(17, 27), rng.randint(18, 29)
+        if b.get(x, 1, z) == "minecraft:air" and (x, z) not in ((22, 24),):
+            b.set(x, 1, z, "red_carpet")
+    # рельсы вдоль коридоров и фонари
+    for i in range(CX):
+        for j in range(CZ):
+            if (i, j) in boss:
+                continue
+            x, z = cell(i, j)
+            r = rng.random()
+            if r < 0.35:
+                b.set(x + 1, 1, z + 1, "rail", shape=rng.choice(["north_south", "east_west"]), waterlogged="false")
+            elif r < 0.5:
+                b.set(x + rng.randint(0, 2), 3 + rng.randint(0, 1), z + rng.randint(0, 2), "cobweb")
+            elif r < 0.6:
+                b.set(x + 1, 0, z + 1, "magma_block")                # горячий пол
+            if rng.random() < 0.3:
+                b.set(x + 1, 4, z + 1, "lantern", hanging="true", waterlogged="false")
+    # ловушки: плита у закрытой восточной стены, в стене — раздатчик со стрелами
+    arrows = {"id": Tag(STRING, "minecraft:dispenser"),
+              "Items": Tag(LIST, [Tag(COMPOUND, {"Slot": Tag(BYTE, 0), "id": Tag(STRING, "minecraft:arrow"),
+                                                 "Count": Tag(BYTE, 16)})], item_type=COMPOUND)}
+    traps = 0
+    cells = [(i, j) for i in range(CX - 1) for j in range(CZ) if (i, j) not in boss and (i, j) != (0, 0)]
+    rng.shuffle(cells)
+    for i, j in cells:
+        if traps >= 4:
+            break
+        if frozenset(((i, j), (i + 1, j))) in links or (i + 1, j) in boss:
+            continue
+        x, z = cell(i, j)
+        b.set(x + 3, 1, z + 1, "dispenser", facing="west", triggered="false")
+        b.block_nbt[(x + 3, 1, z + 1)] = dict(arrows)
+        b.set(x + 2, 1, z + 1, "stone_pressure_plate", powered="false")
+        traps += 1
+    # сундук в тупике
+    dead = [c for c in seen if c != (0, 0) and sum(1 for l in links if c in l) == 1]
+    if dead:
+        i, j = rng.choice(sorted(dead))
+        x, z = cell(i, j)
+        b.chest(x + 1, 1, z + 1, "north", "subway")
+    # гули в коридорах
+    spots = [c for c in sorted(seen) if c != (0, 0)]
+    rng.shuffle(spots)
+    for k, (i, j) in enumerate(spots[:5]):
+        x, z = cell(i, j)
+        if b.get(x + 1, 1, z + 1) in ("minecraft:air", "minecraft:rail"):
+            b.set(x + 1, 1, z + 1, "air")
+            b.mob(x + 1, 1, z + 1, "ghoul", k % 3)
+    # мини-босс
+    name = '{"text":"Хозяин тоннелей","color":"dark_red","bold":true}'
+    b.mob(22, 1, 24, "ghoul", 2, extra={
+        "CustomName": Tag(STRING, name),
+        "CustomNameVisible": Tag(BYTE, 1),
+        "Health": Tag(FLOAT, 160.0),
+        "Attributes": Tag(LIST, [
+            Tag(COMPOUND, {"Name": Tag(STRING, "minecraft:generic.max_health"), "Base": Tag(DOUBLE, 160.0)}),
+            Tag(COMPOUND, {"Name": Tag(STRING, "minecraft:generic.attack_damage"), "Base": Tag(DOUBLE, 12.0)}),
+            Tag(COMPOUND, {"Name": Tag(STRING, "minecraft:generic.armor"), "Base": Tag(DOUBLE, 10.0)}),
+            Tag(COMPOUND, {"Name": Tag(STRING, "minecraft:generic.knockback_resistance"), "Base": Tag(DOUBLE, 0.6)}),
+        ], item_type=COMPOUND),
+        "Tags": Tag(LIST, [Tag(STRING, "tgrpg_subway_boss")], item_type=STRING),
+    })
+    # спуск: тоннель z 1..3 от x=1 (низ, y 0) до x=15 (верх, пол y 12), выход на поверхность x 16..18
+    def floor_y(x):
+        return 0 if x <= 3 else min(12, x - 3)
+    for x in range(0, 19):
+        f = floor_y(x) if x <= 15 else 12
+        for z in range(0, 5):
+            for y in range(max(0, f - 1), min(H, f + 6)):
+                edge = z in (0, 4) or x == 0
+                if y <= f or y == f + 5 or edge:
+                    if y >= 13 and (z in (0, 4) or y == f + 5) and x >= 15:
+                        continue                         # над землёй стен тоннеля нет
+                    b.set(x, y, z, rng.choice(wall))
+                else:
+                    b.set(x, y, z, "air")
+        if 4 <= x <= 15:
+            for z in (1, 2, 3):
+                b.set(x, f, z, "stone_brick_stairs", facing="east", half="bottom", shape="straight", waterlogged="false")
+    for x in range(1, 4):                         # проход из тоннеля в лабиринт
+        for z in (4, 5):
+            for y in range(1, 5):
+                b.set(x, y, z, "air")
+    for x, y in ((6, 6), (11, 11)):
+        b.set(x, y, 2, "lantern", hanging="true", waterlogged="false")
+    # павильон входа на поверхности: x 14..20, z 0..4, пол y 12, стены y 13..16, крыша y 17
+    for x in range(14, 21):
+        for z in range(0, 5):
+            if x >= 16 or z in (0, 4):
+                b.set(x, 12, z, "smooth_stone")
+            for y in range(13, 17):
+                if x == 14 and z in (1, 2, 3):
+                    b.set(x, y, z, "air" if y < 16 else "white_concrete")   # тоннель входит в павильон
+                elif z in (0, 4) or x in (14, 20):
+                    if x == 20 and z in (1, 2, 3) and y <= 15:
+                        b.set(x, y, z, "air")            # вход с востока
+                    elif y in (14, 15) and x not in (14, 20) and z in (0, 4):
+                        b.set(x, y, z, "glass_pane", east="true", west="true", north="false", south="false",
+                              waterlogged="false")
+                    else:
+                        b.set(x, y, z, "red_concrete" if y == 16 else "white_concrete")
+                elif x >= 15:
+                    b.set(x, y, z, "air")
+            b.set(x, 17, z, "iron_block" if (x + z) % 2 == 0 else "light_gray_concrete")
+    b.set(17, 16, 2, "lantern", hanging="true", waterlogged="false")
+    return b
+
+
 if __name__ == "__main__":
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
     only = set(sys.argv[2:])
-    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe), ("rc_lab", rc_lab), ("black_market", black_market)):
+    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe), ("rc_lab", rc_lab), ("black_market", black_market), ("subway", subway)):
         if only and name not in only:
             continue
         info = build().save(os.path.join(out, name + ".nbt"))

@@ -29,10 +29,10 @@ import net.minecraft.network.chat.Component;
  */
 public class ClanScreen extends Screen {
     private static final int WIDTH = 300;
-    private static final int HEIGHT = 232;
+    private static final int HEIGHT = 262;
     private static final int ROW = 16;
     private static final int MAX_MEMBERS_SHOWN = 7;
-    private static final int MAX_CANDIDATES_SHOWN = 4;
+    private static final int MAX_CANDIDATES_SHOWN = 3;
 
     /** Последнее состояние от сервера (null — ещё не пришло). */
     private static ClanStateS2C state;
@@ -49,13 +49,44 @@ public class ClanScreen extends Screen {
         state = null;   // свежие данные придут от сервера сразу после открытия
     }
 
+    /** Задания, войны, рейтинг (null — ещё не пришли). */
+    private static com.tokyoghoulrpg.network.packet.ClanInfoS2C info;
+
+    public static com.tokyoghoulrpg.network.packet.ClanInfoS2C info() {
+        return info;
+    }
+
+    public static void acceptInfo(com.tokyoghoulrpg.network.packet.ClanInfoS2C newInfo) {
+        info = newInfo;
+        if (Minecraft.getInstance().screen instanceof ClanUpgradeScreen upgrade) {
+            upgrade.refresh();
+        }
+    }
+
+    /** Последнее состояние клана (для меню прокачки). */
+    public static ClanStateS2C state() {
+        return state;
+    }
+
     /** Пришло новое состояние: запомнить и перестроить меню, если оно открыто. */
     public static void accept(ClanStateS2C newState) {
         state = newState;
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof ClanScreen screen) {
             screen.refresh();
+        } else if (mc.screen instanceof ClanUpgradeScreen upgrade) {
+            upgrade.refresh();
+        } else if (mc.screen instanceof ClanBankScreen bank) {
+            bank.refresh();
         }
+    }
+
+    /** Открыть меню клана, не сбрасывая уже полученное состояние (возврат из меню прокачки). */
+    public static ClanScreen reopen() {
+        ClanStateS2C kept = state;
+        ClanScreen screen = new ClanScreen();
+        state = kept;
+        return screen;
     }
 
     private void refresh() {
@@ -193,8 +224,15 @@ public class ClanScreen extends Screen {
             }
         }
 
+        // склад клана и прокачка клана
+        addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.clan.storage"),
+                b -> send(ClanManager.STORAGE, "", null, 0)).bounds(left + 10, top + HEIGHT - 24, 60, 18).build());
+        addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.clan.bank"),
+                b -> Minecraft.getInstance().setScreen(new ClanBankScreen())).bounds(left + 74, top + HEIGHT - 24, 60, 18).build());
+        addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.clan.upgrade_open", state.level),
+                b -> Minecraft.getInstance().setScreen(new ClanUpgradeScreen())).bounds(left + 138, top + HEIGHT - 24, 84, 18).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.clan.leave"),
-                b -> send(ClanManager.LEAVE, "", null, 0)).bounds(left + WIDTH - 110, top + HEIGHT - 24, 100, 18).build());
+                b -> send(ClanManager.LEAVE, "", null, 0)).bounds(left + 226, top + HEIGHT - 24, 64, 18).build());
     }
 
     @Override
@@ -295,7 +333,7 @@ public class ClanScreen extends Screen {
             }
         } else {
             gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.leader_only"),
-                    left + 10, top + HEIGHT - 20, 0x777777, false);
+                    left + 10, top + 60 + MAX_MEMBERS_SHOWN * ROW + 4, 0x777777, false);
         }
         boolean canGive = canGivePower();
         powerButtons.forEach((button, online) -> button.active = online && canGive);

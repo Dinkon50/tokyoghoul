@@ -32,7 +32,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "18";
+    private static final String PROTOCOL = "24";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -112,6 +112,21 @@ public final class NetworkHandler {
         CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.FenceActionC2S.class,
                 com.tokyoghoulrpg.network.packet.FenceActionC2S::encode, com.tokyoghoulrpg.network.packet.FenceActionC2S::decode,
                 com.tokyoghoulrpg.network.packet.FenceActionC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.MarketActionC2S.class,
+                com.tokyoghoulrpg.network.packet.MarketActionC2S::encode, com.tokyoghoulrpg.network.packet.MarketActionC2S::decode,
+                com.tokyoghoulrpg.network.packet.MarketActionC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.MarketStateS2C.class,
+                com.tokyoghoulrpg.network.packet.MarketStateS2C::encode, com.tokyoghoulrpg.network.packet.MarketStateS2C::decode,
+                com.tokyoghoulrpg.network.packet.MarketStateS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.ClanInfoS2C.class,
+                com.tokyoghoulrpg.network.packet.ClanInfoS2C::encode, com.tokyoghoulrpg.network.packet.ClanInfoS2C::decode,
+                com.tokyoghoulrpg.network.packet.ClanInfoS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.TitleC2S.class,
+                com.tokyoghoulrpg.network.packet.TitleC2S::encode, com.tokyoghoulrpg.network.packet.TitleC2S::decode,
+                com.tokyoghoulrpg.network.packet.TitleC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.PrestigeC2S.class,
+                com.tokyoghoulrpg.network.packet.PrestigeC2S::encode, com.tokyoghoulrpg.network.packet.PrestigeC2S::decode,
+                com.tokyoghoulrpg.network.packet.PrestigeC2S::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */

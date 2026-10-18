@@ -64,6 +64,12 @@ public final class ModBlocks {
             () -> new com.tokyoghoulrpg.world.MaskWorkshopBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.WOOD).strength(2.5F).sound(SoundType.WOOD)));
 
+    /** Знамя клана: центр территории клана. Прочное, как обсидиан. */
+    public static final RegistryObject<Block> CLAN_BANNER = BLOCKS.register("clan_banner",
+            () -> new com.tokyoghoulrpg.world.ClanBannerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_RED).strength(50.0F, 1200.0F).requiresCorrectToolForDrops()
+                    .sound(SoundType.WOOL).lightLevel(state -> 7)));
+
     private ModBlocks() {
     }
 }

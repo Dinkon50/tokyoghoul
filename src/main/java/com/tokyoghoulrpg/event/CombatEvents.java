@@ -106,6 +106,9 @@ public final class CombatEvents {
         Silence.clear();
         ClanBond.clear();
         com.tokyoghoulrpg.entity.MercenaryNpc.clear();
+        com.tokyoghoulrpg.clan.ClanWars.clear();
+        com.tokyoghoulrpg.clan.ClanAlliances.clear();
+        com.tokyoghoulrpg.clan.ClanGuards.clear();
     }
 
     @SubscribeEvent
@@ -290,6 +293,11 @@ public final class CombatEvents {
             if (data != null && data.getPlayerClass() == PlayerClass.HALF_GHOUL) {
                 amount *= (float) (1.0 + Balance.HALF_GHOUL_DAMAGE);
             }
+            // уровень клана; в войне кланов меньший клан бьёт сильнее
+            amount *= (float) com.tokyoghoulrpg.clan.ClanPerks.damageFactor(attackingPlayer);
+            if (victim instanceof ServerPlayer warVictim) {
+                amount *= (float) com.tokyoghoulrpg.clan.ClanWars.attackFactor(attackingPlayer, warVictim);
+            }
             // тип кагуне (бикаку) и маска (клыкастая)
             amount *= (float) (com.tokyoghoulrpg.combat.KaguneTypeBonus.damageFactor(data)
                     * com.tokyoghoulrpg.item.MaskEffects.damageFactor(attackingPlayer, data));
@@ -348,9 +356,17 @@ public final class CombatEvents {
             amount *= (float) (1.0 - toughness);
             // Какудзя: броня из кагуне
             amount *= (float) Kakuja.defenseFactor(data, defendingPlayer.level().getGameTime());
+            // престиж
+            if (data != null && data.hasChosenClass()) {
+                amount *= (float) Ranks.defenseFactor(data);
+            }
             // тип кагуне (коукаку, бикаку) и маска (костяная)
             amount *= (float) (com.tokyoghoulrpg.combat.KaguneTypeBonus.defenseFactor(data)
                     * com.tokyoghoulrpg.item.MaskEffects.defenseFactor(defendingPlayer, data));
+            amount *= (float) com.tokyoghoulrpg.clan.ClanPerks.defenseFactor(defendingPlayer);
+            if (attacker instanceof ServerPlayer warAttacker) {
+                amount *= (float) com.tokyoghoulrpg.clan.ClanWars.defenseFactor(defendingPlayer, warAttacker);
+            }
             // «Защита CCG»: полный комплект брони CCG на агенте, от гулей защищает сильнее
             amount *= (float) com.tokyoghoulrpg.item.CcgSet.defenseFactor(defendingPlayer, data,
                     attacker instanceof LivingEntity ghoulAttacker && RcSuppress.isGhoul(ghoulAttacker));
@@ -448,6 +464,12 @@ public final class CombatEvents {
                 data.markBossKilled(2);
             }
             Reputation.onKill(killerPlayer, event.getEntity());
+            // банк клана: за убийство людей
+            com.tokyoghoulrpg.clan.ClanBank.onKill(killerPlayer, event.getEntity());
+            // войны кланов: убийство врага
+            if (event.getEntity() instanceof ServerPlayer victimPlayer) {
+                com.tokyoghoulrpg.clan.ClanWars.onKill(killerPlayer, victimPlayer);
+            }
             // личная репутация и репутация клана: мирный — минус, босс — плюс
             Standing.onKill(killerPlayer, event.getEntity());
             // ядра гулей: очень редко
@@ -456,6 +478,8 @@ public final class CombatEvents {
             Kakuja.onKill(killerPlayer, event.getEntity());
             Ranks.onKill(killerPlayer, event.getEntity());
         }
+        // клановый босс: награда клану
+        com.tokyoghoulrpg.clan.ClanBoss.onDeath(event.getEntity());
         // Кровавый полугуль: награда по урону и таймер возрождения на арене
         if (event.getEntity() instanceof com.tokyoghoulrpg.entity.CrimsonMonarch monarch) {
             // финальный босс: только очки крови, и весь сервер узнаёт о победе
@@ -484,7 +508,8 @@ public final class CombatEvents {
     private static void rewardKill(ServerPlayer killer, PlayerData data, LivingEntity victim) {
         double rank = 1.0 + SkillEffects.rankBloodBonus(SkillEffects.level(data, SkillTree.Branch.RANK))
                 + Ranks.bloodBonus(data)
-                + SkillEffects.scavenger(SkillEffects.level(data, SkillTree.Branch.SCAVENGER));
+                + SkillEffects.scavenger(SkillEffects.level(data, SkillTree.Branch.SCAVENGER))
+                + com.tokyoghoulrpg.clan.ClanPerks.bloodBonus(killer);
         // «Ночь охоты»: очки крови двойные
         boolean huntNight = com.tokyoghoulrpg.world.HuntNight.isActive(killer.getServer());
         int night = huntNight ? Balance.HUNT_NIGHT_REWARD : 1;
@@ -496,14 +521,22 @@ public final class CombatEvents {
         // ночной охотник: сверх крови ещё очко навыков
         if (com.tokyoghoulrpg.world.HuntNight.isHunter(victim)) {
             data.addBloodPoints(npcBlood);
+            com.tokyoghoulrpg.clan.ClanPerks.shareBlood(killer, npcBlood);
             int points = data.earnSkillPoints(Balance.HUNT_NIGHT_HUNTER_POINTS);
+            com.tokyoghoulrpg.clan.ClanBank.tax(killer, npcBlood, points);
+            onNpcKilled(killer, victim, npcBlood);
             killer.displayClientMessage(Component.translatable("message.tokyoghoulrpg.hunt_night.kill", npcBlood, points), true);
             NetworkHandler.syncTo(killer);
             return;
         }
         if (victim instanceof BossMob) {
             data.addBloodPoints(bossBlood);
+            com.tokyoghoulrpg.clan.ClanPerks.shareBlood(killer, bossBlood);
             int points = data.earnSkillPoints(Balance.BOSS_SKILL_POINTS);
+            com.tokyoghoulrpg.clan.ClanBank.tax(killer, bossBlood, points);
+            com.tokyoghoulrpg.rep.Achievements.add(killer, "boss_kills", 1);
+            com.tokyoghoulrpg.clan.ClanQuests.progress(killer, com.tokyoghoulrpg.clan.ClanQuests.Kind.KILL_BOSS, 1);
+            com.tokyoghoulrpg.clan.ClanQuests.progress(killer, com.tokyoghoulrpg.clan.ClanQuests.Kind.EARN_BLOOD, bossBlood);
             killer.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.boss_reward",
                     victim.getDisplayName(), bossBlood, points));
             Effects.sound(killer, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
@@ -512,10 +545,22 @@ public final class CombatEvents {
         } else if (victim instanceof GhoulNpc || victim instanceof CcgAgentNpc || victim instanceof HalfGhoulNpc
                 || victim instanceof com.tokyoghoulrpg.entity.TestSubjectNpc) {
             data.addBloodPoints(npcBlood);
+            com.tokyoghoulrpg.clan.ClanPerks.shareBlood(killer, npcBlood);
+            com.tokyoghoulrpg.clan.ClanBank.tax(killer, npcBlood, 0);
+            onNpcKilled(killer, victim, npcBlood);
             killer.displayClientMessage(Component.translatable(huntNight ? "message.tokyoghoulrpg.kill_reward_night"
                     : "message.tokyoghoulrpg.kill_reward", npcBlood), true);
             NetworkHandler.syncTo(killer);
         }
+    }
+
+    /** Убит враг-NPC: достижения и задания клана. */
+    private static void onNpcKilled(ServerPlayer killer, LivingEntity victim, int blood) {
+        com.tokyoghoulrpg.rep.Achievements.add(killer, "npc_kills", 1);
+        com.tokyoghoulrpg.clan.ClanQuests.progress(killer, com.tokyoghoulrpg.clan.ClanQuests.Kind.KILL_NPC, 1);
+        com.tokyoghoulrpg.clan.ClanQuests.progress(killer, victim instanceof CcgAgentNpc
+                ? com.tokyoghoulrpg.clan.ClanQuests.Kind.KILL_CCG : com.tokyoghoulrpg.clan.ClanQuests.Kind.KILL_GHOUL, 1);
+        com.tokyoghoulrpg.clan.ClanQuests.progress(killer, com.tokyoghoulrpg.clan.ClanQuests.Kind.EARN_BLOOD, blood);
     }
 
     /**

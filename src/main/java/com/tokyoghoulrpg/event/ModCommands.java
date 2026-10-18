@@ -129,6 +129,16 @@ public final class ModCommands {
                                         return null;
                                     };
                                 })))
+                .then(Commands.literal("bloodrain").requires(src -> src.hasPermission(OP))
+                        .executes(ctx -> {
+                            com.tokyoghoulrpg.world.BloodRain.start(ctx.getSource().getServer());
+                            return 1;
+                        }))
+                .then(Commands.literal("kaguneauction").requires(src -> src.hasPermission(OP))
+                        .executes(ctx -> {
+                            com.tokyoghoulrpg.market.KaguneAuction.start(ctx.getSource().getServer());
+                            return 1;
+                        }))
                 .then(Commands.literal("tutorial").requires(src -> src.hasPermission(OP))
                         .then(withTarget(Commands.literal("restart"), ctx -> (player, data) -> {
                             data.setTutorial(0, false);

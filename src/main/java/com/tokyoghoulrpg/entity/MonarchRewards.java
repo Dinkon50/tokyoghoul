@@ -40,6 +40,9 @@ public final class MonarchRewards {
                 continue;
             }
             data.addBloodPoints(Balance.MONARCH_BLOOD);
+            com.tokyoghoulrpg.clan.ClanBank.tax(player, Balance.MONARCH_BLOOD, 0);
+            com.tokyoghoulrpg.rep.Achievements.add(player, "monarch_kills", 1);
+            com.tokyoghoulrpg.rep.Achievements.add(player, "boss_kills", 1);
             NetworkHandler.syncTo(player);
             player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.crimson_monarch.reward", Balance.MONARCH_BLOOD));
             player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.crimson_monarch.all_bosses"));

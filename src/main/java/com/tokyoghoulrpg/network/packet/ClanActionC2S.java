@@ -25,14 +25,14 @@ public class ClanActionC2S {
 
     public static void encode(ClanActionC2S msg, FriendlyByteBuf buf) {
         buf.writeVarInt(msg.action);
-        buf.writeUtf(msg.text, 32);
+        buf.writeUtf(msg.text, 80);
         buf.writeUUID(msg.target == null ? NONE : msg.target);
         buf.writeVarInt(msg.amount);
     }
 
     public static ClanActionC2S decode(FriendlyByteBuf buf) {
         int action = buf.readVarInt();
-        String text = buf.readUtf(32);
+        String text = buf.readUtf(80);
         UUID target = buf.readUUID();
         int amount = buf.readVarInt();
         return new ClanActionC2S(action, text, NONE.equals(target) ? null : target, amount);

@@ -30,6 +30,8 @@ public final class KeyBindings {
     public static final KeyMapping KAKUJA = key("kakuja", GLFW.GLFW_KEY_U);
     /** Меню «Профиль»: всё о персонаже на одном экране. */
     public static final KeyMapping PROFILE = key("profile", GLFW.GLFW_KEY_O);
+    /** Торговая площадка: продажа вещей между кланами и внутри клана. */
+    public static final KeyMapping MARKET = key("market", GLFW.GLFW_KEY_M);
     /**
      * Держать вместе с ЛКМ (притянуть цель) или ПКМ (притянуться самому): захваты кагуне.
      * По умолчанию Ctrl. На Mac Minecraft сам превращает Ctrl + ЛКМ в ПКМ, поэтому там по умолчанию Option (Alt).

@@ -96,12 +96,89 @@ public final class Ranks {
         return Component.translatable(key).withStyle(color);
     }
 
+    /** Уровень престижа на текущей ладье (0-5). */
+    public static int prestige(PlayerData data) {
+        if (data == null) {
+            return 0;
+        }
+        return switch (ladder(data.getPlayerClass())) {
+            case CCG -> data.getPrestigeCcg();
+            case GHOUL -> data.getPrestigeGhoul();
+            default -> 0;
+        };
+    }
+
     public static double damageBonus(PlayerData data) {
-        return ladder(data.getPlayerClass()) == NONE ? 0.0 : Balance.RANK_DAMAGE_PER * index(data);
+        return ladder(data.getPlayerClass()) == NONE ? 0.0
+                : Balance.RANK_DAMAGE_PER * index(data) + Balance.PRESTIGE_DAMAGE * prestige(data);
     }
 
     public static double bloodBonus(PlayerData data) {
-        return ladder(data.getPlayerClass()) == NONE ? 0.0 : Balance.RANK_BLOOD_PER * index(data);
+        return ladder(data.getPlayerClass()) == NONE ? 0.0
+                : Balance.RANK_BLOOD_PER * index(data) + Balance.PRESTIGE_BLOOD * prestige(data);
+    }
+
+    /** Множитель входящего урона от престижа. */
+    public static double defenseFactor(PlayerData data) {
+        return 1.0 - Balance.PRESTIGE_DEFENSE * prestige(data);
+    }
+
+    /** Почему нельзя взять престиж (ключ сообщения) или null — можно. */
+    public static String prestigeBlock(PlayerData data) {
+        if (data == null || ladder(data.getPlayerClass()) == NONE) {
+            return "prestige.no_ladder";
+        }
+        if (prestige(data) >= Balance.PRESTIGE_MAX) {
+            return "prestige.maxed";
+        }
+        if (index(data) < COUNT - 1) {
+            return "prestige.need_max";
+        }
+        return null;
+    }
+
+    /** Престиж: высший ранг сбрасывается на первый, навсегда +1 уровень престижа, награда и объявление. */
+    public static void prestigeUp(ServerPlayer player) {
+        PlayerData data = PlayerData.get(player);
+        String block = prestigeBlock(data);
+        if (block != null) {
+            player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg." + block).withStyle(ChatFormatting.RED));
+            return;
+        }
+        int ladder = ladder(data.getPlayerClass());
+        int level = prestige(data) + 1;
+        if (ladder == CCG) {
+            data.setRankCcg(0);
+            data.setPrestigeCcg(level);
+        } else {
+            data.setRankGhoul(0);
+            data.setPrestigeGhoul(level);
+        }
+        int blood = Balance.PRESTIGE_REWARD_BLOOD * level;
+        data.addBloodPoints(blood);
+        data.addSkillPoints(Balance.PRESTIGE_REWARD_POINTS);
+        com.tokyoghoulrpg.rep.Achievements.atLeast(player, "prestige", level);
+        NetworkHandler.syncTo(player);
+        Effects.sound(player, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 0.8F);
+        Effects.sound(player, SoundEvents.TOTEM_USE, 0.6F, 1.2F);
+        if (player.level() instanceof net.minecraft.server.level.ServerLevel level0) {
+            level0.sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING, player.getX(), player.getY() + 1.0,
+                    player.getZ(), 60, 0.6, 1.0, 0.6, 0.3);
+        }
+        player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.prestige.done", stars(level), blood,
+                Balance.PRESTIGE_REWARD_POINTS, Math.round(Balance.PRESTIGE_DAMAGE * level * 100),
+                Math.round(Balance.PRESTIGE_DEFENSE * level * 100), Math.round(Balance.PRESTIGE_BLOOD * level * 100))
+                .withStyle(ChatFormatting.GOLD));
+        Component news = Component.translatable("message.tokyoghoulrpg.prestige.broadcast", player.getGameProfile().getName(),
+                stars(level)).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        for (ServerPlayer p : player.getServer().getPlayerList().getPlayers()) {
+            p.sendSystemMessage(news);
+        }
+    }
+
+    /** Значок престижа: «★3». */
+    public static String stars(int level) {
+        return level <= 0 ? "" : "\u2605" + level;
     }
 
     // ------------------------------------------------------------------ очки
@@ -164,7 +241,7 @@ public final class Ranks {
     /** Код для показа: ладья * 10 + ранг (0 — нет ранга). */
     public static int code(PlayerData data) {
         int ladder = data == null || !data.hasChosenClass() ? NONE : ladder(data.getPlayerClass());
-        return ladder == NONE ? 0 : ladder * 10 + index(data);
+        return ladder == NONE ? 0 : prestige(data) * 100 + ladder * 10 + index(data);
     }
 
     /** Сервер: разослать ранг игрока, если он изменился (вызывается из syncTo). */
@@ -203,7 +280,13 @@ public final class Ranks {
         if (code <= 0) {
             return;
         }
-        Component prefix = Component.literal("[").append(title(code / 10, code % 10)).append("] ");
+        int rank = code % 100;
+        int prestige = code / 100;
+        MutableComponent prefix = Component.literal("[");
+        if (prestige > 0) {
+            prefix.append(Component.literal(stars(prestige) + " ").withStyle(ChatFormatting.GOLD));
+        }
+        prefix.append(title(rank / 10, rank % 10)).append("] ");
         event.setDisplayname(Component.empty().append(prefix).append(event.getDisplayname()));
     }
 }

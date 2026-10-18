@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "tokyoghoulrpg:block/clan_banner_top",
+    "side": "tokyoghoulrpg:block/clan_banner_side",
+    "bottom": "tokyoghoulrpg:block/clan_banner_top"
+  }
+}
