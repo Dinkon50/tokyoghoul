@@ -150,6 +150,25 @@ public final class CombatEvents {
     public static void onAttackEntity(AttackEntityEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && LockManager.isLocked(player)) {
             event.setCanceled(true);
+            return;
+        }
+        // VR: игрок взмахнул контроллером и задел существо. Vivecraft бьёт этим обычным ударом,
+        // а с кагуне или квинке вместо него должен быть их удар — как от нажатия на курок.
+        if (event.getEntity() instanceof ServerPlayer player && com.tokyoghoulrpg.combat.Aim.inVr(player)) {
+            PlayerData data = PlayerData.get(player);
+            if (data == null) {
+                return;
+            }
+            com.tokyoghoulrpg.combat.AbilityType type = null;
+            if (QuinqueAbilities.active(player, data)) {
+                type = com.tokyoghoulrpg.combat.AbilityType.QUINQUE_ATTACK;
+            } else if (data.getPlayerClass().hasKagune() && data.isKaguneActive()) {
+                type = com.tokyoghoulrpg.combat.AbilityType.BASIC_ATTACK;
+            }
+            if (type != null) {
+                event.setCanceled(true);
+                AbilityManager.useAbility(player, type);
+            }
         }
     }
 

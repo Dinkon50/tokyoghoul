@@ -43,6 +43,14 @@ public final class KeyBindings {
 
     /** Зажата ли клавиша захвата. Проверяем саму клавишу: она может совпадать с бегом (тоже Ctrl). */
     public static boolean grabHeld() {
+        // В VR кнопку контроллера нажимает Vivecraft: клавиатура не нажата, но привязка зажата
+        if (GRAB.isDown() && com.tokyoghoulrpg.client.vr.VrClient.active()) {
+            return true;
+        }
+        // На геймпаде захват — зажатый LB / L1
+        if (com.tokyoghoulrpg.client.gamepad.Gamepad.grabHeld()) {
+            return true;
+        }
         if (GRAB.isUnbound()) {
             return false;
         }

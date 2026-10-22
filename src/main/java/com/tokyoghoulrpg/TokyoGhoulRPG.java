@@ -27,6 +27,9 @@ public class TokyoGhoulRPG {
         ModCreativeTab.TABS.register(modBus);
         modBus.addListener(ModEntities::registerAttributes);
         modBus.addListener(ModEntities::registerSpawnPlacements);
+        // Настройки клиента (геймпад). На сервере файл не создаётся.
+        net.minecraftforge.fml.ModLoadingContext.get().registerConfig(
+                net.minecraftforge.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {

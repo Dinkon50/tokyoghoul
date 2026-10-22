@@ -83,6 +83,17 @@ public class KaguneAnimatable implements GeoAnimatable {
         return active || gameTime() < visibleUntil;
     }
 
+    /**
+     * Кагуне сейчас что-то делает: удар, барраж, захват, рывок, блок, копание, появление или убирание.
+     * Просто стоит, идёт или горит яростью — false. От первого лица кагуне видно только в действии.
+     */
+    public boolean isInAction() {
+        if (oneShot != null && gameTime() < oneShotEnd) {
+            return true;
+        }
+        return active && (blocking || breaking);
+    }
+
     /** Новое состояние с сервера. Первое сообщение не проигрывает появление: кагуне просто уже включено. */
     public void updateState(boolean newActive, KaguneVariant newVariant, boolean newRage, boolean newBlocking,
                             long now) {

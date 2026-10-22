@@ -228,7 +228,7 @@ public final class AbilityManager {
             cooldown(player, AbilityType.BITE, state.biteReady - now);
             return;
         }
-        Targeting.Hit hit = Targeting.raycast(player, Balance.BITE_RANGE, false, AbilityManager::isBitable);
+        Targeting.Hit hit = Targeting.raycastFromHead(player, Balance.BITE_RANGE, false, AbilityManager::isBitable);
         if (hit == null) {
             noTarget(player);
             return;

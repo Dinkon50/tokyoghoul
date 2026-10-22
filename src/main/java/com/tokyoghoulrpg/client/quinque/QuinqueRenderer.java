@@ -44,6 +44,11 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
     private static final float THIRD_PERSON_SCALE = 1.0F;
     private static final float FIRST_PERSON_SCALE = 0.5F;
     private static final float OTHER_SCALE = 0.35F;
+    /**
+     * В VR квинке держат в руке «вживую», поэтому она в настоящем размере, как от третьего лица.
+     * Модель предмета от первого лица уменьшает её до 0,68, от третьего — до 0,85: возвращаем ту же долю.
+     */
+    private static final float VR_SCALE = THIRD_PERSON_SCALE * 0.85F / 0.68F;
 
     private static QuinqueRenderer instance;
     private static final Map<String, Optional<QuinqueMesh>> MESHES = new HashMap<>();
@@ -89,7 +94,7 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     /** Держит ли holder квинке в «Освобождении»: свой игрок — по своим данным, чужие — по рассылке сервера. */
-    private static boolean released() {
+    private static boolean released(LivingEntity holder) {
         if (!(holder instanceof Player player)) {
             return false;
         }
@@ -102,6 +107,14 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
         return state != null && state.isRage();
     }
 
+    private static float vrScaleSetting() {
+        try {
+            return com.tokyoghoulrpg.ClientConfig.VR_QUINQUE_SCALE.get().floatValue();
+        } catch (IllegalStateException e) {
+            return 1.0F;
+        }
+    }
+
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack poseStack,
                              MultiBufferSource buffer, int light, int overlay) {
@@ -109,7 +122,11 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
             return;
         }
         QuinqueType type = item.type();
-        String name = type.openMesh() != null && released() ? type.openMesh() : type.mesh();
+        boolean firstPerson = context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
+        // В VR руки рисует Vivecraft без события RenderHandEvent: от первого лица квинке держит свой игрок
+        LivingEntity owner = holder != null ? holder : firstPerson ? Minecraft.getInstance().player : null;
+        String name = type.openMesh() != null && released(owner) ? type.openMesh() : type.mesh();
         QuinqueMesh mesh = mesh(name);
         if (mesh == null) {
             return;
@@ -119,6 +136,10 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
             case FIRST_PERSON_RIGHT_HAND, FIRST_PERSON_LEFT_HAND -> FIRST_PERSON_SCALE;
             default -> OTHER_SCALE;
         };
+        if (firstPerson && com.tokyoghoulrpg.client.vr.VrClient.active()) {
+            // В шлеме квинке в руке контроллера: настоящий размер, она не закрывает экран, как на мониторе
+            scale = VR_SCALE * vrScaleSetting();
+        }
         poseStack.pushPose();
         // рукоять в нижнем левом углу плоскости предмета, модель (+Y) по диагонали вправо-вверх, как клинок меча
         poseStack.translate(GRIP, GRIP, 0.5F);

@@ -8,7 +8,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 
-/** Рисует кагуне за спиной игрока. Подключается к обоим видам скина (обычный и тонкие руки). */
+/**
+ * Рисует кагуне за спиной игрока. Подключается к обоим видам скина (обычный и тонкие руки).
+ * От первого лица и в VR модель своего игрока не рисуется, тогда кагуне рисует KaguneFirstPerson
+ * тем же способом (renderOnBody), поэтому оно растёт из того же места на спине.
+ */
 public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     // Тонкая подстройка положения (в блоках: 1 пиксель = 0.0625) и размера, если понадобится.
     private static final float OFFSET_X = 0.0F;
@@ -34,6 +38,8 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
         if (kagune == null || !kagune.shouldRender()) {
             return;
         }
+        // Свой игрок нарисован целиком (третье лицо, зеркало в VR): второй раз от первого лица не рисуем
+        KaguneFirstPerson.markDrawnByModel(player);
 
         // Ходьба и копание: для своего игрока копание видно по ломанию блока, для других — по взмаху руки
         Minecraft mc = Minecraft.getInstance();
@@ -44,6 +50,17 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
         poseStack.pushPose();
         // Привязываем кагуне к телу игрока: так оно наклоняется вместе с телом, когда игрок приседает.
         getParentModel().body.translateAndRotate(poseStack);
+        renderOnBody(poseStack, buffer, packedLight, kagune, renderer, veinsRenderer);
+        poseStack.popPose();
+    }
+
+    /**
+     * Рисует кагуне, когда poseStack уже в пространстве тела модели игрока (как после body.translateAndRotate).
+     * Общий код для обычного вида и для первого лица.
+     */
+    static void renderOnBody(PoseStack poseStack, MultiBufferSource buffer, int packedLight, KaguneAnimatable kagune,
+                             KaguneRenderer renderer, KaguneVeinsRenderer veinsRenderer) {
+        poseStack.pushPose();
         // Пространство модели игрока перевёрнуто, а начало у шеи. Возвращаем к пространству Blockbench:
         // начало у ног, ось Y вверх. Модель кагуне нарисована именно так: основание на спине (z = 2 пикселя).
         poseStack.translate(OFFSET_X, 1.501F + OFFSET_Y, OFFSET_Z);

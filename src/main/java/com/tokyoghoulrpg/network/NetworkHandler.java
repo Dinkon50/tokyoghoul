@@ -32,7 +32,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "24";
+    private static final String PROTOCOL = "25";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -127,6 +127,9 @@ public final class NetworkHandler {
         CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.PrestigeC2S.class,
                 com.tokyoghoulrpg.network.packet.PrestigeC2S::encode, com.tokyoghoulrpg.network.packet.PrestigeC2S::decode,
                 com.tokyoghoulrpg.network.packet.PrestigeC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.VrAimC2S.class,
+                com.tokyoghoulrpg.network.packet.VrAimC2S::encode, com.tokyoghoulrpg.network.packet.VrAimC2S::decode,
+                com.tokyoghoulrpg.network.packet.VrAimC2S::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */

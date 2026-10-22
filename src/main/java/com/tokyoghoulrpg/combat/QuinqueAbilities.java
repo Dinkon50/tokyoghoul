@@ -161,8 +161,13 @@ public final class QuinqueAbilities {
             cooldown(player, AbilityType.QUINQUE_LUNGE, state.lungeReady - now);
             return;
         }
-        Vec3 look = player.getLookAngle();
+        // выпад туда, куда направлена квинке (в VR — рука, иначе взгляд)
+        Vec3 look = Aim.dir(player);
         Vec3 direction = new Vec3(look.x, 0.0, look.z);
+        if (direction.lengthSqr() < 1.0E-4) {
+            look = player.getLookAngle();
+            direction = new Vec3(look.x, 0.0, look.z);
+        }
         if (direction.lengthSqr() < 1.0E-4) {
             return;
         }
@@ -232,9 +237,9 @@ public final class QuinqueAbilities {
                 Effects.particles(player, ParticleTypes.ELECTRIC_SPARK, 2, 0.3, 0.05);
                 return false;
             }
-            Vec3 from = player.getEyePosition();
+            Vec3 from = Aim.origin(player);
             Targeting.Hit hit = Targeting.raycast(player, Balance.NARUKAMI_BOLT_RANGE, true, e -> true);
-            Vec3 to = hit != null ? hit.point() : from.add(player.getLookAngle().scale(Balance.NARUKAMI_BOLT_RANGE));
+            Vec3 to = hit != null ? hit.point() : from.add(Aim.dir(player).scale(Balance.NARUKAMI_BOLT_RANGE));
             if (hit != null && hit.entity() != null) {
                 to = hit.entity().getBoundingBox().getCenter();
                 if (CombatContext.hit(player, hit.entity(), damage, AttackType.STRONG)) {

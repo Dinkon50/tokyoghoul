@@ -14,13 +14,13 @@ import net.minecraft.util.FormattedCharSequence;
  */
 public class GuideScreen extends Screen {
     public static final String[] CHAPTERS = {
-            "start", "classes", "keys", "ghoul", "kagune_types", "kakuja", "ccg", "human", "blood", "skills",
+            "start", "classes", "keys", "gamepad", "vr", "ghoul", "kagune_types", "kakuja", "ccg", "human", "blood", "skills",
             "combos", "prestige",
             "quests", "masks", "places", "events", "market", "clans", "territory", "tips"};
     private static final int WIDTH = 380;
     private static final int HEIGHT = 290;
     private static final int LIST_W = 112;
-    private static final int ROW = 13;
+    private static final int ROW = 12;
 
     private static int chapter = 0;
     private static int page = 0;

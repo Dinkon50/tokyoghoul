@@ -30,12 +30,21 @@ public final class Targeting {
     }
 
     /**
-     * Луч из глаз игрока. Блок на пути закрывает цель за ним.
+     * Луч из глаз игрока по взгляду (в VR — из главной руки по её направлению, см. Aim).
+     * Блок на пути закрывает цель за ним.
      * Если allowBlock равно true и первым попался блок, возвращается точка на блоке.
      */
     public static Hit raycast(ServerPlayer player, double range, boolean allowBlock, Predicate<LivingEntity> filter) {
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
+        return raycast(player, Aim.origin(player), Aim.dir(player), range, allowBlock, filter);
+    }
+
+    /** Луч строго из глаз по взгляду, даже в VR (например, укус: кусают головой, а не рукой). */
+    public static Hit raycastFromHead(ServerPlayer player, double range, boolean allowBlock, Predicate<LivingEntity> filter) {
+        return raycast(player, player.getEyePosition(), player.getLookAngle(), range, allowBlock, filter);
+    }
+
+    private static Hit raycast(ServerPlayer player, Vec3 eye, Vec3 look, double range, boolean allowBlock,
+            Predicate<LivingEntity> filter) {
         Vec3 end = eye.add(look.scale(range));
 
         BlockHitResult blockHit = player.level().clip(
@@ -44,9 +53,20 @@ public final class Targeting {
                 ? Double.MAX_VALUE
                 : eye.distanceToSqr(blockHit.getLocation());
 
-        AABB box = player.getBoundingBox().expandTowards(look.scale(range)).inflate(1.0);
+        // Луч может начинаться у руки, а не в теле, поэтому область поиска — вокруг всего луча
+        AABB box = new AABB(eye, end).inflate(1.0);
         EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(player.level(), player, eye, end, box,
                 e -> valid(player, e) && filter.test((LivingEntity) e));
+        if (entityHit == null) {
+            // Луч начинается внутри существа (в VR рука вплотную к цели): такой луч его не находит, а цель — оно
+            for (Entity e : player.level().getEntities(player, new AABB(eye, eye).inflate(0.5),
+                    c -> valid(player, c) && filter.test((LivingEntity) c))) {
+                if (e.getBoundingBox().inflate(0.3).contains(eye)) {
+                    entityHit = new EntityHitResult(e, eye);
+                    break;
+                }
+            }
+        }
 
         if (entityHit != null && eye.distanceToSqr(entityHit.getLocation()) <= blockDistSq) {
             return new Hit((LivingEntity) entityHit.getEntity(), entityHit.getLocation());
@@ -59,10 +79,10 @@ public final class Targeting {
 
     /**
      * Существа в прямоугольнике перед игроком: reach блоков вперёд, halfWidth блоков в каждую сторону.
-     * Прямоугольник поворачивается вместе со взглядом игрока по горизонтали.
+     * Прямоугольник поворачивается вместе со взглядом игрока по горизонтали (в VR — куда направлена главная рука).
      */
     public static List<LivingEntity> inFront(ServerPlayer player, double reach, double halfWidth) {
-        double yaw = Math.toRadians(player.getYRot());
+        double yaw = Math.toRadians(Aim.yaw(player));
         double forwardX = -Math.sin(yaw);
         double forwardZ = Math.cos(yaw);
         double sideX = Math.cos(yaw);
