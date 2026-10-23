@@ -60,6 +60,8 @@ public class KaguneAnimatable implements GeoAnimatable {
     private long rageStart = 0L;
     /** Пока идёт убирание, модель ещё видна. */
     private long visibleUntil = 0L;
+    /** До этого тика модель скрыта: её щупальца сейчас рисует ульта (KaguneUltimateFx). */
+    private long hiddenUntil = 0L;
 
     public KaguneVariant getVariant() {
         return variant;
@@ -80,7 +82,15 @@ public class KaguneAnimatable implements GeoAnimatable {
 
     /** Нужно ли рисовать кагуне прямо сейчас. */
     public boolean shouldRender() {
+        if (gameTime() < hiddenUntil) {
+            return false;
+        }
         return active || gameTime() < visibleUntil;
+    }
+
+    /** Скрыть модель до этого тика (щупальца ульты рисуются отдельно). */
+    public void hideUntil(long tick) {
+        hiddenUntil = tick;
     }
 
     /**

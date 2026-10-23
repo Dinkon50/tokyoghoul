@@ -26,6 +26,14 @@ public final class KaguneClientState {
                 .playOneShot(animation, gameTime());
     }
 
+    /** Скрыть модель кагуне игрока до этого тика (во время ульты). */
+    public static void hide(int entityId, long untilTick) {
+        KaguneAnimatable kagune = STATES.get(entityId);
+        if (kagune != null) {
+            kagune.hideUntil(untilTick);
+        }
+    }
+
     public static void clear() {
         STATES.clear();
     }

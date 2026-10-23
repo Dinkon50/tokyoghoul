@@ -223,7 +223,7 @@ public class ProfileScreen extends Screen {
         int rx = left + 188;
         int ry = top + 24;
         ry = line(gfx, rx, ry, Component.translatable("screen.tokyoghoulrpg.profile.cooldowns"), 0xE0A050);
-        for (String[] entry : cooldownEntries(cls)) {
+        for (String[] entry : cooldownEntries(cls, data)) {
             long ready = data.getCooldownsCache().getOrDefault(entry[0], 0L);
             long left2 = ready - now;
             Component name = Component.translatable(entry[1]);
@@ -257,7 +257,7 @@ public class ProfileScreen extends Screen {
     }
 
     /** Какие откаты показывать: ключ в данных и название способности. */
-    private static List<String[]> cooldownEntries(PlayerClass cls) {
+    private static List<String[]> cooldownEntries(PlayerClass cls, com.tokyoghoulrpg.data.PlayerData data) {
         List<String[]> list = new ArrayList<>();
         if (cls.hasKagune()) {
             list.add(new String[] {"bite", "ability.tokyoghoulrpg.bite"});
@@ -282,6 +282,10 @@ public class ProfileScreen extends Screen {
         list.add(new String[] {"charisma", "ability.tokyoghoulrpg.charisma"});
         list.add(new String[] {"fortune", "ability.tokyoghoulrpg.fortune"});
         list.add(new String[] {"bond", "screen.tokyoghoulrpg.profile.bond"});
+        // «Бессмертие» — только если открыто в дереве навыков
+        if (com.tokyoghoulrpg.skill.SkillEffects.level(data, com.tokyoghoulrpg.skill.SkillTree.Branch.UNDYING) > 0) {
+            list.add(new String[] {"undying", "ability.tokyoghoulrpg.undying"});
+        }
         return list;
     }
 

@@ -4,5 +4,7 @@ package com.tokyoghoulrpg.combat;
 public enum AttackType {
     BASIC,
     STRONG,
-    BARRAGE
+    BARRAGE,
+    /** Ульта гуля: сквозь блок, броню и все множители урона — ровно столько, сколько задано. */
+    ULTIMATE
 }

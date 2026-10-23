@@ -239,7 +239,7 @@ public final class Combos {
     }
 
     /** Кого комбо не трогает: свой клан и союзники, свои питомцы, стойки для брони. */
-    private static boolean spared(ServerPlayer player, LivingEntity target) {
+    static boolean spared(ServerPlayer player, LivingEntity target) {
         if (target instanceof ArmorStand) {
             return true;
         }

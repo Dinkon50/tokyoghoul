@@ -38,7 +38,7 @@ import org.joml.Matrix4f;
  */
 @Mod.EventBusSubscriber(modid = TokyoGhoulRPG.MOD_ID, value = Dist.CLIENT)
 public final class KaguneReach {
-    private static final ResourceLocation TEXTURE =
+    static final ResourceLocation TEXTURE =
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "textures/kagune/kagune_stretch.png");
     private static final float RETRACT_TICKS = 6.0F;
     private static final float BASE_RADIUS = 0.17F;
@@ -149,8 +149,14 @@ public final class KaguneReach {
     }
 
     /** Щупальце — цепочка четырёхгранных отрезков вдоль кривой, тоньше к концу, с лёгкой волной. */
-    private static void drawTentacle(ClientLevel level, PoseStack poseStack, VertexConsumer consumer, Vec3 cam,
+    static void drawTentacle(ClientLevel level, PoseStack poseStack, VertexConsumer consumer, Vec3 cam,
                                      Vec3 from, Vec3 bend, Vec3 to, float extend, float time) {
+        drawTentacle(level, poseStack, consumer, cam, from, bend, to, extend, time, BASE_RADIUS, TIP_RADIUS);
+    }
+
+    /** То же с толщиной у основания и у кончика (в блоках). */
+    static void drawTentacle(ClientLevel level, PoseStack poseStack, VertexConsumer consumer, Vec3 cam,
+                             Vec3 from, Vec3 bend, Vec3 to, float extend, float time, float baseRadius, float tipRadius) {
         double length = from.distanceTo(bend) + bend.distanceTo(to);
         if (length < 0.05) {
             return;
@@ -177,7 +183,7 @@ public final class KaguneReach {
             double waveSide = Mth.sin(k * 9.0F - time * 0.45F) * 0.12 * envelope;
             double waveUp = Mth.cos(k * 7.0F - time * 0.35F) * 0.08 * envelope;
             centers[i] = p.add(side.scale(waveSide)).add(up.scale(waveUp));
-            radii[i] = Mth.lerp(k, BASE_RADIUS, TIP_RADIUS);
+            radii[i] = Mth.lerp(k, baseRadius, tipRadius);
         }
 
         // координаты считаем относительно камеры: так нет дрожания вдали от центра мира
@@ -234,8 +240,8 @@ public final class KaguneReach {
             Vec3 o0 = side.scale(Math.cos(a0)).add(up.scale(Math.sin(a0)));
             Vec3 o1 = side.scale(Math.cos(a1)).add(up.scale(Math.sin(a1)));
             Vec3 n = o0.add(o1).add(dir).normalize();
-            vertex(consumer, matrix, normal, cam, end.add(o0.scale(TIP_RADIUS)), 0.0F, 0.0F, light, n);
-            vertex(consumer, matrix, normal, cam, end.add(o1.scale(TIP_RADIUS)), 0.25F, 0.0F, light, n);
+            vertex(consumer, matrix, normal, cam, end.add(o0.scale(tipRadius)), 0.0F, 0.0F, light, n);
+            vertex(consumer, matrix, normal, cam, end.add(o1.scale(tipRadius)), 0.25F, 0.0F, light, n);
             vertex(consumer, matrix, normal, cam, point, 0.25F, 0.25F, light, n);
             vertex(consumer, matrix, normal, cam, point, 0.0F, 0.25F, light, n);
         }

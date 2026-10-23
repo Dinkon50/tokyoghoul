@@ -144,6 +144,7 @@ public final class AbilityManager {
             case STRONG_ATTACK -> attack(player, data, state, now, true);
             case GRAPPLE_SELF -> grapple(player, data, state, now);
             case PULL_TARGET -> pull(player, data, state, now);
+            case ULTIMATE -> GhoulUltimate.use(player, data, state, now);
             default -> {
             }
         }

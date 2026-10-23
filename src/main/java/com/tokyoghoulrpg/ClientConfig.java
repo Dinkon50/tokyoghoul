@@ -17,6 +17,7 @@ public final class ClientConfig {
 
     public static final ForgeConfigSpec.BooleanValue KAGUNE_FIRST_PERSON_ALWAYS;
     public static final ForgeConfigSpec.DoubleValue VR_QUINQUE_SCALE;
+    public static final ForgeConfigSpec.BooleanValue VR_GESTURES;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -39,6 +40,9 @@ public final class ClientConfig {
                 .define("kaguneFirstPersonAlways", false);
         VR_QUINQUE_SCALE = b.comment("Размер квинке в руке в VR (1.0 — настоящий размер, как у модели игрока)")
                 .defineInRange("vrQuinqueScale", 1.0, 0.3, 3.0);
+        VR_GESTURES = b.comment("VR: жесты — удар взмахом, выпад уколом квинке, блок руками перед лицом, "
+                        + "барраж зажатым курком, рывок двойным толчком стика. false — выключить (зоны на теле и меню остаются)")
+                .define("vrGestures", true);
         b.pop();
         SPEC = b.build();
     }

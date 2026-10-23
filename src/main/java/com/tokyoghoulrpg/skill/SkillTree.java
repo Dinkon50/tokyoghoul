@@ -110,6 +110,8 @@ public final class SkillTree {
         RETRIBUTION("retribution", Tab.SPECIAL, 1, Balance.RETRIBUTION_COST, 1, 0x8C1AE6),
         CHARISMA("charisma", Tab.SPECIAL, 1, Balance.CHARISMA_COST, 1, 0xFFD133),
         FORTUNE("fortune", Tab.SPECIAL, 1, Balance.FORTUNE_COST, 1, 0x3CC878),
+        // «Бессмертие» у всех классов: смертельный удар не убивает, как тотем бессмертия (раз в 15 минут)
+        UNDYING("undying", Tab.SPECIAL, 1, Balance.UNDYING_COST, 1, 0xF2C94C),
         // «Выдержка» у всех классов: оглушение короче (кроме оглушения за сломанный блок)
         STUN_RESIST("stun_resist", Tab.SPECIAL, 3, Balance.COSTS_3, 1, 0xD8B070),
         // «Добытчик»: больше очков крови за убийства; «Первая помощь»: аптечки сильнее и чаще
@@ -272,6 +274,7 @@ public final class SkillTree {
                 case CHARISMA -> Component.translatable(key, Balance.AURA_TICKS / 20, percent(Balance.CHARISMA_HEAL),
                         Balance.CHARISMA_BUFF_TICKS / 20, Balance.AURA_COOLDOWN / 20);
                 case FORTUNE -> Component.translatable(key, Balance.FORTUNE_COOLDOWN / 20);
+                case UNDYING -> Component.translatable(key, Balance.UNDYING_COOLDOWN / 1200);
             };
         }
     }

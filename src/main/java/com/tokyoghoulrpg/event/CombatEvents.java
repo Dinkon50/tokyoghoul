@@ -152,8 +152,9 @@ public final class CombatEvents {
             event.setCanceled(true);
             return;
         }
-        // VR: игрок взмахнул контроллером и задел существо. Vivecraft бьёт этим обычным ударом,
-        // а с кагуне или квинке вместо него должен быть их удар — как от нажатия на курок.
+        // VR: игрок взмахнул контроллером и задел существо — Vivecraft бьёт этим обычным ударом.
+        // С кагуне или квинке вместо него их удар. Обычно взмах уже заметил клиент (VrControls) и прислал удар сам;
+        // тогда этот второй запрос сервер молча пропустит (удар ещё идёт), а если клиент взмах не заметил — ударит.
         if (event.getEntity() instanceof ServerPlayer player && com.tokyoghoulrpg.combat.Aim.inVr(player)) {
             PlayerData data = PlayerData.get(player);
             if (data == null) {
@@ -191,6 +192,10 @@ public final class CombatEvents {
         if (source.getEntity() == null) {
             return;
         }
+        // Ульту гуля блок не держит: кагуне схватило и бьёт в живот
+        if (CombatContext.type() == AttackType.ULTIMATE) {
+            return;
+        }
         if (piercing) {
             // Это часть урона, которая проходит сквозь блок (ветка «Пробивание»)
             return;
@@ -200,14 +205,22 @@ public final class CombatEvents {
         if (CombatContext.type() == AttackType.STRONG && source.getEntity() instanceof LivingEntity striker
                 && QuinqueAbilities.tryParry(blocker, data, striker)) {
             event.setCanceled(true);
+            com.tokyoghoulrpg.combat.VrFeedback.parry(blocker);
+            if (striker instanceof ServerPlayer strikerPlayer) {
+                com.tokyoghoulrpg.combat.VrFeedback.blockBroken(strikerPlayer);
+            }
             return;
         }
         boolean breaks = CombatContext.type() == AttackType.STRONG || isRaging(source.getEntity());
         if (breaks) {
             AbilityManager.breakBlock(blocker, data);
+            com.tokyoghoulrpg.combat.VrFeedback.blockBroken(blocker);
             return;
         }
         event.setCanceled(true);
+        if (blocker.tickCount % 2 == 0) {
+            com.tokyoghoulrpg.combat.VrFeedback.blocked(blocker);
+        }
         if (blocker.tickCount % 3 == 0) {
             Effects.sound(blocker, SoundEvents.SHIELD_BLOCK, 0.8F, 0.9F + blocker.getRandom().nextFloat() * 0.2F);
         }
@@ -295,6 +308,10 @@ public final class CombatEvents {
         }
         float amount = event.getAmount();
         Entity attacker = event.getSource().getEntity();
+        // Ульта гуля: ровно заданный урон (половина здоровья полугуля), без усилений и защит
+        if (CombatContext.type() == AttackType.ULTIMATE) {
+            return;
+        }
 
         if (attacker instanceof ServerPlayer attackingPlayer) {
             PlayerData data = PlayerData.get(attackingPlayer);
@@ -443,6 +460,26 @@ public final class CombatEvents {
                 data.combat().secondWindReady = now + Balance.SECOND_WIND_COOLDOWN;
                 dying.setHealth(Balance.SECOND_WIND_HEALTH);
                 dying.displayClientMessage(Component.translatable("message.tokyoghoulrpg.second_wind"), true);
+                return;
+            }
+            // «Бессмертие» (вкладка «Особые», у всех классов): как тотем бессмертия, раз в 15 минут.
+            // Тотем в руке игра проверяет раньше этого события, поэтому он тратится первым.
+            if (data != null && SkillEffects.level(data, SkillTree.Branch.UNDYING) > 0 && now >= data.getUndyingReady()) {
+                event.setCanceled(true);
+                data.setUndyingReady(now + Balance.UNDYING_COOLDOWN);
+                dying.setHealth(1.0F);
+                dying.removeAllEffects();
+                dying.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.REGENERATION, 900, 1));
+                dying.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.ABSORPTION, 100, 1));
+                dying.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 800, 0));
+                // анимация и звук тотема у всех, кто рядом (у самого игрока — тотем на экране)
+                dying.level().broadcastEntityEvent(dying, (byte) 35);
+                dying.displayClientMessage(Component.translatable("message.tokyoghoulrpg.undying",
+                        Balance.UNDYING_COOLDOWN / 1200), false);
+                NetworkHandler.syncTo(dying);
                 return;
             }
         }

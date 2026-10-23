@@ -30,6 +30,9 @@ public class TokyoGhoulRPG {
         // Настройки клиента (геймпад). На сервере файл не создаётся.
         net.minecraftforge.fml.ModLoadingContext.get().registerConfig(
                 net.minecraftforge.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        // VR: зоны на теле нужно передать Vivecraft до первой загрузки ресурсов (только на клиенте)
+        net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                () -> com.tokyoghoulrpg.client.vr.VrClient::registerEarly);
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {

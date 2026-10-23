@@ -27,6 +27,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     // Сохраняется в мире
     private PlayerClass playerClass = PlayerClass.NONE;
     private KaguneVariant kaguneVariant = KaguneVariant.NONE;
+    /** Носить скин из мода вместо своего: гуль и полугуль — скин гуля, агент CCG — скин CCG (выбирается вместе с классом). */
+    private boolean modSkin = false;
     /** Тип кагуне (ринкаку, укаку, коукаку, бикаку): пассивный бонус. NONE — ещё не выбран. */
     private KaguneType kaguneType = KaguneType.NONE;
     /** Подсказки для новичков: какая сейчас и закончены ли (у персонажей из старых сохранений — закончены). */
@@ -78,6 +80,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     /** Какудзя: накопленные очки (100 — форма открыта) и до какого тика форма действует. */
     private int kakujaPoints = 0;
     private long kakujaEndTick = 0L;
+    /** Когда снова готовы ульта гуля и «Бессмертие» (тик мира). Сохраняются: откаты долгие, перезаход не сбрасывает. */
+    private long ultimateReady = 0L;
+    private long undyingReady = 0L;
     /** Очки ранга: отдельно звание CCG и рейтинг гуля (при смене класса своё не теряется). */
     private int rankCcg = 0;
     private int rankGhoul = 0;
@@ -145,6 +150,30 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public void setPlayerClass(PlayerClass playerClass) {
         this.playerClass = playerClass;
+    }
+
+    public boolean isModSkin() {
+        return modSkin;
+    }
+
+    public void setModSkin(boolean modSkin) {
+        this.modSkin = modSkin;
+    }
+
+    /** У класса есть свой скин в моде: гуль, полугуль, агент CCG. */
+    public static boolean hasModSkin(PlayerClass cls) {
+        return cls.hasKagune() || cls == PlayerClass.CCG_AGENT;
+    }
+
+    /** Какой скин мода показывать сейчас: 0 — свой скин игрока, 1 — скин гуля, 2 — скин CCG. */
+    public int modSkinId() {
+        if (!modSkin) {
+            return 0;
+        }
+        if (playerClass.hasKagune()) {
+            return 1;
+        }
+        return playerClass == PlayerClass.CCG_AGENT ? 2 : 0;
     }
 
     public KaguneVariant getKaguneVariant() {
@@ -661,6 +690,22 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         this.blocking = blocking;
     }
 
+    public long getUltimateReady() {
+        return ultimateReady;
+    }
+
+    public void setUltimateReady(long tick) {
+        this.ultimateReady = tick;
+    }
+
+    public long getUndyingReady() {
+        return undyingReady;
+    }
+
+    public void setUndyingReady(long tick) {
+        this.undyingReady = tick;
+    }
+
     public long getLockEndTick() {
         return lockEndTick;
     }
@@ -737,6 +782,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     public void reset() {
         playerClass = PlayerClass.NONE;
         kaguneVariant = KaguneVariant.NONE;
+        modSkin = false;
         kaguneType = KaguneType.NONE;
         tutorialStep = 0;
         tutorialDone = false;
@@ -809,6 +855,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         CompoundTag tag = new CompoundTag();
         tag.putString("class", playerClass.id());
         tag.putString("kagune_variant", kaguneVariant.id());
+        tag.putBoolean("mod_skin", modSkin);
         tag.putString("kagune_type", kaguneType.id());
         tag.putInt("tutorial_step", tutorialStep);
         tag.putBoolean("tutorial_done", tutorialDone);
@@ -849,6 +896,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putLong("cafe_coffee_day", cafeCoffeeDay);
         tag.putLong("cafe_flesh_day", cafeFleshDay);
         tag.putInt("kakuja_points", kakujaPoints);
+        tag.putLong("ultimate_ready", ultimateReady);
+        tag.putLong("undying_ready", undyingReady);
         tag.putInt("rank_ccg", rankCcg);
         tag.putInt("rank_ghoul", rankGhoul);
         tag.putInt("prestige_ccg", prestigeCcg);
@@ -915,6 +964,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         cd.putLong("fortune", combat.fortuneReady);
         cd.putLong("kakuja", combat.kakujaReady);
         cd.putLong("bond", bondCooldownEnd);
+        cd.putLong("ultimate", ultimateReady);
+        cd.putLong("undying", undyingReady);
         tag.put("cooldowns", cd);
         return tag;
     }
@@ -923,6 +974,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     public void deserializeNBT(CompoundTag tag) {
         playerClass = PlayerClass.byId(tag.getString("class"));
         kaguneVariant = KaguneVariant.byId(tag.getString("kagune_variant"));
+        modSkin = tag.getBoolean("mod_skin");
         kaguneType = KaguneType.byId(tag.getString("kagune_type"));
         // персонаж из сохранения, где подсказок ещё не было: он уже не новичок
         tutorialStep = tag.getInt("tutorial_step");
@@ -968,6 +1020,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         cafeCoffeeDay = tag.contains("cafe_coffee_day") ? tag.getLong("cafe_coffee_day") : -1L;
         cafeFleshDay = tag.contains("cafe_flesh_day") ? tag.getLong("cafe_flesh_day") : -1L;
         setKakujaPoints(tag.getInt("kakuja_points"));
+        ultimateReady = tag.getLong("ultimate_ready");
+        undyingReady = tag.getLong("undying_ready");
         setRankCcg(tag.getInt("rank_ccg"));
         setRankGhoul(tag.getInt("rank_ghoul"));
         setPrestigeCcg(tag.getInt("prestige_ccg"));

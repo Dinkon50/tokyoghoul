@@ -46,6 +46,10 @@ public final class ClientForgeEvents {
         }
 
         ClientHooks.tickPendingScreens(mc);
+        long now = mc.player.level().getGameTime();
+        // Ульта (H J K L быстро) — только у гуля и полугуля
+        PlayerData selfData = PlayerData.get(mc.player);
+        boolean ghoul = selfData != null && selfData.getPlayerClass().hasKagune();
 
         while (KeyBindings.TOGGLE_KAGUNE.consumeClick()) {
             if (mc.screen == null) {
@@ -56,11 +60,21 @@ public final class ClientForgeEvents {
             sendAbility(mc, AbilityType.BITE);
         }
         while (KeyBindings.DASH.consumeClick()) {
+            if (ghoul && mc.screen == null) {
+                UltimateCombo.dash(now);
+            }
             sendAbility(mc, AbilityType.DASH);
         }
         while (KeyBindings.RAGE.consumeClick()) {
+            // J сразу после H может оказаться частью комбо ульты: тогда ярость подождёт
+            if (!(ghoul && mc.screen == null && UltimateCombo.rage(now))) {
+                sendAbility(mc, AbilityType.RAGE);
+            }
+        }
+        if (ghoul && UltimateCombo.releaseDeferredRage(now)) {
             sendAbility(mc, AbilityType.RAGE);
         }
+
         while (KeyBindings.RETRIBUTION.consumeClick()) {
             sendAbility(mc, AbilityType.RETRIBUTION);
         }
@@ -103,21 +117,29 @@ public final class ClientForgeEvents {
             }
         }
 
-        // Блок держится, пока нажата L: отправляем серверу только изменения
+        // Сначала все нажатия блока и баррага (они же — конец комбо ульты), потом их состояние
         while (KeyBindings.BLOCK.consumeClick()) {
-            // нажатия считаем по состоянию клавиши ниже
+            if (ghoul && mc.screen == null) {
+                UltimateCombo.block(now);
+            }
         }
-        boolean down = KeyBindings.BLOCK.isDown() && mc.screen == null;
+        while (KeyBindings.BARRAGE.consumeClick()) {
+            if (ghoul && mc.screen == null) {
+                UltimateCombo.barrage(now);
+            }
+        }
+
+        // Блок держится, пока нажата L: отправляем серверу только изменения
+        boolean down = (ghoul ? UltimateCombo.blockHeld(KeyBindings.BLOCK.isDown()) : KeyBindings.BLOCK.isDown())
+                && mc.screen == null;
         if (down != blockHeld) {
             blockHeld = down;
             NetworkHandler.CHANNEL.sendToServer(new BlockC2S(down));
         }
 
         // Барраж держится, пока зажата K: зажал - серия идёт, отпустил - закончилась
-        while (KeyBindings.BARRAGE.consumeClick()) {
-            // нажатия считаем по состоянию клавиши ниже
-        }
-        boolean barrageDown = KeyBindings.BARRAGE.isDown() && mc.screen == null;
+        boolean barrageDown = (ghoul ? UltimateCombo.barrageHeld(KeyBindings.BARRAGE.isDown(), now)
+                : KeyBindings.BARRAGE.isDown()) && mc.screen == null;
         if (barrageDown != barrageHeld) {
             barrageHeld = barrageDown;
             NetworkHandler.CHANNEL.sendToServer(new BarrageC2S(barrageDown));
@@ -150,7 +172,9 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientHooks.reset();
+        UltimateCombo.reset();
         KaguneClientState.clear();
+        com.tokyoghoulrpg.client.kagune.KaguneUltimateFx.clear();
         com.tokyoghoulrpg.client.kagune.KaguneReach.clear();
         com.tokyoghoulrpg.rank.Ranks.clearClient();
         blockHeld = false;

@@ -32,7 +32,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "25";
+    private static final String PROTOCOL = "29";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -130,6 +130,16 @@ public final class NetworkHandler {
         CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.VrAimC2S.class,
                 com.tokyoghoulrpg.network.packet.VrAimC2S::encode, com.tokyoghoulrpg.network.packet.VrAimC2S::decode,
                 com.tokyoghoulrpg.network.packet.VrAimC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.SkinChoiceC2S.class,
+                com.tokyoghoulrpg.network.packet.SkinChoiceC2S::encode, com.tokyoghoulrpg.network.packet.SkinChoiceC2S::decode,
+                com.tokyoghoulrpg.network.packet.SkinChoiceC2S::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.VrHapticS2C.class,
+                com.tokyoghoulrpg.network.packet.VrHapticS2C::encode, com.tokyoghoulrpg.network.packet.VrHapticS2C::decode,
+                com.tokyoghoulrpg.network.packet.VrHapticS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.KaguneUltimateS2C.class,
+                com.tokyoghoulrpg.network.packet.KaguneUltimateS2C::encode,
+                com.tokyoghoulrpg.network.packet.KaguneUltimateS2C::decode,
+                com.tokyoghoulrpg.network.packet.KaguneUltimateS2C::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */
@@ -184,12 +194,18 @@ public final class NetworkHandler {
     private static KaguneStateS2C kagunePacket(ServerPlayer player, PlayerData data) {
         boolean visible = data.getPlayerClass().hasKagune() && data.isKaguneActive();
         return new KaguneStateS2C(player.getId(), visible, data.getKaguneVariant(), data.isRageActive(),
-                visible && data.isBlocking());
+                visible && data.isBlocking(), data.modSkinId());
     }
 
     /** Анимация кагуне у любого существа с кагуне (например, у Кровавого полугуля): видят все, кто рядом. */
     public static void playAnimationFor(net.minecraft.world.entity.Entity entity, String animation) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new KaguneAnimS2C(entity.getId(), animation));
+    }
+
+    /** Ульта гуля: щупальца хватают цель (targetId) или втягиваются (-1). Видят все, кто видит гуля. */
+    public static void kaguneUltimate(ServerPlayer player, int targetId) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new com.tokyoghoulrpg.network.packet.KaguneUltimateS2C(player.getId(), targetId));
     }
 
     /** Щупальце захвата тянется к цели: видят все, кто видит игрока. targetId -1 — цель блок. */

@@ -24,7 +24,9 @@ public enum AbilityType {
     CHARISMA("charisma", false),
     FORTUNE("fortune", false),
     // Какудзя: гуль и полугуль, когда накопили очки
-    KAKUJA("kakuja", false);
+    KAKUJA("kakuja", false),
+    // Ульта гуля и полугуля: H J K L быстро подряд (нужно кагуне)
+    ULTIMATE("ultimate", true);
 
     private final String id;
     private final boolean needsKagune;

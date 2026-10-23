@@ -349,6 +349,34 @@ public final class Balance {
 
     // «Бросок судьбы»: один из шести исходов [СПЕКА]; шансы в сумме 100%
     public static final int[] FORTUNE_COST = {25};                  // 25 очков (на сложной 38)
+
+    // Ульта гуля и полугуля [ТВОЁ]: кагуне хватает цель в 2 блоках, поднимает и бьёт в живот
+    /** Здоровье полугуля без прокачки: 20 + 4 (всем классам) + 20 (гулям) + 4 (полугулю) = 48 (24 сердца). */
+    public static final double HALF_GHOUL_BASE_HEALTH = 20.0 + 4.0 + 20.0 + 4.0;
+    /** Урон ульты — половина здоровья полугуля: 24 (12 сердец), сквозь броню, блок и множители урона. */
+    public static final float ULTIMATE_DAMAGE = (float) (HALF_GHOUL_BASE_HEALTH / 2.0);
+    /** По человеку и агенту CCG ульта бьёт слабее: 75% — 18 урона (9 сердец), с полного здоровья (24) остаётся 6. */
+    public static final double ULTIMATE_HUMAN_FACTOR = 0.75;
+    public static final int ULTIMATE_COOLDOWN = 10 * 60 * 20;       // раз в 10 минут
+    public static final double ULTIMATE_RANGE = 2.0;                // цель не дальше 2 блоков (между телами)
+    // Тайминги ульты в тиках от начала (20 тиков = 1 с). Сервер бьёт, клиент рисует щупальца и камеру по ним же.
+    public static final int ULTIMATE_DURATION = 200;                // вся ульта — 10 секунд, оба не двигаются
+    public static final int ULTIMATE_CAMERA_IN = 26;                // камера плавно уходит на третье лицо (0 → 1,3 с)
+    public static final int ULTIMATE_SHOOT = 30;                    // кагуне раскрылось за спиной — верхние щупальца выстреливают
+    public static final int ULTIMATE_LATCH = 42;                    // верхние схватили цель за плечи
+    public static final int ULTIMATE_LIFT_END = 74;                 // цель медленно поднята
+    public static final int[] ULTIMATE_STABS = {90, 102, 112, 121, 129, 136, 142}; // удары нижних в живот по очереди (всё чаще)
+    public static final int ULTIMATE_FINAL = 160;                   // оба нижних насквозь — добивающий удар
+    public static final int ULTIMATE_FINAL_WEIGHT = 5;              // добивающий удар = 5 обычных: 7 по 2 + 10 = 24
+    public static final int ULTIMATE_RELEASE = 178;                 // щупальца вырывают и отпускают цель
+    public static final int ULTIMATE_RETRACT = 16;                  // кагуне втягивается после
+    public static final int ULTIMATE_CAMERA_OUT = 22;               // камера плавно возвращается на первое лицо
+    public static final double ULTIMATE_LIFT = 1.4;                 // на сколько блоков поднимают цель
+    public static final double ULTIMATE_HOLD = 1.7;                 // на каком расстоянии перед гулем держат цель
+
+    // «Бессмертие» (у всех классов, вкладка «Особые») [ТВОЁ]: как тотем бессмертия
+    public static final int[] UNDYING_COST = {25};                  // 25 очков на нормальной (на сложной 38, полугулю 30)
+    public static final int UNDYING_COOLDOWN = 15 * 60 * 20;        // раз в 15 минут
     public static final int FORTUNE_COOLDOWN = 60 * 20;             // [ВРЕМЕННО] откат 1 минута
     public static final int FORTUNE_SHIELD_TICKS = 30 * 20;         // защита у баффов держится 30 секунд
     // шанс в процентах, лечение (доля макс. здоровья), защита (доля урона, которая не проходит)

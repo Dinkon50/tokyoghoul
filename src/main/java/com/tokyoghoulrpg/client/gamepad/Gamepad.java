@@ -42,7 +42,7 @@ import org.lwjgl.glfw.GLFWGamepadState;
  *   RT / LT — притянуть цель / притянуться самому (как Ctrl + ЛКМ / ПКМ)
  *   RB — барраж (держать), A — «Харизма», B — «Бросок судьбы», X — «Аура возмездия», Y — выбросить предмет
  *   Крестовина: ↑ навыки, ↓ задания, ← клан, → профиль
- *   View / Share — торговая площадка, Menu / Options — книга новичка, L3 — сменить руку, R3 — вид (F5)
+ *   View / Share — торговая площадка, Menu / Options — книга новичка, L3 — вид (F5), R3 — ульта гуля
  * В меню: левый стик — курсор, A / ✕ — нажать, X / □ — правая кнопка мыши, B / ○ — назад,
  *   правый стик или LB / RB — прокрутка (в книге новичка — листать страницы).
  * </pre>
@@ -287,8 +287,19 @@ public final class Gamepad {
         bind(RB, layer2 ? KeyBindings.BARRAGE : KeyBindings.BLOCK);
         bind(RT, o.keyAttack);
         bind(LT, o.keyUse);
-        bind(L3, layer2 ? o.keySwapOffhand : o.keySprint);
-        bind(R3, layer2 ? o.keyTogglePerspective : KeyBindings.KAKUJA);
+        bind(L3, layer2 ? o.keyTogglePerspective : o.keySprint);
+        if (layer2) {
+            // LB + R3 — ульта гуля
+            if (pressed(R3)) {
+                releaseButton(R3);
+                com.tokyoghoulrpg.network.NetworkHandler.CHANNEL.sendToServer(
+                        new com.tokyoghoulrpg.network.packet.AbilityC2S(com.tokyoghoulrpg.combat.AbilityType.ULTIMATE));
+            } else if (released(R3)) {
+                releaseButton(R3);
+            }
+        } else {
+            bind(R3, KeyBindings.KAKUJA);
+        }
         bind(UP, layer2 ? KeyBindings.SKILL_TREE : KeyBindings.RAGE);
         bind(DOWN, layer2 ? KeyBindings.QUESTS : KeyBindings.BITE);
         if (layer2) {

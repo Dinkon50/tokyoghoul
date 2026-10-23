@@ -16,19 +16,23 @@ import net.minecraftforge.network.NetworkEvent;
 public class SelectClassC2S {
     private final PlayerClass playerClass;
     private final KaguneVariant variant;
+    /** Взять скин класса из мода (гуль, полугуль, агент CCG) вместо своего. */
+    private final boolean modSkin;
 
-    public SelectClassC2S(PlayerClass playerClass, KaguneVariant variant) {
+    public SelectClassC2S(PlayerClass playerClass, KaguneVariant variant, boolean modSkin) {
         this.playerClass = playerClass;
         this.variant = variant;
+        this.modSkin = modSkin;
     }
 
     public static void encode(SelectClassC2S msg, FriendlyByteBuf buf) {
         buf.writeEnum(msg.playerClass);
         buf.writeEnum(msg.variant);
+        buf.writeBoolean(msg.modSkin);
     }
 
     public static SelectClassC2S decode(FriendlyByteBuf buf) {
-        return new SelectClassC2S(buf.readEnum(PlayerClass.class), buf.readEnum(KaguneVariant.class));
+        return new SelectClassC2S(buf.readEnum(PlayerClass.class), buf.readEnum(KaguneVariant.class), buf.readBoolean());
     }
 
     /** Стартовые очки крови: один раз на персонажа, любому классу. */
@@ -60,6 +64,7 @@ public class SelectClassC2S {
                 }
                 data.setPlayerClass(msg.playerClass);
                 data.setKaguneVariant(variant);
+                data.setModSkin(PlayerData.hasModSkin(msg.playerClass) && msg.modSkin);
                 data.setKaguneActive(false);
                 data.setRage(0);
                 giveStartBlood(data);

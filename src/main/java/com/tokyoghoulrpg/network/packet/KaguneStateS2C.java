@@ -15,13 +15,17 @@ public class KaguneStateS2C {
     private final KaguneVariant variant;
     private final boolean rage;
     private final boolean blocking;
+    /** Какой скин мода носит игрок (его видят все): 0 — свой, 1 — гуль, 2 — CCG. */
+    private final int modSkin;
 
-    public KaguneStateS2C(int entityId, boolean active, KaguneVariant variant, boolean rage, boolean blocking) {
+    public KaguneStateS2C(int entityId, boolean active, KaguneVariant variant, boolean rage, boolean blocking,
+                          int modSkin) {
         this.entityId = entityId;
         this.active = active;
         this.variant = variant;
         this.rage = rage;
         this.blocking = blocking;
+        this.modSkin = modSkin;
     }
 
     public static void encode(KaguneStateS2C msg, FriendlyByteBuf buf) {
@@ -30,17 +34,20 @@ public class KaguneStateS2C {
         buf.writeEnum(msg.variant);
         buf.writeBoolean(msg.rage);
         buf.writeBoolean(msg.blocking);
+        buf.writeByte(msg.modSkin);
     }
 
     public static KaguneStateS2C decode(FriendlyByteBuf buf) {
         return new KaguneStateS2C(buf.readVarInt(), buf.readBoolean(), buf.readEnum(KaguneVariant.class), buf.readBoolean(),
-                buf.readBoolean());
+                buf.readBoolean(), buf.readByte());
     }
 
     public static void handle(KaguneStateS2C msg, Supplier<NetworkEvent.Context> ctx) {
         NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                KaguneClientState.applyState(msg.entityId, msg.active, msg.variant, msg.rage, msg.blocking)));
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            KaguneClientState.applyState(msg.entityId, msg.active, msg.variant, msg.rage, msg.blocking);
+            com.tokyoghoulrpg.client.ModSkins.setWearing(msg.entityId, msg.modSkin);
+        }));
         context.setPacketHandled(true);
     }
 }
