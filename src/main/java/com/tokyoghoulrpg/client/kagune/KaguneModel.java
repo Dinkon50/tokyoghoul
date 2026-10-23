@@ -32,4 +32,17 @@ public class KaguneModel extends GeoModel<KaguneAnimatable> {
     public ResourceLocation getAnimationResource(KaguneAnimatable animatable) {
         return ANIMATIONS;
     }
+
+    /** Щупальце захвата: на время захвата его нет на модели — вместо него к цели тянется длинное (KaguneReach). */
+    static final String REACH_BONE = "upper_left";
+
+    @Override
+    public void setCustomAnimations(KaguneAnimatable animatable, long instanceId,
+                                    software.bernie.geckolib.core.animation.AnimationState<KaguneAnimatable> animationState) {
+        super.setCustomAnimations(animatable, instanceId, animationState);
+        software.bernie.geckolib.core.animatable.model.CoreGeoBone bone = getAnimationProcessor().getBone(REACH_BONE);
+        if (bone != null) {
+            bone.setHidden(animatable.isReachTentacleHidden());
+        }
+    }
 }

@@ -451,7 +451,7 @@ public final class AbilityManager {
         }
         AbilitySync.Timing timing = AbilitySync.get("kagune_grapple");
         state.grappleReady = now + Balance.GRAPPLE_COOLDOWN;
-        NetworkHandler.playAnimation(player, "kagune_grapple");
+        // анимации модели нет: к цели тянется одно щупальце кагуне (KaguneReach на клиенте)
         NetworkHandler.kaguneReach(player, hit.entity() != null ? hit.entity().getId() : -1, hit.point(), "kagune_grapple");
         Effects.sound(player, SoundEvents.FISHING_BOBBER_THROW, 0.9F, 0.6F);
         state.actions.add(new Actions.GrappleSelf(now, hit.entity(), hit.point(),
@@ -471,7 +471,7 @@ public final class AbilityManager {
         }
         AbilitySync.Timing timing = AbilitySync.get("kagune_grab_pull");
         state.pullReady = now + Balance.PULL_COOLDOWN;
-        NetworkHandler.playAnimation(player, "kagune_grab_pull");
+        // анимации модели нет: к цели тянется одно щупальце кагуне (KaguneReach на клиенте)
         NetworkHandler.kaguneReach(player, hit.entity().getId(), hit.point(), "kagune_grab_pull");
         Effects.sound(player, SoundEvents.FISHING_BOBBER_THROW, 0.9F, 0.6F);
         state.actions.add(new Actions.PullTarget(now, hit.entity(), timing));

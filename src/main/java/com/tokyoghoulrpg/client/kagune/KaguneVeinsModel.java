@@ -54,4 +54,17 @@ public class KaguneVeinsModel extends GeoModel<KaguneVeinsAnimatable> {
     public RenderType getRenderType(KaguneVeinsAnimatable animatable, ResourceLocation texture) {
         return RenderType.eyes(texture);
     }
+
+    /** Вены на щупальце захвата прячутся вместе с ним. */
+    private static final String REACH_BONE = KaguneModel.REACH_BONE;
+
+    @Override
+    public void setCustomAnimations(KaguneVeinsAnimatable animatable, long instanceId,
+                                    software.bernie.geckolib.core.animation.AnimationState<KaguneVeinsAnimatable> animationState) {
+        super.setCustomAnimations(animatable, instanceId, animationState);
+        software.bernie.geckolib.core.animatable.model.CoreGeoBone bone = getAnimationProcessor().getBone(REACH_BONE);
+        if (bone != null) {
+            bone.setHidden(animatable.getMain().isReachTentacleHidden());
+        }
+    }
 }

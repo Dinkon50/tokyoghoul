@@ -34,6 +34,8 @@ import org.joml.Matrix4f;
  *   <li>потом держится за цель (за существом следует, когда его тянет), пока игрока или цель подтягивает;</li>
  *   <li>после «отпускания» быстро втягивается обратно.</li>
  * </ul>
+ * Это одно из щупалец кагуне (upper_left): на модели его на это время нет, после захвата оно снова на месте.
+ * Своей анимации захвата у модели больше нет — только это щупальце.
  * Рисуется в мире, поэтому видно и от первого лица, и у других игроков.
  */
 @Mod.EventBusSubscriber(modid = TokyoGhoulRPG.MOD_ID, value = Dist.CLIENT)
@@ -61,7 +63,10 @@ public final class KaguneReach {
         AbilitySync.Timing timing = AbilitySync.get(animation);
         float latch = Math.max(4, timing.latch());
         float release = Math.max(latch + 2, timing.release());
-        REACHES.put(ownerId, new Reach(targetId, new Vec3(x, y, z), mc.level.getGameTime(), latch, release));
+        long now = mc.level.getGameTime();
+        REACHES.put(ownerId, new Reach(targetId, new Vec3(x, y, z), now, latch, release));
+        // это щупальце — одно из щупалец кагуне: на модели его нет, пока оно тянется, потом оно на месте
+        KaguneClientState.hideReachTentacle(ownerId, now + (long) Math.ceil(release + RETRACT_TICKS));
     }
 
     public static void clear() {
@@ -121,7 +126,9 @@ public final class KaguneReach {
             double rx = -fz;                // вправо от взгляда
             double rz = fx;
             double h = owner.getBbHeight();
-            Vec3 from = new Vec3(ox - fx * 0.26, oy + h * 0.6, oz - fz * 0.26);
+            // из корня щупальца upper_left (справа на спине, как у модели: 16 пикселей вверх, 3,5 назад, 1,8 вбок);
+            // само это щупальце на модели на время захвата спрятано
+            Vec3 from = new Vec3(ox - fx * 0.205 + rx * 0.105, oy + 0.94, oz - fz * 0.205 + rz * 0.105);
             // изгиб: щупальце поднимается из-за спины над правым плечом и уже оттуда летит к цели,
             // поэтому никогда не проходит сквозь тело
             Vec3 bend = new Vec3(ox - fx * 0.45 + rx * 0.75, oy + h * 1.25, oz - fz * 0.45 + rz * 0.75);

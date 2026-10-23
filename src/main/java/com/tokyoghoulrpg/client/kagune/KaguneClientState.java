@@ -34,6 +34,14 @@ public final class KaguneClientState {
         }
     }
 
+    /** Убрать с модели щупальце захвата до этого тика (захват: вместо него тянется длинное щупальце). */
+    public static void hideReachTentacle(int entityId, long untilTick) {
+        KaguneAnimatable kagune = STATES.get(entityId);
+        if (kagune != null) {
+            kagune.hideReachTentacleUntil(untilTick);
+        }
+    }
+
     public static void clear() {
         STATES.clear();
     }

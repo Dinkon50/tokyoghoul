@@ -93,7 +93,7 @@ public final class KaguneFirstPerson {
         kagune.setMotion(player.walkAnimation.speed(partial) > 0.15F, breaking);
         // Пока кагуне просто включено (стоишь, идёшь, ярость), от первого лица его не видно, чтобы не отвлекало.
         // Видно только в действии: удары, барраж, захваты, рывок, блок, копание, появление и убирание.
-        if (!alwaysVisible() && !kagune.isInAction()) {
+        if (!alwaysVisible() && !kagune.visibleInFirstPerson()) {
             return;
         }
 

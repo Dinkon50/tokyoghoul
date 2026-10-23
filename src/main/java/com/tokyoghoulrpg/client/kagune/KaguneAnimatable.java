@@ -62,6 +62,12 @@ public class KaguneAnimatable implements GeoAnimatable {
     private long visibleUntil = 0L;
     /** До этого тика модель скрыта: её щупальца сейчас рисует ульта (KaguneUltimateFx). */
     private long hiddenUntil = 0L;
+    /** До этого тика у модели нет одного щупальца (upper_left): оно сейчас тянется к цели захвата (KaguneReach). */
+    private long reachHiddenUntil = 0L;
+
+    /** Разовые анимации ударов: от первого лица их не показываем (выглядит плохо). */
+    private static final java.util.Set<String> STRIKES = java.util.Set.of("kagune_attack_right_thrust",
+            "kagune_attack_left_sweep", "kagune_attack_double", "kagune_barrage", "kagune_grapple", "kagune_grab_pull");
 
     public KaguneVariant getVariant() {
         return variant;
@@ -86,6 +92,28 @@ public class KaguneAnimatable implements GeoAnimatable {
             return false;
         }
         return active || gameTime() < visibleUntil;
+    }
+
+    /** Убрать с модели щупальце захвата до этого тика (вместо него тянется длинное щупальце). */
+    public void hideReachTentacleUntil(long tick) {
+        reachHiddenUntil = tick;
+    }
+
+    /** Нет ли сейчас на модели щупальца захвата. */
+    public boolean isReachTentacleHidden() {
+        return gameTime() < reachHiddenUntil;
+    }
+
+    /**
+     * Видно ли своё кагуне от первого лица: только когда оно не бьёт — блок, копание, рывок, появление и убирание.
+     * Удары, барраж и захваты от первого лица не показываем (захват видно по длинному щупальцу).
+     */
+    public boolean visibleInFirstPerson() {
+        boolean oneShotNow = oneShot != null && gameTime() < oneShotEnd;
+        if (oneShotNow) {
+            return !STRIKES.contains(oneShot);
+        }
+        return active && (blocking || breaking);
     }
 
     /** Скрыть модель до этого тика (щупальца ульты рисуются отдельно). */
