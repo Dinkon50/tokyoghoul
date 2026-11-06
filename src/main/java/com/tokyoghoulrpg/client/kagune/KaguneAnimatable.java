@@ -290,7 +290,12 @@ public class KaguneAnimatable implements GeoAnimatable {
             return;
         }
         try {
-            if (transitionField.getInt(controller) != ticks) {
+            // в разных версиях GeckoLib поле целое или дробное
+            if (transitionField.getType() == double.class) {
+                if (transitionField.getDouble(controller) != ticks) {
+                    transitionField.setDouble(controller, ticks);
+                }
+            } else if (transitionField.getInt(controller) != ticks) {
                 transitionField.setInt(controller, ticks);
             }
         } catch (ReflectiveOperationException | RuntimeException e) {

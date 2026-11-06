@@ -226,7 +226,7 @@ public final class Shards {
         Vec3 before = target.getDeltaMovement();
         boolean hurt;
         if (s.type == AttackType.ULTIMATE) {
-            hurt = CombatContext.hitUltimate(owner, target, s.damage * ultimateFactor(target));
+            hurt = CombatContext.hitUltimate(owner, target, (float) (s.damage * ultimateFactor(target)));
         } else {
             hurt = CombatContext.hit(owner, target, s.damage, s.type);
         }
