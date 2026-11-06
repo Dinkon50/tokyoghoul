@@ -126,6 +126,16 @@ public final class AbilityManager {
         CombatState state = data.combat();
         long now = player.level().getGameTime();
 
+        // Ульта (J + K): начавшийся барраж или блок не мешают — их прерываем
+        if (type == AbilityType.ULTIMATE && player.isAlive() && !LockManager.isLocked(player)
+                && data.isKaguneActive() && GhoulUltimate.ready(data, now)) {
+            if (state.isBarraging()) {
+                setBarrage(player, false);
+            }
+            if (data.isBlocking()) {
+                stopBlock(player, data);
+            }
+        }
         // Оглушённый, играющий барраж или держащий блок не может использовать другие способности
         if (!player.isAlive() || LockManager.isLocked(player) || state.isBarraging() || data.isBlocking()) {
             return;
@@ -135,16 +145,60 @@ public final class AbilityManager {
             return;
         }
 
+        // «Укаку Тоуки» (крылья): атаки — стрельба осколками, захватов нет, у ульты своя
+        boolean wings = WingsFire.uses(data);
+        // «Гурман» Цукиямы: лента на руке — серия ударов, выпад, вихрь, своя ульта, захватов нет
+        boolean gourmet = GourmetFire.uses(data);
         switch (type) {
             case BITE -> bite(player, data, state, now);
             case DASH -> dash(player, data, state, now);
             case BARRAGE -> barrage(player, data, state, now);
             case RAGE -> rage(player, data, now);
-            case BASIC_ATTACK -> attack(player, data, state, now, false);
-            case STRONG_ATTACK -> attack(player, data, state, now, true);
-            case GRAPPLE_SELF -> grapple(player, data, state, now);
-            case PULL_TARGET -> pull(player, data, state, now);
-            case ULTIMATE -> GhoulUltimate.use(player, data, state, now);
+            case BASIC_ATTACK -> {
+                if (wings) {
+                    WingsFire.basic(player, data, state, now);
+                } else if (gourmet) {
+                    GourmetFire.basic(player, data, state, now);
+                } else {
+                    attack(player, data, state, now, false);
+                }
+            }
+            case STRONG_ATTACK -> {
+                if (wings) {
+                    WingsFire.big(player, data, state, now);
+                } else if (gourmet) {
+                    GourmetFire.lunge(player, data, state, now);
+                } else {
+                    attack(player, data, state, now, true);
+                }
+            }
+            case GRAPPLE_SELF -> {
+                if (wings) {
+                    WingsFire.noGrab(player);
+                } else if (gourmet) {
+                    GourmetFire.noGrab(player);
+                } else {
+                    grapple(player, data, state, now);
+                }
+            }
+            case PULL_TARGET -> {
+                if (wings) {
+                    WingsFire.noGrab(player);
+                } else if (gourmet) {
+                    GourmetFire.noGrab(player);
+                } else {
+                    pull(player, data, state, now);
+                }
+            }
+            case ULTIMATE -> {
+                if (wings) {
+                    WingsFire.ultimate(player, data, state, now);
+                } else if (gourmet) {
+                    GourmetFire.ultimate(player, data, state, now);
+                } else {
+                    GhoulUltimate.use(player, data, state, now);
+                }
+            }
             default -> {
             }
         }
@@ -167,7 +221,7 @@ public final class AbilityManager {
         }
         CombatState state = data.combat();
         boolean stopped = state.actions.removeIf(action -> {
-            if (action instanceof Actions.Barrage) {
+            if (action instanceof BarrageAction) {
                 action.cancel(player);
                 return true;
             }
@@ -311,9 +365,9 @@ public final class AbilityManager {
         Combos.onDash(player);
         Effects.sound(player, SoundEvents.ENDER_DRAGON_FLAP, 0.35F, 1.9F);
         Effects.particles(player, ParticleTypes.CLOUD, 6, 0.3, 0.02);
-        if (data.isKaguneActive()) {
-            NetworkHandler.playAnimation(player, "kagune_dash");
-        }
+        // рывок видят все: тело наклоняется вперёд (у любого класса), выпущенное кагуне играет свою анимацию рывка
+        NetworkHandler.playAnimation(player, data.getPlayerClass().hasKagune() && data.isKaguneActive()
+                ? "kagune_dash" : "dash");
     }
 
     /** Гуль и полугуль: своя ветка «Рывок». Человек: ветка «Рывок» на его вкладке. Агент CCG: базовый рывок. */
@@ -344,6 +398,14 @@ public final class AbilityManager {
     }
 
     private static void barrage(ServerPlayer player, PlayerData data, CombatState state, long now) {
+        if (WingsFire.uses(data)) {
+            WingsFire.hail(player, data, state, now);
+            return;
+        }
+        if (GourmetFire.uses(data)) {
+            GourmetFire.whirl(player, data, state, now);
+            return;
+        }
         if (now < state.barrageReady) {
             cooldown(player, AbilityType.BARRAGE, state.barrageReady - now);
             return;
@@ -665,7 +727,9 @@ public final class AbilityManager {
         // Барраж закончился (до конца или кнопку отпустили): запускаем откат
         boolean barraging = state.isBarraging();
         if (state.wasBarraging && !barraging) {
-            state.barrageReady = now + SkillEffects.barrageCooldown(lvl(data, SkillTree.Branch.BARRAGE));
+            state.barrageReady = now + (WingsFire.uses(data) ? WingsFire.hailCooldown(data)
+                    : GourmetFire.uses(data) ? GourmetFire.whirlCooldown(data)
+                    : SkillEffects.barrageCooldown(lvl(data, SkillTree.Branch.BARRAGE)));
         }
         state.wasBarraging = barraging;
 
@@ -870,7 +934,7 @@ public final class AbilityManager {
     // Сообщения
     // ------------------------------------------------------------------
 
-    private static void cooldown(ServerPlayer player, AbilityType type, long ticksLeft) {
+    static void cooldown(ServerPlayer player, AbilityType type, long ticksLeft) {
         String seconds = String.format(Locale.ROOT, "%.1f", ticksLeft / 20.0);
         player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.cooldown",
                 Component.translatable(type.translationKey()), seconds), true);
@@ -881,7 +945,7 @@ public final class AbilityManager {
         player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.silenced", seconds), true);
     }
 
-    private static void noTarget(ServerPlayer player) {
+    static void noTarget(ServerPlayer player) {
         player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.no_target"), true);
     }
 }

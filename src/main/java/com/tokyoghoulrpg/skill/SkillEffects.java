@@ -123,7 +123,7 @@ public final class SkillEffects {
 
     /** Уровень ветки, если она есть в дереве класса игрока, иначе 0. */
     public static int level(PlayerData data, SkillTree.Branch branch) {
-        if (data == null || !SkillTree.isAvailable(data.getPlayerClass(), branch)) {
+        if (data == null || !SkillTree.isAvailable(data.getPlayerClass(), data.getKaguneVariant(), branch)) {
             return 0;
         }
         return branch == SkillTree.Branch.RAGE ? data.getRageLevel() : data.skillLevel(branch.id());

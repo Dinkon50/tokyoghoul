@@ -64,12 +64,16 @@ public class AbilityMenuScreen extends Screen {
         com.tokyoghoulrpg.data.PlayerData data = this.minecraft.player == null ? null
                 : com.tokyoghoulrpg.data.PlayerData.get(this.minecraft.player);
         if (data != null && com.tokyoghoulrpg.data.PlayerData.hasModSkin(data.getPlayerClass())) {
-            boolean wearing = data.isModSkin();
-            addRenderableWidget(Button.builder(Component.translatable(wearing
-                                    ? "screen.tokyoghoulrpg.skin.toggle_mod" : "screen.tokyoghoulrpg.skin.toggle_own"),
+            // свой → скин 1 → скин 2 (гуль, полугуль) → свой; у агента CCG: свой ↔ скин CCG
+            int current = data.skinChoice();
+            int next = (current + 1) % com.tokyoghoulrpg.data.PlayerData.skinCount(data.getPlayerClass());
+            String[] labels = {"screen.tokyoghoulrpg.skin.toggle_own", data.getPlayerClass().hasKagune()
+                            ? "screen.tokyoghoulrpg.skin.toggle_first" : "screen.tokyoghoulrpg.skin.toggle_mod",
+                    "screen.tokyoghoulrpg.skin.toggle_alt"};
+            addRenderableWidget(Button.builder(Component.translatable(labels[current]),
                             b -> {
                                 NetworkHandler.CHANNEL.sendToServer(
-                                        new com.tokyoghoulrpg.network.packet.SkinChoiceC2S(!wearing));
+                                        new com.tokyoghoulrpg.network.packet.SkinChoiceC2S(next));
                                 onClose();
                             })
                     .bounds(right, top + STEP * 6, BUTTON_W, BUTTON_H).build());

@@ -193,8 +193,10 @@ public final class NetworkHandler {
 
     private static KaguneStateS2C kagunePacket(ServerPlayer player, PlayerData data) {
         boolean visible = data.getPlayerClass().hasKagune() && data.isKaguneActive();
+        // блок виден и у агента CCG: другие игроки видят его стойку с квинке
+        boolean quinqueGuard = data.getPlayerClass() == com.tokyoghoulrpg.data.PlayerClass.CCG_AGENT;
         return new KaguneStateS2C(player.getId(), visible, data.getKaguneVariant(), data.isRageActive(),
-                visible && data.isBlocking(), data.modSkinId());
+                (visible || quinqueGuard) && data.isBlocking(), data.modSkinId());
     }
 
     /** Анимация кагуне у любого существа с кагуне (например, у Кровавого полугуля): видят все, кто рядом. */

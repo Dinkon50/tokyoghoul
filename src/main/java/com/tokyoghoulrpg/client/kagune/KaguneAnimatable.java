@@ -20,9 +20,18 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Состояние приходит с сервера, поэтому кагуне видно и у других игроков.
  */
 public class KaguneAnimatable implements GeoAnimatable {
-    /** Длительности из файла анимаций: появление 2,4 с и убирание 1,9 с. */
+    /** Длительности из файлов анимаций: появление и убирание у каждого кагуне свои (Канеки 2,4 и 1,9 с). */
     private static final int APPEAR_TICKS = 48;
     private static final int RETRACT_TICKS = 38;
+    private static final int WINGS_APPEAR_TICKS = 30;
+    private static final int WINGS_RETRACT_TICKS = 22;
+    private static final int GOURMET_APPEAR_TICKS = 24;
+    private static final int GOURMET_RETRACT_TICKS = 18;
+    /**
+     * Разовые анимации, которые сервер продлевает, пока действие идёт (стрельба крыльями, град): повторный
+     * запуск той же анимации не начинает её заново, а только сдвигает конец. Сами они зациклены.
+     */
+    private static final java.util.Set<String> SUSTAINED = java.util.Set.of("wings_fire", "wings_hail");
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("kagune_idle");
     private static final RawAnimation RAGE = RawAnimation.begin().thenLoop("kagune_rage");
@@ -32,6 +41,12 @@ public class KaguneAnimatable implements GeoAnimatable {
     private static final RawAnimation BLOCK = RawAnimation.begin().thenPlay("kagune_block_start").thenLoop("kagune_block_hold");
     private static final int BLOCK_END_TICKS = 14;
     private static final Map<String, RawAnimation> ONE_SHOTS = new HashMap<>();
+    /** Плавный переход между анимациями: обычно 3 тика, у рывка 1 (он сам длится 3-5 тиков и иначе опаздывает). */
+    private static final int TRANSITION = 3;
+    private static final int FAST_TRANSITION = 1;
+    /** Поле длины перехода в контроллере GeckoLib (через отражение: если его нет, переход просто остаётся 3 тика). */
+    private static java.lang.reflect.Field transitionField;
+    private static boolean transitionLookedUp = false;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final KaguneVeinsAnimatable veins = new KaguneVeinsAnimatable(this);
@@ -67,7 +82,8 @@ public class KaguneAnimatable implements GeoAnimatable {
 
     /** Разовые анимации ударов: от первого лица их не показываем (выглядит плохо). */
     private static final java.util.Set<String> STRIKES = java.util.Set.of("kagune_attack_right_thrust",
-            "kagune_attack_left_sweep", "kagune_attack_double", "kagune_barrage", "kagune_grapple", "kagune_grab_pull");
+            "kagune_attack_left_sweep", "kagune_attack_double", "kagune_barrage", "kagune_grapple", "kagune_grab_pull",
+            "wings_fire", "wings_big", "wings_hail", "wings_storm");
 
     public KaguneVariant getVariant() {
         return variant;
@@ -77,8 +93,18 @@ public class KaguneAnimatable implements GeoAnimatable {
         return veins;
     }
 
+    /** Вены ярости есть только у модели Канеки (её же использует «Авторский»). */
+    public boolean hasVeins() {
+        return variant != KaguneVariant.WINGS && variant != KaguneVariant.GOURMET;
+    }
+
     public boolean isRage() {
         return rage;
+    }
+
+    /** Держит ли игрок блок (у агента CCG — блок квинке). */
+    public boolean isBlocking() {
+        return blocking;
     }
 
     /** Сколько тиков идёт ярость. */
@@ -176,27 +202,34 @@ public class KaguneAnimatable implements GeoAnimatable {
             oneShot = null;
             return;
         }
+        if (SUSTAINED.contains(animation) && animation.equals(oneShot) && now < oneShotEnd) {
+            oneShotEnd = now + durationTicks(animation, variant);
+            return;
+        }
         startOneShot(animation, now);
     }
 
     private void startOneShot(String animation, long now) {
         oneShot = animation;
-        oneShotEnd = now + durationTicks(animation);
+        oneShotEnd = now + durationTicks(animation, variant);
         // Та же анимация подряд должна проиграться заново
         restartSerial++;
     }
 
-    private static int durationTicks(String animation) {
+    private static int durationTicks(String animation, KaguneVariant variant) {
         return switch (animation) {
-            case "kagune_appear" -> APPEAR_TICKS;
-            case "kagune_retract" -> RETRACT_TICKS;
+            case "kagune_appear" -> variant == KaguneVariant.WINGS ? WINGS_APPEAR_TICKS
+                    : variant == KaguneVariant.GOURMET ? GOURMET_APPEAR_TICKS : APPEAR_TICKS;
+            case "kagune_retract" -> variant == KaguneVariant.WINGS ? WINGS_RETRACT_TICKS
+                    : variant == KaguneVariant.GOURMET ? GOURMET_RETRACT_TICKS : RETRACT_TICKS;
             case "kagune_block_end" -> BLOCK_END_TICKS;
             default -> Math.max(1, AbilitySync.get(animation).duration());
         };
     }
 
     private static RawAnimation oneShotAnimation(String name) {
-        return ONE_SHOTS.computeIfAbsent(name, n -> RawAnimation.begin().thenPlay(n));
+        return ONE_SHOTS.computeIfAbsent(name, n -> SUSTAINED.contains(n)
+                ? RawAnimation.begin().thenLoop(n) : RawAnimation.begin().thenPlay(n));
     }
 
     private static long gameTime() {
@@ -223,7 +256,9 @@ public class KaguneAnimatable implements GeoAnimatable {
             seen.serial = restartSerial;
             state.getController().forceAnimationReset();
         }
-        if (oneShot != null && now < oneShotEnd) {
+        boolean oneShotNow = oneShot != null && now < oneShotEnd;
+        setTransition(state.getController(), oneShotNow && "kagune_dash".equals(oneShot) ? FAST_TRANSITION : TRANSITION);
+        if (oneShotNow) {
             return state.setAndContinue(oneShotAnimation(oneShot));
         }
         if (!active) {
@@ -239,6 +274,28 @@ public class KaguneAnimatable implements GeoAnimatable {
             return state.setAndContinue(BREAK_BLOCKS);
         }
         return state.setAndContinue(moving ? WALK : IDLE);
+    }
+
+    private static void setTransition(AnimationController<?> controller, int ticks) {
+        if (!transitionLookedUp) {
+            transitionLookedUp = true;
+            try {
+                transitionField = AnimationController.class.getDeclaredField("transitionLength");
+                transitionField.setAccessible(true);
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                transitionField = null;
+            }
+        }
+        if (transitionField == null) {
+            return;
+        }
+        try {
+            if (transitionField.getInt(controller) != ticks) {
+                transitionField.setInt(controller, ticks);
+            }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            transitionField = null;
+        }
     }
 
     @Override

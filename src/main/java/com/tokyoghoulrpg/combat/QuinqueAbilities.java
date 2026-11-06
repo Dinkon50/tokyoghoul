@@ -34,7 +34,7 @@ import net.minecraft.world.phys.Vec3;
  *   <li>Shift + ЛКМ — «Выпад»: рывок вперёд с уколом всех на пути.</li>
  * </ul>
  * Урон ударов считается от урона квинке в руке, поэтому у разных квинке он будет разный.
- * Анимаций пока нет (обычный взмах рукой): их подключим вместе с моделями квинке.
+ * Анимации приёмов сделаны кодом (client/quinque/QuinqueAnim): сервер рассылает, какой приём начался.
  */
 public final class QuinqueAbilities {
     private static final UUID RELEASE_SPEED_ID = UUID.fromString("5b1f2c0e-7a41-4c0a-9d51-0a1b2c3d4e40");
@@ -106,6 +106,7 @@ public final class QuinqueAbilities {
         boolean finisher = step == 2;
         state.attackBusyUntil = now + (finisher ? Balance.QUINQUE_FINISHER_BUSY : Balance.QUINQUE_ATTACK_BUSY);
         player.swing(InteractionHand.MAIN_HAND, true);
+        NetworkHandler.playAnimation(player, "quinque_attack_" + (step + 1));
         int combo = lvl(data, SkillTree.Branch.Q_COMBO);
         float finisherMult = Balance.QUINQUE_FINISHER_MULT + SkillEffects.qFinisherBonus(combo);
         float damage = (float) (weaponDamage(player) * (finisher ? finisherMult : 1.0F)
@@ -128,6 +129,7 @@ public final class QuinqueAbilities {
         state.strongReady = now + Balance.QUINQUE_STRONG_COOLDOWN;
         state.attackBusyUntil = now + Balance.QUINQUE_STRONG_DELAY + 4;
         player.swing(InteractionHand.MAIN_HAND, true);
+        NetworkHandler.playAnimation(player, "quinque_strong");
         if (type.ranged()) {
             // Narukami: разряд на расстояние
             state.actions.add(new Bolt(now + Balance.QUINQUE_STRONG_DELAY, strongDamage));
@@ -154,6 +156,7 @@ public final class QuinqueAbilities {
         int duration = hits[count - 1] + 4;
         float damage = weaponDamage(player) * type.flurryMult();
         state.actions.add(new Actions.Barrage(now, hits, duration, damage, Balance.QUINQUE_FLURRY_WIDTH));
+        NetworkHandler.playAnimation(player, "quinque_flurry:" + duration);
     }
 
     private static void lunge(ServerPlayer player, PlayerData data, CombatState state, long now) {
@@ -176,8 +179,9 @@ public final class QuinqueAbilities {
         player.swing(InteractionHand.MAIN_HAND, true);
         Effects.sound(player, SoundEvents.TRIDENT_RIPTIDE_1, 0.8F, 1.4F);
         float damage = (float) (weaponDamage(player) * Balance.QUINQUE_LUNGE_MULT * (1.0 + SkillEffects.qLungeDamage(lungeLevel)));
-        state.actions.add(new Lunge(direction.normalize(), damage,
-                type(player).lungeTicks() + SkillEffects.qLungeExtraTicks(lungeLevel)));
+        int lungeTicks = type(player).lungeTicks() + SkillEffects.qLungeExtraTicks(lungeLevel);
+        state.actions.add(new Lunge(direction.normalize(), damage, lungeTicks));
+        NetworkHandler.playAnimation(player, "quinque_lunge:" + (lungeTicks + 4));
     }
 
     /** «Выпад»: несколько тиков быстрого движения вперёд, каждого на пути колет один раз. */
@@ -281,6 +285,7 @@ public final class QuinqueAbilities {
         player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.release_on"), true);
         Effects.sound(player, SoundEvents.BEACON_ACTIVATE, 1.0F, 1.4F);
         Effects.particles(player, Effects.RC, 40, 0.6, 0.05);
+        NetworkHandler.playAnimation(player, "quinque_release");
     }
 
     /** Удар агента с квинке попал по гулю: копится шкала «Освобождения». */

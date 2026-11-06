@@ -45,7 +45,9 @@ public class BossKaguneLayer<T extends HalfGhoulBoss> extends RenderLayer<T, Pla
         poseStack.translate(0.0F, 1.501F, 0.0F);
         poseStack.scale(-1.0F, -1.0F, 1.0F);
         renderer.render(poseStack, kagune, buffer, null, null, packedLight);
-        veinsRenderer.render(poseStack, kagune.getVeins(), buffer, null, null, packedLight);
+        if (kagune.hasVeins()) {
+            veinsRenderer.render(poseStack, kagune.getVeins(), buffer, null, null, packedLight);
+        }
         poseStack.popPose();
     }
 }

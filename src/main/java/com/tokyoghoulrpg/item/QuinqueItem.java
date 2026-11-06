@@ -71,6 +71,27 @@ public class QuinqueItem extends SwordItem {
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return com.tokyoghoulrpg.client.quinque.QuinqueRenderer.instance();
             }
+
+            /** Анимации квинке от третьего лица: своя поза руки, пока идёт приём или блок. */
+            @Override
+            public net.minecraft.client.model.HumanoidModel.ArmPose getArmPose(
+                    net.minecraft.world.entity.LivingEntity entity, net.minecraft.world.InteractionHand hand,
+                    ItemStack stack) {
+                if (hand == net.minecraft.world.InteractionHand.MAIN_HAND
+                        && com.tokyoghoulrpg.client.quinque.QuinqueAnim.animating(entity, stack)) {
+                    return com.tokyoghoulrpg.client.quinque.QuinqueAnim.ARM_POSE;
+                }
+                return null;
+            }
+
+            /** Анимации квинке от первого лица. */
+            @Override
+            public boolean applyForgeHandTransform(com.mojang.blaze3d.vertex.PoseStack poseStack,
+                    net.minecraft.client.player.LocalPlayer player, net.minecraft.world.entity.HumanoidArm arm,
+                    ItemStack stack, float partialTick, float equipProcess, float swingProcess) {
+                return com.tokyoghoulrpg.client.quinque.QuinqueAnim.applyFirstPerson(poseStack, player, arm, stack,
+                        equipProcess);
+            }
         });
     }
 }

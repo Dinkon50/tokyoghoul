@@ -51,7 +51,7 @@ public class CombatState {
 
     public boolean isBarraging() {
         for (ActiveAction action : actions) {
-            if (action instanceof Actions.Barrage) {
+            if (action instanceof BarrageAction) {
                 return true;
             }
         }

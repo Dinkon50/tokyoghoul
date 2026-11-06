@@ -83,6 +83,10 @@ public final class KaguneFirstPerson {
         if (kagune == null || !kagune.shouldRender()) {
             return;
         }
+        // «Гурман» обвивает руку: от первого лица его рисует GourmetFirstPerson прямо на руке
+        if (kagune.getVariant() == com.tokyoghoulrpg.data.KaguneVariant.GOURMET) {
+            return;
+        }
         if (renderer == null) {
             renderer = new KaguneRenderer();
             veinsRenderer = new KaguneVeinsRenderer();

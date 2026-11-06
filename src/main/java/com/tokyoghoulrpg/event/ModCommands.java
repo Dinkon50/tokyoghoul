@@ -109,7 +109,7 @@ public final class ModCommands {
                                 })))
                 .then(Commands.literal("variant").requires(src -> src.hasPermission(OP))
                         .then(withTarget(Commands.argument("variant", StringArgumentType.word())
-                                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(List.of("kaneki", "author"), builder)),
+                                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(List.of("kaneki", "wings", "gourmet"), builder)),
                                 ctx -> {
                                     KaguneVariant variant = KaguneVariant.byId(StringArgumentType.getString(ctx, "variant"));
                                     return (player, data) -> setVariant(data, player, variant);
@@ -367,7 +367,8 @@ public final class ModCommands {
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.rage",
                         data.getRage(), PlayerData.RAGE_MAX, data.getRageLevel()))
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.skills",
-                        data.getSkills().size(), SkillTree.totalCost(data.getPlayerClass(), player.level().getDifficulty())))
+                        data.getSkills().size(), SkillTree.totalCost(data.getPlayerClass(), data.getKaguneVariant(),
+                                player.level().getDifficulty())))
                 .append("\n").append(questLine)
                 .append("\n").append(Component.translatable("command.tokyoghoulrpg.info.rep",
                         data.getRepCcg(), data.getRepGhouls()))
@@ -435,7 +436,7 @@ public final class ModCommands {
     /** Открыть бесплатно все навыки дерева своего класса. */
     private static Component unlockAllSkills(ServerPlayer player, PlayerData data) {
         int opened = 0;
-        for (SkillTree.Tab tab : SkillTree.tabs(data.getPlayerClass())) {
+        for (SkillTree.Tab tab : SkillTree.tabs(data.getPlayerClass(), data.getKaguneVariant())) {
             for (SkillTree.Branch branch : SkillTree.branches(tab)) {
                 for (SkillTree.Skill skill : SkillTree.branch(branch)) {
                     if (!data.hasSkill(skill.id())) {

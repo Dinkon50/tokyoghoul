@@ -32,6 +32,11 @@ public final class GhoulUltimate {
     private GhoulUltimate() {
     }
 
+    /** Откат прошёл. */
+    static boolean ready(PlayerData data, long now) {
+        return now >= data.getUltimateReady();
+    }
+
     public static void use(ServerPlayer player, PlayerData data, CombatState state, long now) {
         if (now < data.getUltimateReady()) {
             long left = (data.getUltimateReady() - now + 19) / 20;
@@ -46,7 +51,8 @@ public final class GhoulUltimate {
         }
         LivingEntity target = findTarget(player);
         if (target == null) {
-            // секретная способность: при случайном наборе без цели ничего не пишем
+            // обычное «нет цели», как у захватов: про ульту ничего не пишем
+            AbilityManager.noTarget(player);
             return;
         }
         data.setUltimateReady(now + Balance.ULTIMATE_COOLDOWN);

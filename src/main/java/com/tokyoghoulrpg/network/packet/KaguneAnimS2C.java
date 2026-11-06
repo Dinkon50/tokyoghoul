@@ -28,8 +28,24 @@ public class KaguneAnimS2C {
 
     public static void handle(KaguneAnimS2C msg, Supplier<NetworkEvent.Context> ctx) {
         NetworkEvent.Context context = ctx.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                KaguneClientState.playAnimation(msg.entityId, msg.animation)));
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            // анимации квинке (имя начинается с quinque_) играет рука игрока, остальные — кагуне
+            if ("dash".equals(msg.animation) || "kagune_dash".equals(msg.animation)) {
+                com.tokyoghoulrpg.client.DashLean.start(msg.entityId);
+            }
+            if ("dash".equals(msg.animation)) {
+                // рывок без кагуне: только наклон тела
+                return;
+            }
+            if (msg.animation.startsWith("quinque_")) {
+                com.tokyoghoulrpg.client.quinque.QuinqueAnim.play(msg.entityId, msg.animation);
+            } else {
+                if (msg.animation.isEmpty()) {
+                    com.tokyoghoulrpg.client.quinque.QuinqueAnim.play(msg.entityId, "");
+                }
+                KaguneClientState.playAnimation(msg.entityId, msg.animation);
+            }
+        }));
         context.setPacketHandled(true);
     }
 }

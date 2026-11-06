@@ -40,8 +40,8 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "textures/quinque/palette.png");
     /** Точка хвата в плоскости предмета (в пикселях из 16): как у рукояти меча. */
-    private static final float GRIP = 3.5F / 16.0F;
-    private static final float THIRD_PERSON_SCALE = 1.0F;
+    static final float GRIP = 3.5F / 16.0F;
+    static final float THIRD_PERSON_SCALE = 1.0F;
     private static final float FIRST_PERSON_SCALE = 0.5F;
     private static final float OTHER_SCALE = 0.35F;
     /**
@@ -144,6 +144,14 @@ public class QuinqueRenderer extends BlockEntityWithoutLevelRenderer {
         // рукоять в нижнем левом углу плоскости предмета, модель (+Y) по диагонали вправо-вверх, как клинок меча
         poseStack.translate(GRIP, GRIP, 0.5F);
         poseStack.mulPose(Axis.ZP.rotationDegrees(-45.0F));
+        if (!firstPerson) {
+            // анимация приёма поворачивает квинке в кисти (QuinqueAnim): вокруг точки хвата
+            float[] wrist = QuinqueAnim.wrist(owner);
+            if (wrist != null) {
+                poseStack.mulPose(new org.joml.Quaternionf().rotationZYX(wrist[2] * ((float) Math.PI / 180.0F),
+                        wrist[1] * ((float) Math.PI / 180.0F), wrist[0] * ((float) Math.PI / 180.0F)));
+            }
+        }
         poseStack.scale(scale, scale, scale);
         if (type.flipInHand()) {
             // поворот вокруг древка: лезвие косы уходит с верхней стороны на нижнюю

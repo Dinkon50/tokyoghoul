@@ -200,6 +200,12 @@ public final class CombatEvents {
             // Это часть урона, которая проходит сквозь блок (ветка «Пробивание»)
             return;
         }
+        // «Гурман»: ветка «Парирование» — удар сразу после постановки блока гасится целиком, лента бьёт в ответ
+        if (com.tokyoghoulrpg.combat.GourmetFire.tryParry(blocker, data, source.getEntity())) {
+            event.setCanceled(true);
+            com.tokyoghoulrpg.combat.VrFeedback.parry(blocker);
+            return;
+        }
         // Идеальный блок: сильный удар, пришедший сразу после того, как поставлен блок, парируется —
         // урона нет, блок цел, атакующий оглушён. От обычных ударов парирования нет: их блок просто гасит.
         if (CombatContext.type() == AttackType.STRONG && source.getEntity() instanceof LivingEntity striker
@@ -213,6 +219,8 @@ public final class CombatEvents {
         }
         boolean breaks = CombatContext.type() == AttackType.STRONG || isRaging(source.getEntity());
         if (breaks) {
+            // «Гурман»: «Плотная спираль» гасит часть урона этого удара
+            com.tokyoghoulrpg.combat.GourmetFire.onBlockBroken(blocker, data, source.getEntity());
             AbilityManager.breakBlock(blocker, data);
             com.tokyoghoulrpg.combat.VrFeedback.blockBroken(blocker);
             return;
@@ -321,6 +329,8 @@ public final class CombatEvents {
                         ? QuinqueAbilities.releaseDamageBonus(data) : RageStats.damageBonus(data.getRageLevel())));
             }
             amount *= (float) (1.0 + SkillEffects.damageBonus(SkillEffects.level(data, SkillTree.Branch.DAMAGE)));
+            // «Гурман»: «Изящество» (давно не получал урона) и «Метка» на цели
+            amount *= (float) com.tokyoghoulrpg.combat.GourmetFire.damageFactor(attackingPlayer, data, victim);
             // передача силы в клане: получатель сильнее, отдавший слабее (и удары, и способности)
             amount *= (float) ClanBond.damageFactor(attackingPlayer);
             // квинке, улучшенная ядрами: +15% / +30% / +50%
@@ -376,6 +386,8 @@ public final class CombatEvents {
                         ? QuinqueAbilities.releaseReduction(data) : RageStats.damageReduction(data.getRageLevel())));
             }
             amount *= (float) (1.0 - SkillEffects.damageReduction(SkillEffects.level(data, SkillTree.Branch.DEFENSE)));
+            // «Гурман»: удар, сломавший блок, ослаблен «Плотной спиралью»
+            amount *= (float) com.tokyoghoulrpg.combat.GourmetFire.brokenBlockFactor(defendingPlayer);
             // Агент CCG: «Защита от кагуне» от любых гулей
             if (attacker instanceof LivingEntity livingAttacker && RcSuppress.isGhoul(livingAttacker)) {
                 amount *= (float) (1.0 - SkillEffects.kaguneGuard(SkillEffects.level(data, SkillTree.Branch.KAGUNE_GUARD)));

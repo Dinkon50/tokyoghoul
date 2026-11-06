@@ -19,7 +19,7 @@ public final class SkillManager {
         }
         SkillTree.Skill skill = SkillTree.find(id);
         // Навык должен быть из дерева именно этого класса
-        if (skill == null || data.hasSkill(id) || !SkillTree.isAvailable(data.getPlayerClass(), skill.branch())) {
+        if (skill == null || data.hasSkill(id) || !SkillTree.isAvailable(data.getPlayerClass(), data.getKaguneVariant(), skill.branch())) {
             return;
         }
         if (skill.requires() != null && !data.hasSkill(skill.requires())) {
@@ -27,10 +27,12 @@ public final class SkillManager {
         }
         int cost = SkillTree.cost(skill, player.level().getDifficulty(), data.getPlayerClass());
         // Обычной прокачкой — не больше 85% дерева: приходится выбирать, что важнее
-        if (SkillTree.overCap(data.getPlayerClass(), data.getSkills(), skill, player.level().getDifficulty())) {
+        if (SkillTree.overCap(data.getPlayerClass(), data.getKaguneVariant(), data.getSkills(), skill,
+                player.level().getDifficulty())) {
             player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.skill_cap",
-                    SkillTree.spentCost(data.getPlayerClass(), data.getSkills(), player.level().getDifficulty()),
-                    SkillTree.capCost(data.getPlayerClass(), player.level().getDifficulty())), true);
+                    SkillTree.spentCost(data.getPlayerClass(), data.getKaguneVariant(), data.getSkills(),
+                            player.level().getDifficulty()),
+                    SkillTree.capCost(data.getPlayerClass(), data.getKaguneVariant(), player.level().getDifficulty())), true);
             return;
         }
         if (data.getSkillPoints() < cost) {

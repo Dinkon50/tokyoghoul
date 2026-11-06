@@ -2,14 +2,16 @@ package com.tokyoghoulrpg.client.kagune;
 
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.tokyoghoulrpg.data.KaguneVariant;
 import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 
 /**
- * Рисует кагуне за спиной игрока. Подключается к обоим видам скина (обычный и тонкие руки).
+ * Рисует кагуне за спиной игрока («Гурман» Цукиямы — на правой руке). Подключается к обоим видам скина (обычный и тонкие руки).
  * От первого лица и в VR модель своего игрока не рисуется, тогда кагуне рисует KaguneFirstPerson
  * тем же способом (renderOnBody), поэтому оно растёт из того же места на спине.
  */
@@ -49,8 +51,34 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
 
         poseStack.pushPose();
         // Привязываем кагуне к телу игрока: так оно наклоняется вместе с телом, когда игрок приседает.
-        getParentModel().body.translateAndRotate(poseStack);
-        renderOnBody(poseStack, buffer, packedLight, kagune, renderer, veinsRenderer);
+        if (kagune.getVariant() == KaguneVariant.GOURMET) {
+            // «Гурман» обвивает правую руку: рисуем в пространстве руки, чтобы оно двигалось вместе с ней
+            ModelPart arm = getParentModel().rightArm;
+            arm.translateAndRotate(poseStack);
+            renderOnArm(poseStack, buffer, packedLight, kagune, renderer, veinsRenderer, "slim".equals(player.getModelName()));
+        } else {
+            getParentModel().body.translateAndRotate(poseStack);
+            renderOnBody(poseStack, buffer, packedLight, kagune, renderer, veinsRenderer);
+        }
+        poseStack.popPose();
+    }
+
+    /** Плечо правой руки в покое (пиксели модели игрока): точка, вокруг которой качается рука. */
+    private static final float ARM_PIVOT_X = -5.0F;
+    private static final float ARM_PIVOT_Y = 2.0F;
+
+    /**
+     * Рисует кагуне руки (poseStack уже в пространстве правой руки, после rightArm.translateAndRotate).
+     * Модель нарисована в тех же координатах Blockbench, что и остальные: рука висит вдоль тела, плечо в точке (5, 22, 0).
+     */
+    static void renderOnArm(PoseStack poseStack, MultiBufferSource buffer, int packedLight, KaguneAnimatable kagune,
+                            KaguneRenderer renderer, KaguneVeinsRenderer veinsRenderer, boolean slim) {
+        poseStack.pushPose();
+        poseStack.scale(-SCALE, -SCALE, SCALE);
+        // из координат Blockbench (начало у ног) в пространство руки: начало в плече.
+        // Тонкая рука (3 пикселя) стоит на полпикселя ближе к телу, поэтому и кагуне сдвигаем, чтобы рука была по центру.
+        poseStack.translate((ARM_PIVOT_X - (slim ? 0.5F : 0.0F)) / 16.0F, (ARM_PIVOT_Y - 24.0F) / 16.0F, 0.0F);
+        renderer.render(poseStack, kagune, buffer, null, null, packedLight);
         poseStack.popPose();
     }
 
@@ -67,7 +95,9 @@ public class KaguneLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
         poseStack.scale(-SCALE, -SCALE, SCALE);
         renderer.render(poseStack, kagune, buffer, null, null, packedLight);
         // Вены рисуем всегда, пока видно кагуне: так их анимация не отстаёт. Без ярости текстура прозрачная.
-        veinsRenderer.render(poseStack, kagune.getVeins(), buffer, null, null, packedLight);
+        if (kagune.hasVeins()) {
+            veinsRenderer.render(poseStack, kagune.getVeins(), buffer, null, null, packedLight);
+        }
         poseStack.popPose();
     }
 }

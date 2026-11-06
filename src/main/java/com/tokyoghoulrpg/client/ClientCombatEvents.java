@@ -61,6 +61,17 @@ public final class ClientCombatEvents {
         if (QuinqueAbilities.active(player, data) && mc.options.keyAttack.isDown() && mc.gameMode != null) {
             mc.gameMode.stopDestroyBlock();
         }
+        // «Укаку Тоуки» (крылья): зажатая ЛКМ — стрельба очередью. Просьба уходит каждый тик, а темп выстрелов
+        // держит сервер (прокачка «Скорострельность»). Если смотришь на блок вплотную, ЛКМ копает, как у других кагуне.
+        // «Гурман»: так же зажатая ЛКМ продолжает серию ударов лентой (темп держит сервер, прокачка «Серия»).
+        if (mc.screen == null && data.getPlayerClass().hasKagune()
+                && (data.getKaguneVariant() == com.tokyoghoulrpg.data.KaguneVariant.WINGS
+                        || data.getKaguneVariant() == com.tokyoghoulrpg.data.KaguneVariant.GOURMET)
+                && data.isKaguneActive() && !data.isBlocking() && mc.options.keyAttack.isDown()
+                && !KeyBindings.grabHeld()
+                && !(mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK)) {
+            send(AbilityType.BASIC_ATTACK);
+        }
     }
 
     @SubscribeEvent

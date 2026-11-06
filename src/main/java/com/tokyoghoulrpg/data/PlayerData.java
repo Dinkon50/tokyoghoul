@@ -29,6 +29,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     private KaguneVariant kaguneVariant = KaguneVariant.NONE;
     /** Носить скин из мода вместо своего: гуль и полугуль — скин гуля, агент CCG — скин CCG (выбирается вместе с классом). */
     private boolean modSkin = false;
+    /** Для гуля и полугуля: второй скин из мода вместо первого (работает, только если modSkin). */
+    private boolean altSkin = false;
     /** Тип кагуне (ринкаку, укаку, коукаку, бикаку): пассивный бонус. NONE — ещё не выбран. */
     private KaguneType kaguneType = KaguneType.NONE;
     /** Подсказки для новичков: какая сейчас и закончены ли (у персонажей из старых сохранений — закончены). */
@@ -158,6 +160,24 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     public void setModSkin(boolean modSkin) {
         this.modSkin = modSkin;
+        if (!modSkin) {
+            altSkin = false;
+        }
+    }
+
+    /** Выбор скина одним числом: 0 — свой, 1 — скин класса, 2 — второй скин гуля (только гуль и полугуль). */
+    public int skinChoice() {
+        return !modSkin ? 0 : (altSkin && playerClass.hasKagune() ? 2 : 1);
+    }
+
+    public void setSkinChoice(int choice) {
+        modSkin = choice > 0;
+        altSkin = choice == 2 && playerClass.hasKagune();
+    }
+
+    /** Сколько скинов можно выбрать (включая свой): гуль и полугуль — 3, агент CCG — 2. */
+    public static int skinCount(PlayerClass cls) {
+        return cls.hasKagune() ? 3 : 2;
     }
 
     /** У класса есть свой скин в моде: гуль, полугуль, агент CCG. */
@@ -165,13 +185,13 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         return cls.hasKagune() || cls == PlayerClass.CCG_AGENT;
     }
 
-    /** Какой скин мода показывать сейчас: 0 — свой скин игрока, 1 — скин гуля, 2 — скин CCG. */
+    /** Какой скин мода показывать сейчас: 0 — свой скин игрока, 1 — скин гуля, 2 — скин CCG, 3 — второй скин гуля. */
     public int modSkinId() {
         if (!modSkin) {
             return 0;
         }
         if (playerClass.hasKagune()) {
-            return 1;
+            return altSkin ? 3 : 1;
         }
         return playerClass == PlayerClass.CCG_AGENT ? 2 : 0;
     }
@@ -783,6 +803,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         playerClass = PlayerClass.NONE;
         kaguneVariant = KaguneVariant.NONE;
         modSkin = false;
+        altSkin = false;
         kaguneType = KaguneType.NONE;
         tutorialStep = 0;
         tutorialDone = false;
@@ -856,6 +877,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putString("class", playerClass.id());
         tag.putString("kagune_variant", kaguneVariant.id());
         tag.putBoolean("mod_skin", modSkin);
+        tag.putBoolean("alt_skin", altSkin);
         tag.putString("kagune_type", kaguneType.id());
         tag.putInt("tutorial_step", tutorialStep);
         tag.putBoolean("tutorial_done", tutorialDone);
@@ -974,7 +996,12 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     public void deserializeNBT(CompoundTag tag) {
         playerClass = PlayerClass.byId(tag.getString("class"));
         kaguneVariant = KaguneVariant.byId(tag.getString("kagune_variant"));
+        if (kaguneVariant == KaguneVariant.AUTHOR) {
+            // «Авторский» убран из выбора игроков, его место занял «Укаку Тоуки»
+            kaguneVariant = KaguneVariant.WINGS;
+        }
         modSkin = tag.getBoolean("mod_skin");
+        altSkin = tag.getBoolean("alt_skin");
         kaguneType = KaguneType.byId(tag.getString("kagune_type"));
         // персонаж из сохранения, где подсказок ещё не было: он уже не новичок
         tutorialStep = tag.getInt("tutorial_step");

@@ -48,16 +48,20 @@ public final class ModSkins {
     public static final Skin GHOUL = new Skin(new ResourceLocation(TokyoGhoulRPG.MOD_ID, "textures/skin/ghoul.png"), "default");
     public static final Skin CCG = new Skin(new ResourceLocation(TokyoGhoulRPG.MOD_ID, "textures/skin/ccg.png"), "slim");
 
+    /** 3 — второй скин гуля (обычные руки). */
+    public static final Skin GHOUL_ALT = new Skin(new ResourceLocation(TokyoGhoulRPG.MOD_ID, "textures/skin/ghoul_alt.png"), "default");
+
     public static Skin byId(int id) {
         return switch (id) {
             case 1 -> GHOUL;
             case 2 -> CCG;
+            case 3 -> GHOUL_ALT;
             default -> null;
         };
     }
 
     private static boolean isModTexture(ResourceLocation texture) {
-        return GHOUL.texture().equals(texture) || CCG.texture().equals(texture);
+        return GHOUL.texture().equals(texture) || CCG.texture().equals(texture) || GHOUL_ALT.texture().equals(texture);
     }
 
     /** Какой скин мода носит игрок: номер сущности → скин. */

@@ -95,7 +95,7 @@ public final class Actions {
     }
 
     /** Барраж: серия ударов в моменты из анимации. Урон наносится только за реальные попадания. */
-    public static final class Barrage implements ActiveAction {
+    public static final class Barrage implements BarrageAction {
         private final long start;
         private final int[] hitTicks;
         private final int duration;

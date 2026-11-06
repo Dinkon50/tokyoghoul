@@ -29,7 +29,7 @@ public enum PlayerClass {
 
     /** Варианты кагуне на выбор. Для классов без кагуне список пустой. */
     public List<KaguneVariant> variants() {
-        return hasKagune ? List.of(KaguneVariant.KANEKI, KaguneVariant.AUTHOR) : List.of();
+        return hasKagune ? List.of(KaguneVariant.KANEKI, KaguneVariant.WINGS, KaguneVariant.GOURMET) : List.of();
     }
 
     public String translationKey() {

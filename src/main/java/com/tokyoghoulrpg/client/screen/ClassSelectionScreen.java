@@ -89,17 +89,17 @@ public class ClassSelectionScreen extends Screen {
         } else {
             // скин: под каждым превью своя кнопка
             int y = dollTop() + 32 * DOLL_SCALE + 10;
-            addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.skin.own"),
-                            button -> choose(false))
-                    .bounds(centerX - 150, y, 140, 20)
-                    .tooltip(Tooltip.create(Component.translatable("screen.tokyoghoulrpg.skin.own.tip")))
-                    .build());
-            String skinKey = selected.hasKagune() ? "screen.tokyoghoulrpg.skin.ghoul" : "screen.tokyoghoulrpg.skin.ccg";
-            addRenderableWidget(Button.builder(Component.translatable(skinKey),
-                            button -> choose(true))
-                    .bounds(centerX + 10, y, 140, 20)
-                    .tooltip(Tooltip.create(Component.translatable(skinKey + ".tip")))
-                    .build());
+            int count = PlayerData.skinCount(selected);
+            String[] skinKeys = selected.hasKagune()
+                    ? new String[] {"screen.tokyoghoulrpg.skin.own", "screen.tokyoghoulrpg.skin.ghoul", "screen.tokyoghoulrpg.skin.ghoul_alt"}
+                    : new String[] {"screen.tokyoghoulrpg.skin.own", "screen.tokyoghoulrpg.skin.ccg"};
+            for (int i = 0; i < count; i++) {
+                final int choice = i;
+                addRenderableWidget(Button.builder(Component.translatable(skinKeys[i]), button -> choose(choice))
+                        .bounds(centerX + skinColumn(i, count) - SKIN_BUTTON_W / 2, y, SKIN_BUTTON_W, 20)
+                        .tooltip(Tooltip.create(Component.translatable(skinKeys[i] + ".tip")))
+                        .build());
+            }
             if (!variantOnly || selected.hasKagune()) {
                 addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.back"), button -> {
                             chosenVariant = null;
@@ -112,6 +112,13 @@ public class ClassSelectionScreen extends Screen {
                         .build());
             }
         }
+    }
+
+    private static final int SKIN_BUTTON_W = 120;
+
+    /** Сдвиг колонки скина от центра экрана: два скина — по бокам, три — ещё и в середине. */
+    private static int skinColumn(int index, int count) {
+        return count == 3 ? (index - 1) * 130 : (index == 0 ? -80 : 80);
     }
 
     private int dollTop() {
@@ -129,17 +136,17 @@ public class ClassSelectionScreen extends Screen {
             chosenVariant = KaguneVariant.NONE;
             buildButtons();
         } else {
-            NetworkHandler.CHANNEL.sendToServer(new SelectClassC2S(cls, KaguneVariant.NONE, false));
+            NetworkHandler.CHANNEL.sendToServer(new SelectClassC2S(cls, KaguneVariant.NONE, 0));
             onClose();
         }
     }
 
-    private void choose(boolean modSkin) {
+    private void choose(int skin) {
         if (variantOnly) {
             NetworkHandler.CHANNEL.sendToServer(new SelectVariantC2S(chosenVariant));
-            NetworkHandler.CHANNEL.sendToServer(new SkinChoiceC2S(modSkin));
+            NetworkHandler.CHANNEL.sendToServer(new SkinChoiceC2S(skin));
         } else {
-            NetworkHandler.CHANNEL.sendToServer(new SelectClassC2S(selected, chosenVariant, modSkin));
+            NetworkHandler.CHANNEL.sendToServer(new SelectClassC2S(selected, chosenVariant, skin));
         }
         onClose();
     }
@@ -179,9 +186,15 @@ public class ClassSelectionScreen extends Screen {
                     : DefaultPlayerSkin.getDefaultSkin();
             boolean ownSlim = this.minecraft.player != null && "slim".equals(this.minecraft.player.getModelName())
                     && !ModSkins.isWearing(this.minecraft.player);
-            drawDoll(gfx, own, this.width / 2 - 80 - dollW / 2, dollTop(), ownSlim);
+            int count = PlayerData.skinCount(selected);
+            drawDoll(gfx, own, this.width / 2 + skinColumn(0, count) - dollW / 2, dollTop(), ownSlim);
             ModSkins.Skin classSkin = selected.hasKagune() ? ModSkins.GHOUL : ModSkins.CCG;
-            drawDoll(gfx, classSkin.texture(), this.width / 2 + 80 - dollW / 2, dollTop(), "slim".equals(classSkin.model()));
+            drawDoll(gfx, classSkin.texture(), this.width / 2 + skinColumn(1, count) - dollW / 2, dollTop(),
+                    "slim".equals(classSkin.model()));
+            if (count == 3) {
+                drawDoll(gfx, ModSkins.GHOUL_ALT.texture(), this.width / 2 + skinColumn(2, count) - dollW / 2, dollTop(),
+                        "slim".equals(ModSkins.GHOUL_ALT.model()));
+            }
         }
 
         super.render(gfx, mouseX, mouseY, partialTick);

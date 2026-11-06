@@ -1398,5 +1398,35 @@
         ]
       }
     ]
+  },
+  "gourmet_slash_a": {
+    "duration": 0.3
+  },
+  "gourmet_slash_b": {
+    "duration": 0.3
+  },
+  "gourmet_thrust": {
+    "duration": 0.45
+  },
+  "gourmet_lunge": {
+    "duration": 0.6
+  },
+  "gourmet_whirl": {
+    "duration": 2.0
+  },
+  "gourmet_dance": {
+    "duration": 1.2
+  },
+  "wings_fire": {
+    "duration": 0.3
+  },
+  "wings_big": {
+    "duration": 0.7
+  },
+  "wings_hail": {
+    "duration": 2.5
+  },
+  "wings_storm": {
+    "duration": 3.3
   }
 }

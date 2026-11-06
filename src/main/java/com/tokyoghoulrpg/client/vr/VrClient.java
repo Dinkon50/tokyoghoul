@@ -118,6 +118,41 @@ public final class VrClient {
         }
     }
 
+    private static Object commonApi;
+    private static Method isVrPlayer;
+    private static boolean commonChecked;
+
+    /**
+     * Играет ли этот игрок (свой или чужой) в шлеме. Руки VR-игроков Vivecraft ставит сам
+     * по контроллерам, поэтому наши позы рук им не нужны.
+     */
+    public static boolean isVrPlayer(net.minecraft.world.entity.Entity entity) {
+        if (!(entity instanceof net.minecraft.world.entity.player.Player player)) {
+            return false;
+        }
+        if (!commonChecked) {
+            commonChecked = true;
+            if (ModList.get().isLoaded("vivecraft")) {
+                try {
+                    Class<?> apiClass = Class.forName("org.vivecraft.api.VRAPI");
+                    isVrPlayer = apiClass.getMethod("isVRPlayer", net.minecraft.world.entity.player.Player.class);
+                    commonApi = apiClass.getMethod("instance").invoke(null);
+                } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+                    commonApi = null;
+                }
+            }
+        }
+        if (commonApi == null) {
+            return false;
+        }
+        try {
+            return Boolean.TRUE.equals(isVrPlayer.invoke(commonApi, player));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            commonApi = null;
+            return false;
+        }
+    }
+
     private static Pose pose(Method source) {
         if (!active()) {
             return null;

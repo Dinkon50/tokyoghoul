@@ -92,15 +92,17 @@ public final class ClassChange {
         }
 
         int refund = 0;
+        // вид кагуне сохраняется только при переходе гуль ↔ полугуль; иначе дерево считаем как у обычного кагуне
+        KaguneVariant keptVariant = target.hasKagune() && old.hasKagune() ? data.getKaguneVariant() : KaguneVariant.NONE;
         for (String id : new ArrayList<>(data.getSkills())) {
             SkillTree.Skill skill = SkillTree.find(id);
-            if (skill == null || !SkillTree.isAvailable(target, skill.branch())) {
+            if (skill == null || !SkillTree.isAvailable(target, keptVariant, skill.branch())) {
                 refund += skill == null ? 0 : data.paidFor(id, skill.cost());
                 data.removeSkill(id);
             }
         }
         data.addSkillPoints(refund);
-        if (!SkillTree.isAvailable(target, SkillTree.Branch.RAGE)) {
+        if (!SkillTree.isAvailable(target, keptVariant, SkillTree.Branch.RAGE)) {
             data.setRageLevel(0);
         }
 

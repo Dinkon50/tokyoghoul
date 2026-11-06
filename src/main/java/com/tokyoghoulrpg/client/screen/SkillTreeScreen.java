@@ -34,7 +34,7 @@ public class SkillTreeScreen extends Screen {
     /** Вкладки дерева для класса игрока. */
     private List<SkillTree.Tab> tabs() {
         PlayerData data = data();
-        return data == null ? List.of() : SkillTree.tabs(data.getPlayerClass());
+        return data == null ? List.of() : SkillTree.tabs(data.getPlayerClass(), data.getKaguneVariant());
     }
 
     /** Если сохранённая вкладка от другого класса, открываем первую вкладку своего. */
@@ -128,7 +128,7 @@ public class SkillTreeScreen extends Screen {
         if (skill.requires() != null && !data.hasSkill(skill.requires())) {
             return State.LOCKED;
         }
-        if (SkillTree.overCap(data.getPlayerClass(), data.getSkills(), skill, difficulty())) {
+        if (SkillTree.overCap(data.getPlayerClass(), data.getKaguneVariant(), data.getSkills(), skill, difficulty())) {
             return State.CAP;
         }
         if (data.getSkillPoints() < cost(skill)) {
@@ -186,9 +186,9 @@ public class SkillTreeScreen extends Screen {
             if (!tabs().isEmpty()) {
                 // сколько дерева уже открыто и сколько можно открыть всего (85%)
                 Component cap = Component.translatable("screen.tokyoghoulrpg.skill_tree.cap",
-                        SkillTree.spentCost(data.getPlayerClass(), data.getSkills(), difficulty()),
-                        SkillTree.capCost(data.getPlayerClass(), difficulty()),
-                        SkillTree.totalCost(data.getPlayerClass(), difficulty()));
+                        SkillTree.spentCost(data.getPlayerClass(), data.getKaguneVariant(), data.getSkills(), difficulty()),
+                        SkillTree.capCost(data.getPlayerClass(), data.getKaguneVariant(), difficulty()),
+                        SkillTree.totalCost(data.getPlayerClass(), data.getKaguneVariant(), difficulty()));
                 gfx.drawCenteredString(this.font, cap, this.width / 2, top + 22, 0x9A5A7A);
             }
             int gap = 16;

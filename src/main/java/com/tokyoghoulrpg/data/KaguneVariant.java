@@ -4,7 +4,12 @@ package com.tokyoghoulrpg.data;
 public enum KaguneVariant {
     NONE("none"),
     KANEKI("kaneki"),
-    AUTHOR("author");
+    /** Больше не выбирается игроками (его место занял WINGS); модель остаётся у боссов. */
+    AUTHOR("author"),
+    /** «Укаку Тоуки»: огненные крылья из лопаток (в стиле укаку), левое больше правого: модель geo/ukaku_kagune.geo.json. */
+    WINGS("wings"),
+    /** «Гурман» Цукиямы Шу: фиолетовая лента-спираль вдоль правой руки (коукаку): geo/gourmet_kagune.geo.json. */
+    GOURMET("gourmet");
 
     private final String id;
 

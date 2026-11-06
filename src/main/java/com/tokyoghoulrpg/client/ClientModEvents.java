@@ -104,7 +104,10 @@ public final class ClientModEvents {
     /** F3+T и смена ресурс-паков: модели квинке читаются заново. */
     @SubscribeEvent
     public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener((ResourceManagerReloadListener) manager -> QuinqueRenderer.clearCache());
+        event.registerReloadListener((ResourceManagerReloadListener) manager -> {
+            QuinqueRenderer.clearCache();
+            com.tokyoghoulrpg.client.quinque.QuinqueAnim.reload();
+        });
     }
 
     @SubscribeEvent
