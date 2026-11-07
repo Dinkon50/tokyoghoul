@@ -33,7 +33,7 @@ public final class ShopServer {
         if (entry == null || data == null || nearbyTrader(player, entityId) == null) {
             return;
         }
-        int price = BloodShop.priceFor(entry, data);
+        int price = BloodShop.priceFor(entry, data, player.level().getDifficulty());
         if (data.getBloodPoints() < price) {
             player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.blood_not_enough"), true);
             return;

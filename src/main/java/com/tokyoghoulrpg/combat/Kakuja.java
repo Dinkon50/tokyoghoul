@@ -185,6 +185,7 @@ public final class Kakuja {
             return;
         }
         data.setKakujaEndTick(now + formTicks(data));
+        com.tokyoghoulrpg.quest.QuestManager.progress(player, com.tokyoghoulrpg.quest.Quest.Trigger.KAKUJA, 1);
         AttrUtil.set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "tg_kakuja_speed", Balance.KAKUJA_SPEED,
                 AttributeModifier.Operation.MULTIPLY_TOTAL);
         Effects.sound(player, SoundEvents.WARDEN_ROAR, 0.9F, 1.3F);

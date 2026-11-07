@@ -222,21 +222,6 @@
         },
         {
           "type": "minecraft:item",
-          "name": "tokyoghoulrpg:ghoul_injection",
-          "weight": 3
-        },
-        {
-          "type": "minecraft:item",
-          "name": "tokyoghoulrpg:human_injection",
-          "weight": 3
-        },
-        {
-          "type": "minecraft:item",
-          "name": "tokyoghoulrpg:ccg_injection",
-          "weight": 3
-        },
-        {
-          "type": "minecraft:item",
           "name": "tokyoghoulrpg:quinque_kura",
           "weight": 3
         },
@@ -253,6 +238,33 @@
         {
           "type": "minecraft:item",
           "name": "tokyoghoulrpg:skill_reset_seal",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.03
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_injection",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:human_injection",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ccg_injection",
           "weight": 1
         }
       ]

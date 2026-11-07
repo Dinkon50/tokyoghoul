@@ -101,7 +101,9 @@ public final class DoubleJumpClient {
             boostX = dx * Balance.DOUBLE_JUMP_BOOST;
             boostZ = dz * Balance.DOUBLE_JUMP_BOOST;
         }
-        player.setDeltaMovement(motion.x * 0.6 + boostX, Balance.DOUBLE_JUMP_VELOCITY, motion.z * 0.6 + boostZ);
+        // ветка «Прыжок» поднимает и второй прыжок
+        double up = Balance.DOUBLE_JUMP_VELOCITY + com.tokyoghoulrpg.skill.SkillEffects.jumpBonus(PlayerData.get(player));
+        player.setDeltaMovement(motion.x * 0.6 + boostX, up, motion.z * 0.6 + boostZ);
         player.fallDistance = 0.0F;
         // облачко под ногами видно сразу, не дожидаясь сервера
         for (int i = 0; i < 8; i++) {

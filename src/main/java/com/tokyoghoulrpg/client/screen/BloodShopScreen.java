@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /** Лавка торговца: товары за очки крови и кнопка обычной торговли за изумруды. */
-public class BloodShopScreen extends Screen {
+public class BloodShopScreen extends ModScreen {
     private static final int WIDTH = 260;
     private static final int ROW_H = 22;
 
@@ -81,14 +81,13 @@ public class BloodShopScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int top = top();
         int left = left();
         int panelH = 40 + BloodShop.ENTRIES.size() * ROW_H + 58;
-        gfx.fill(left, top - 6, left + WIDTH, top + panelH, 0xC0140808);
-        gfx.fill(left, top - 6, left + 2, top + panelH, 0xFFB01E1E);
+        modPanel(gfx, left, top - 6, WIDTH, (top + panelH) - (top - 6), 0xFFB01E1E);
 
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top, 0xC21B1B);
+        modTitle(gfx, this.title, this.width / 2, top, 0xC21B1B);
         int blood = blood();
         gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.shop.balance", blood),
                 this.width / 2, top + 14, 0xFF5A78);
@@ -104,11 +103,12 @@ public class BloodShopScreen extends Screen {
             BloodShop.Entry entry = BloodShop.ENTRIES.get(i);
             ItemStack stack = entry.stack();
             if (i % 2 == 0) {
-                gfx.fill(left + 4, y, left + WIDTH - 4, y + ROW_H - 2, 0x40FFFFFF);
+                gfx.fill(left + 4, y, left + WIDTH - 4, y + ROW_H - 2, 0x18FFFFFF);
             }
             gfx.renderItem(stack, left + 10, y + 4);
             gfx.drawString(this.font, stack.getHoverName(), left + 32, y + 3, 0xE6E6E6, false);
-            int price = BloodShop.priceFor(entry, mcData());
+            int price = BloodShop.priceFor(entry, mcData(), this.minecraft.level == null
+                    ? net.minecraft.world.Difficulty.NORMAL : this.minecraft.level.getDifficulty());
             boolean affordable = blood >= price;
             gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.shop.price", price),
                     left + 32, y + 13, affordable ? 0xFF5A78 : 0x777777, false);

@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
  * Торговая площадка (клавиша M). Вкладки: «Все кланы» (лоты для всех), «Мой клан» (только для своего клана),
  * «Мои лоты». Внизу — выставить вещь из главной руки: цена в очках крови и кому видно.
  */
-public class MarketScreen extends Screen {
+public class MarketScreen extends ModScreen {
     private static final int WIDTH = 340;
     private static final int HEIGHT = 250;
     private static final int ROW = 20;
@@ -170,14 +170,13 @@ public class MarketScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + HEIGHT, 0xC0141008);
-        gfx.fill(left, top, left + 2, top + HEIGHT, 0xFFD8B060);
+        modPanel(gfx, left, top, WIDTH, (top + HEIGHT) - (top), 0xFFD8B060);
         Minecraft mc = Minecraft.getInstance();
         PlayerData data = mc.player == null ? null : PlayerData.get(mc.player);
-        gfx.drawString(this.font, this.title, left + 10, top + 7, 0xD8B060, false);
+        modTitle(gfx, this.title, this.width / 2, top + 7, 0xD8B060);
         if (data != null) {
             Component blood = Component.translatable("screen.tokyoghoulrpg.market.blood", data.getBloodPoints());
             gfx.drawString(this.font, blood, left + WIDTH - 10 - this.font.width(blood), top + 7, 0xFF5A78, false);

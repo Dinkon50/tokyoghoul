@@ -82,6 +82,9 @@ public final class ClientForgeEvents {
         while (KeyBindings.KAKUJA.consumeClick()) {
             sendAbility(mc, AbilityType.KAKUJA);
         }
+        while (KeyBindings.GOURMET_RAGE.consumeClick()) {
+            sendAbility(mc, AbilityType.GOURMET_RAGE);
+        }
         while (KeyBindings.MARKET.consumeClick()) {
             if (mc.screen == null) {
                 mc.setScreen(new com.tokyoghoulrpg.client.screen.MarketScreen());
@@ -141,7 +144,7 @@ public final class ClientForgeEvents {
         }
     }
 
-    /** Когда выбран класс, здоровье и голод показывает наша панель, а ванильные полоски скрываются. */
+    /** Когда выбран класс, здоровье, голод и броню показывает наша панель, а полоски Minecraft скрываются. */
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
         Minecraft mc = Minecraft.getInstance();
@@ -153,7 +156,8 @@ public final class ClientForgeEvents {
             return;
         }
         if (event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type()
-                || event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()) {
+                || event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()
+                || event.getOverlay() == VanillaGuiOverlay.ARMOR_LEVEL.type()) {
             event.setCanceled(true);
         }
     }

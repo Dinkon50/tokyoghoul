@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /** Окно информатора: контракт на сегодня или текущий контракт с прогрессом. */
-public class ContractScreen extends Screen {
+public class ContractScreen extends ModScreen {
     private static final int WIDTH = 280;
     private static final int HEIGHT = 120;
 
@@ -63,12 +63,11 @@ public class ContractScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + HEIGHT, 0xC0140808);
-        gfx.fill(left, top, left + 2, top + HEIGHT, 0xFFB01E1E);
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top + 6, 0xC21B1B);
+        modPanel(gfx, left, top, WIDTH, (top + HEIGHT) - (top), 0xFFB01E1E);
+        modTitle(gfx, this.title, this.width / 2, top + 6, 0xC21B1B);
 
         PlayerData data = data();
         Contract active = data == null || data.getContractId() == null ? null : Contract.byId(data.getContractId());

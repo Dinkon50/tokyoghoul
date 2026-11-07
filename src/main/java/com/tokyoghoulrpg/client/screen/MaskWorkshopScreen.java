@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /** Мастерская масок: четыре маски, у каждой «Обычная» и «Работа мастера» с ценой в очках крови. */
-public class MaskWorkshopScreen extends Screen {
+public class MaskWorkshopScreen extends ModScreen {
     private static final int WIDTH = 330;
     private static final int ROW = 40;
     private final BlockPos pos;
@@ -56,13 +56,12 @@ public class MaskWorkshopScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
         int height = ModItems.MASKS.size() * ROW + 70;
-        gfx.fill(left, top, left + WIDTH, top + height, 0xC0140808);
-        gfx.fill(left, top, left + 2, top + height, 0xFFB01E1E);
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top + 7, 0xC21B1B);
+        modPanel(gfx, left, top, WIDTH, (top + height) - (top), 0xFFB01E1E);
+        modTitle(gfx, this.title, this.width / 2, top + 7, 0xC21B1B);
         Minecraft mc = Minecraft.getInstance();
         PlayerData data = mc.player == null ? null : PlayerData.get(mc.player);
         if (data != null) {

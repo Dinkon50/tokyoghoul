@@ -140,6 +140,9 @@ public final class NetworkHandler {
                 com.tokyoghoulrpg.network.packet.KaguneUltimateS2C::encode,
                 com.tokyoghoulrpg.network.packet.KaguneUltimateS2C::decode,
                 com.tokyoghoulrpg.network.packet.KaguneUltimateS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.ShardFxS2C.class,
+                com.tokyoghoulrpg.network.packet.ShardFxS2C::encode, com.tokyoghoulrpg.network.packet.ShardFxS2C::decode,
+                com.tokyoghoulrpg.network.packet.ShardFxS2C::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */

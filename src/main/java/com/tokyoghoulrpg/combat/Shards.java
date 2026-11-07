@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import com.tokyoghoulrpg.network.NetworkHandler;
+import com.tokyoghoulrpg.network.packet.ShardFxS2C;
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -18,6 +21,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -26,20 +30,31 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
 import org.joml.Vector3f;
 
 /**
  * Осколки «Укаку Тоуки»: летящие снаряды, которые целиком живут на сервере (сущности не нужны).
  * Каждый тик осколок пролетает свою скорость вперёд, упирается в блок или в первое существо на пути,
- * а за собой оставляет огненный след из частиц, поэтому полёт видно. Попадание — обычный удар способности
+ * Игроки рядом видят его как летящий кристаллический шип (ShardFxS2C, client/ShardSpikes), огня нет. Попадание — обычный удар способности
  * (CombatContext.hit): блок, ярость, ветки «Урон» и «Кровотечение» работают так же, как у других ударов.
  */
 @Mod.EventBusSubscriber(modid = TokyoGhoulRPG.MOD_ID)
 public final class Shards {
-    /** Огненно-оранжевый след и более яркий след большого осколка. */
-    private static final DustParticleOptions TRAIL = new DustParticleOptions(new Vector3f(1.0F, 0.42F, 0.08F), 0.7F);
-    private static final DustParticleOptions TRAIL_HOT = new DustParticleOptions(new Vector3f(1.0F, 0.78F, 0.3F), 0.9F);
-    private static final DustParticleOptions TRAIL_BIG = new DustParticleOptions(new Vector3f(1.0F, 0.3F, 0.05F), 1.9F);
+    /** Тёмно-красная крошка шипов (попадание, удар о стену, след большого шипа). */
+    public static final DustParticleOptions SPIKE_DUST = new DustParticleOptions(new Vector3f(0.72F, 0.08F, 0.04F), 0.6F);
+    public static final DustParticleOptions SPIKE_DUST_BIG = new DustParticleOptions(new Vector3f(0.6F, 0.05F, 0.03F), 1.2F);
+    /** Большой шип разбивается на красные осколки, как стекло. */
+    public static final BlockParticleOption SHATTER = new BlockParticleOption(ParticleTypes.BLOCK,
+            Blocks.RED_STAINED_GLASS.defaultBlockState());
+    /** Шип виден игрокам в этом радиусе. */
+    private static final double FX_RANGE = 96.0;
+    private static int nextId = 1;
+    /** Размеры летящих шипов (их рисует client/ShardSpikes). */
+    public static final int SIZE_TINY = 0;
+    public static final int SIZE_SMALL = 1;
+    public static final int SIZE_MEDIUM = 2;
+    public static final int SIZE_BIG = 3;
     /** Лишнее не копим: в игре с десятками стрелков осколков не больше этого. */
     private static final int MAX_LIVE = 2500;
 
@@ -60,6 +75,8 @@ public final class Shards {
         /** Осколок, выпущенный дугой «Электрического разряда», сам дугу не даёт. */
         boolean noArc;
         final Set<UUID> hit = new HashSet<>();
+        /** Номер для клиентов (летящий шип). */
+        int id;
 
         public Shard(ServerLevel level, UUID owner, Vec3 pos, Vec3 direction, double speed, double range, float damage,
                 AttackType type, boolean big, int pierce, double splash) {
@@ -105,7 +122,37 @@ public final class Shards {
     public static void spawn(Shard shard) {
         if (LIVE.size() < MAX_LIVE) {
             LIVE.add(shard);
+            shard.id = nextId++;
+            if (nextId == Integer.MAX_VALUE) {
+                nextId = 1;
+            }
+            // большой осколок (ПКМ) — большой шип, ульта — средние, остальное (ЛКМ) — маленькие
+            int size = shard.big ? SIZE_BIG : shard.type == AttackType.ULTIMATE ? SIZE_MEDIUM : SIZE_SMALL;
+            send(shard, ShardFxS2C.spawn(shard.id, shard.pos.x, shard.pos.y, shard.pos.z,
+                    shard.velocity.x, shard.velocity.y, shard.velocity.z, shard.left, size));
         }
+    }
+
+    /**
+     * Только видимый шип без урона (урон уже нанесён сам): например, «Рикошет» от одной цели к другой.
+     * Клиент сам ведёт его и убирает, пролетев range блоков.
+     */
+    public static void visual(ServerLevel level, Vec3 from, Vec3 velocity, double range, int size) {
+        if (range < 0.05 || velocity.lengthSqr() < 1.0E-8) {
+            return;
+        }
+        int id = nextId++;
+        if (nextId == Integer.MAX_VALUE) {
+            nextId = 1;
+        }
+        NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
+                from.x, from.y, from.z, FX_RANGE, level.dimension())),
+                ShardFxS2C.spawn(id, from.x, from.y, from.z, velocity.x, velocity.y, velocity.z, range, size));
+    }
+
+    private static void send(Shard s, ShardFxS2C packet) {
+        NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
+                s.pos.x, s.pos.y, s.pos.z, FX_RANGE, s.level.dimension())), packet);
     }
 
     @SubscribeEvent
@@ -117,6 +164,8 @@ public final class Shards {
         for (Shard shard : new ArrayList<>(LIVE)) {
             if (step(shard)) {
                 alive.add(shard);
+            } else {
+                send(shard, ShardFxS2C.end(shard.id));
             }
         }
         LIVE.clear();
@@ -191,7 +240,9 @@ public final class Shards {
             if (s.big) {
                 explode(s, owner, end, null);
             } else {
-                s.level.sendParticles(TRAIL_HOT, end.x, end.y, end.z, 3, 0.08, 0.08, 0.08, 0.02);
+                // шип воткнулся в стену и раскрошился
+                s.level.sendParticles(SPIKE_DUST, end.x, end.y, end.z, 3, 0.08, 0.08, 0.08, 0.02);
+                s.level.sendParticles(ParticleTypes.CRIT, end.x, end.y, end.z, 1, 0.05, 0.05, 0.05, 0.05);
             }
             return false;
         }
@@ -200,25 +251,17 @@ public final class Shards {
         return s.left > 0.0;
     }
 
-    /** Огненный след по пройденному за тик отрезку. */
+    /** След: маленькие шипы летят чисто (их рисует клиент), за большим тянется редкая тёмно-красная крошка. */
     private static void trail(Shard s, Vec3 from, Vec3 to) {
-        Vec3 delta = to.subtract(from);
-        double length = delta.length();
-        if (length < 1.0E-3) {
+        if (!s.big) {
             return;
         }
-        int points = s.big ? 4 : 2;
-        for (int i = 0; i < points; i++) {
-            Vec3 p = from.add(delta.scale((i + 0.5) / points));
-            s.level.sendParticles(s.big ? TRAIL_BIG : (i == 0 ? TRAIL_HOT : TRAIL), p.x, p.y, p.z, 1, 0.0, 0.0, 0.0, 0.0);
+        Vec3 delta = to.subtract(from);
+        if (delta.lengthSqr() < 1.0E-6) {
+            return;
         }
-        if (s.big) {
-            Vec3 p = from.add(delta.scale(0.5));
-            s.level.sendParticles(ParticleTypes.FLAME, p.x, p.y, p.z, 2, 0.06, 0.06, 0.06, 0.01);
-        } else if (s.level.getGameTime() % 3 == 0) {
-            Vec3 p = from.add(delta.scale(0.5));
-            s.level.sendParticles(ParticleTypes.SMALL_FLAME, p.x, p.y, p.z, 1, 0.0, 0.0, 0.0, 0.0);
-        }
+        Vec3 p = from.add(delta.scale(0.5));
+        s.level.sendParticles(SPIKE_DUST_BIG, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.0);
     }
 
     /** Попадание в существо. */
@@ -242,7 +285,7 @@ public final class Shards {
         if (s.big) {
             explode(s, owner, point, target);
         } else if (hurt) {
-            s.level.sendParticles(TRAIL_HOT, point.x, point.y, point.z, 2, 0.1, 0.1, 0.1, 0.03);
+            s.level.sendParticles(SPIKE_DUST, point.x, point.y, point.z, 2, 0.1, 0.1, 0.1, 0.03);
         } else {
             // блок погасил осколок
             s.level.sendParticles(ParticleTypes.CRIT, point.x, point.y, point.z, 2, 0.1, 0.1, 0.1, 0.1);
@@ -263,11 +306,11 @@ public final class Shards {
 
     /** Большой осколок разбивается: вспышка, а с III уровня «Крупного осколка» ещё и урон вокруг. */
     private static void explode(Shard s, ServerPlayer owner, Vec3 point, LivingEntity direct) {
-        s.level.sendParticles(ParticleTypes.FLAME, point.x, point.y, point.z, 18, 0.35, 0.35, 0.35, 0.08);
-        s.level.sendParticles(TRAIL_BIG, point.x, point.y, point.z, 8, 0.3, 0.3, 0.3, 0.02);
-        s.level.sendParticles(ParticleTypes.LAVA, point.x, point.y, point.z, 4, 0.25, 0.25, 0.25, 0.0);
+        s.level.sendParticles(SHATTER, point.x, point.y, point.z, 20, 0.3, 0.3, 0.3, 0.15);
+        s.level.sendParticles(SPIKE_DUST_BIG, point.x, point.y, point.z, 8, 0.3, 0.3, 0.3, 0.02);
+        s.level.sendParticles(ParticleTypes.CRIT, point.x, point.y, point.z, 6, 0.3, 0.3, 0.3, 0.2);
         s.level.playSound(null, point.x, point.y, point.z, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS, 1.2F, 0.7F);
-        s.level.playSound(null, point.x, point.y, point.z, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.7F, 1.4F);
+        s.level.playSound(null, point.x, point.y, point.z, SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.7F, 1.2F);
         if (s.splash <= 0.0) {
             return;
         }

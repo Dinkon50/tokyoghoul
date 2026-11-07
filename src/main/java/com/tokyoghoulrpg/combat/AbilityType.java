@@ -25,6 +25,8 @@ public enum AbilityType {
     FORTUNE("fortune", false),
     // Какудзя: гуль и полугуль, когда накопили очки
     KAKUJA("kakuja", false),
+    // «Ярость гурмана»: только «Гурман», когда своя шкала полная (100)
+    GOURMET_RAGE("gourmet_rage", false),
     // Ульта гуля и полугуля: H J K L быстро подряд (нужно кагуне)
     ULTIMATE("ultimate", true);
 

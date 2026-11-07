@@ -55,6 +55,10 @@ public class SelectClassC2S {
                 if (data.hasChosenClass() || msg.playerClass == PlayerClass.NONE) {
                     return;
                 }
+                // При создании персонажа можно стать только гулем или человеком (полугуль и агент CCG — инъекциями)
+                if (msg.playerClass != PlayerClass.GHOUL && msg.playerClass != PlayerClass.HUMAN) {
+                    return;
+                }
                 KaguneVariant variant = KaguneVariant.NONE;
                 if (msg.playerClass.hasKagune()) {
                     if (!msg.playerClass.variants().contains(msg.variant)) {

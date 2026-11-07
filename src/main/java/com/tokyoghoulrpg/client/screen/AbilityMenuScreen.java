@@ -17,7 +17,7 @@ import net.minecraft.network.chat.Component;
  * Нужно в VR (открывается касанием запястья левой руки или из меню паузы) и на геймпаде (из меню паузы).
  * Способность срабатывает сразу после закрытия меню.
  */
-public class AbilityMenuScreen extends Screen {
+public class AbilityMenuScreen extends ModScreen {
     private static final int BUTTON_W = 150;
     private static final int BUTTON_H = 20;
     private static final int STEP = 23;
@@ -41,6 +41,12 @@ public class AbilityMenuScreen extends Screen {
         ability(left, top + STEP * 5, "key.tokyoghoulrpg.retribution", () -> send(AbilityType.RETRIBUTION));
         ability(left, top + STEP * 6, "key.tokyoghoulrpg.charisma", () -> send(AbilityType.CHARISMA));
         ability(left, top + STEP * 7, "key.tokyoghoulrpg.fortune", () -> send(AbilityType.FORTUNE));
+        com.tokyoghoulrpg.data.PlayerData self = this.minecraft.player == null ? null
+                : com.tokyoghoulrpg.data.PlayerData.get(this.minecraft.player);
+        if (self != null && self.getPlayerClass().hasKagune()
+                && self.getKaguneVariant() == com.tokyoghoulrpg.data.KaguneVariant.GOURMET) {
+            ability(left, top + STEP * 8, "key.tokyoghoulrpg.gourmet_rage", () -> send(AbilityType.GOURMET_RAGE));
+        }
 
         // справа — окна мода
         open(right, top, "key.tokyoghoulrpg.skill_tree", () -> this.minecraft.setScreen(new SkillTreeScreen()));
@@ -107,9 +113,12 @@ public class AbilityMenuScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(gfx);
+        modBackground(gfx);
         int top = top();
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top - 16, 0xE05050);
+        int px = this.width / 2 - BUTTON_W - 16;
+        modPanel(gfx, px, top - 30, BUTTON_W * 2 + 32, STEP * 9 + 52, 0xFFB01E1E);
+        gfx.fill(this.width / 2, top - 4, this.width / 2 + 1, top + STEP * 9 - 4, ScreenFx.alpha(modAccent(), 0x40));
+        modTitle(gfx, this.title, this.width / 2, top - 22, 0xE05050);
         gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.abilities.hint"),
                 this.width / 2, top + STEP * 9 + 6, 0x8A8A8A);
         super.render(gfx, mouseX, mouseY, partialTick);

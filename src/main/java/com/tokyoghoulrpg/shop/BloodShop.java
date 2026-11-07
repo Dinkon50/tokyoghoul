@@ -26,9 +26,10 @@ public final class BloodShop {
     }
 
     public static final List<Entry> ENTRIES = List.of(
-            new Entry(ModItems.HUMAN_INJECTION, 1000),
-            new Entry(ModItems.GHOUL_INJECTION, 1000),
-            new Entry(ModItems.CCG_INJECTION, 1000),
+            // инъекции: цена от сложности мира (injectionPrice), репутация и скидки на неё не действуют
+            new Entry(ModItems.HUMAN_INJECTION, com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_HARD, true),
+            new Entry(ModItems.GHOUL_INJECTION, com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_HARD, true),
+            new Entry(ModItems.CCG_INJECTION, com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_HARD, true),
             // квинке: способности открываются только у агента CCG, другим это просто оружие.
             // Narukami и IXA не продаются: их отдаёт Старший следователь в финальном задании агента.
             new Entry(ModItems.QUINQUE_KURA, 300),
@@ -43,13 +44,30 @@ public final class BloodShop {
      * Цена для игрока: зависит от репутации у своей стороны (от -20% до +25%), а в «удачный день»
      * (высокая личная репутация) ещё скидка 15-25%. Печать перерождения всегда по своей цене.
      */
-    public static int priceFor(Entry entry, PlayerData data) {
+    public static int priceFor(Entry entry, PlayerData data, net.minecraft.world.Difficulty difficulty) {
+        if (isInjection(entry)) {
+            return injectionPrice(difficulty);
+        }
         if (data == null || entry.fixedPrice()) {
             return entry.price();
         }
         int price = Reputation.price(data, entry.price());
         int deal = Standing.dealPercent(data);
         return deal > 0 ? (int) Math.round(price * (100 - deal) / 100.0) : price;
+    }
+
+    private static boolean isInjection(Entry entry) {
+        net.minecraft.world.item.Item item = entry.item().get();
+        return item == ModItems.HUMAN_INJECTION.get() || item == ModItems.GHOUL_INJECTION.get()
+                || item == ModItems.CCG_INJECTION.get();
+    }
+
+    /** Инъекция: 100 000 на сложной, 80 000 на нормальной, 60 000 на лёгкой и мирной. Никогда не дешевле 60 000. */
+    public static int injectionPrice(net.minecraft.world.Difficulty difficulty) {
+        int price = difficulty == net.minecraft.world.Difficulty.HARD ? com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_HARD
+                : difficulty == net.minecraft.world.Difficulty.NORMAL ? com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_NORMAL
+                : com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_EASY;
+        return Math.max(com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_MIN, price);
     }
 
     public static Entry get(int index) {

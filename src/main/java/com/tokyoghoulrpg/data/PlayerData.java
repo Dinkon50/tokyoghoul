@@ -82,6 +82,9 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
     /** Какудзя: накопленные очки (100 — форма открыта) и до какого тика форма действует. */
     private int kakujaPoints = 0;
     private long kakujaEndTick = 0L;
+    /** «Ярость гурмана» (только «Гурман»): своя шкала 0..100 (очко за съеденного полугуля) и до какого тика действует. */
+    private int gourmetRage = 0;
+    private long gourmetRageEndTick = 0L;
     /** Когда снова готовы ульта гуля и «Бессмертие» (тик мира). Сохраняются: откаты долгие, перезаход не сбрасывает. */
     private long ultimateReady = 0L;
     private long undyingReady = 0L;
@@ -474,6 +477,26 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         return kakujaEndTick > now;
     }
 
+    public int getGourmetRage() {
+        return gourmetRage;
+    }
+
+    public void setGourmetRage(int points) {
+        this.gourmetRage = Math.max(0, Math.min(com.tokyoghoulrpg.combat.GourmetBalance.RAGE_MAX, points));
+    }
+
+    public long getGourmetRageEndTick() {
+        return gourmetRageEndTick;
+    }
+
+    public void setGourmetRageEndTick(long tick) {
+        this.gourmetRageEndTick = tick;
+    }
+
+    public boolean isGourmetRageActive(long now) {
+        return gourmetRageEndTick > now;
+    }
+
     public int getBossesKilled() {
         return bossesKilled;
     }
@@ -837,6 +860,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         cafeFleshDay = -1L;
         kakujaPoints = 0;
         kakujaEndTick = 0L;
+        gourmetRage = 0;
+        gourmetRageEndTick = 0L;
         rankCcg = 0;
         rankGhoul = 0;
         prestigeCcg = 0;
@@ -918,6 +943,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         tag.putLong("cafe_coffee_day", cafeCoffeeDay);
         tag.putLong("cafe_flesh_day", cafeFleshDay);
         tag.putInt("kakuja_points", kakujaPoints);
+        tag.putInt("gourmet_rage", gourmetRage);
+        tag.putLong("gourmet_rage_end", gourmetRageEndTick);
         tag.putLong("ultimate_ready", ultimateReady);
         tag.putLong("undying_ready", undyingReady);
         tag.putInt("rank_ccg", rankCcg);
@@ -1047,6 +1074,8 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         cafeCoffeeDay = tag.contains("cafe_coffee_day") ? tag.getLong("cafe_coffee_day") : -1L;
         cafeFleshDay = tag.contains("cafe_flesh_day") ? tag.getLong("cafe_flesh_day") : -1L;
         setKakujaPoints(tag.getInt("kakuja_points"));
+        setGourmetRage(tag.getInt("gourmet_rage"));
+        gourmetRageEndTick = tag.getLong("gourmet_rage_end");
         ultimateReady = tag.getLong("ultimate_ready");
         undyingReady = tag.getLong("undying_ready");
         setRankCcg(tag.getInt("rank_ccg"));

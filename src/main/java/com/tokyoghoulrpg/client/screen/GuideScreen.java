@@ -12,7 +12,7 @@ import net.minecraft.util.FormattedCharSequence;
  * Книга новичка: слева разделы, справа текст раздела постранично (стрелки или колесо мыши).
  * Тексты — в языковых файлах: guide.tokyoghoulrpg.&lt;раздел&gt;.title / .text («\n» — новая строка).
  */
-public class GuideScreen extends Screen {
+public class GuideScreen extends ModScreen {
     public static final String[] CHAPTERS = {
             "start", "classes", "keys", "gamepad", "vr", "ghoul", "kagune_types", "kakuja", "ccg", "human", "blood", "skills",
             "combos", "prestige",
@@ -95,13 +95,12 @@ public class GuideScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + HEIGHT, 0xE01A1210);
-        gfx.fill(left, top, left + 2, top + HEIGHT, 0xFFB01E1E);
+        modPanel(gfx, left, top, WIDTH, (top + HEIGHT) - (top), 0xFFB01E1E);
         gfx.fill(left + LIST_W, top + 20, left + LIST_W + 1, top + HEIGHT - 6, 0x60B01E1E);
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top + 7, 0xE05050);
+        modTitle(gfx, this.title, this.width / 2, top + 7, 0xE05050);
         int tx = left + LIST_W + 10;
         gfx.drawString(this.font, Component.translatable("guide.tokyoghoulrpg." + CHAPTERS[chapter] + ".title"),
                 tx, top + 24, 0xFFD27A, false);

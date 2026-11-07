@@ -1,0 +1,140 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 2.0,
+        "max": 4.0
+      },
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:flesh",
+          "weight": 15,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2.0,
+                "max": 5.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:coffee",
+          "weight": 8,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1.0,
+                "max": 2.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:bone",
+          "weight": 10,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2.0,
+                "max": 6.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:rotten_flesh",
+          "weight": 8,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1.0,
+                "max": 4.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_nugget",
+          "weight": 5,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2.0,
+                "max": 6.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:smoke_bomb",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:medkit",
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:empty",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:mask_fang",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:mask_crow",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:mask_bone",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_coat",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_pants",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_boots",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

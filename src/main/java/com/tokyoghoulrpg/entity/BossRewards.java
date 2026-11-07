@@ -94,6 +94,8 @@ public final class BossRewards {
             PlayerData pd = PlayerData.get(player);
             if (pd != null) {
                 pd.markBossKilled(4);
+                // сюжетное задание «Кровавая арена» — каждому, кто нанёс урон
+                QuestManager.progress(player, Quest.Trigger.KILL_HALF_GHOUL_BOSS, 1);
                 com.tokyoghoulrpg.rep.Achievements.add(player, "boss_kills", 1);
                 com.tokyoghoulrpg.clan.ClanQuests.progress(player, com.tokyoghoulrpg.clan.ClanQuests.Kind.KILL_BOSS, 1);
             }

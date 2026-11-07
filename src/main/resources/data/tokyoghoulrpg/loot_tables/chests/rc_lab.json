@@ -146,11 +146,6 @@
               }
             }
           ]
-        },
-        {
-          "type": "minecraft:item",
-          "name": "tokyoghoulrpg:ghoul_injection",
-          "weight": 2
         }
       ]
     },
@@ -166,6 +161,23 @@
         {
           "type": "minecraft:empty",
           "weight": 5
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.01
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_injection",
+          "weight": 1
         }
       ]
     }

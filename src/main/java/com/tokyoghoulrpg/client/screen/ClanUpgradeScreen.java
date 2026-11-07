@@ -17,7 +17,7 @@ import net.minecraft.network.chat.Component;
  * Прокачка клана: уровень, казна, что даёт каждый уровень. Любой участник вкладывает очки крови в казну,
  * глава покупает следующий уровень из казны.
  */
-public class ClanUpgradeScreen extends Screen {
+public class ClanUpgradeScreen extends ModScreen {
     private static final int WIDTH = 330;
     private static final int HEIGHT = 270;
 
@@ -227,11 +227,10 @@ public class ClanUpgradeScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + HEIGHT, 0xC0140808);
-        gfx.fill(left, top, left + 2, top + HEIGHT, 0xFFE0A050);
+        modPanel(gfx, left, top, WIDTH, (top + HEIGHT) - (top), 0xFFE0A050);
         ClanStateS2C state = ClanScreen.state();
         if (state == null || state.clanName.isEmpty()) {
             gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.loading"),
@@ -239,7 +238,7 @@ public class ClanUpgradeScreen extends Screen {
             super.render(gfx, mouseX, mouseY, partialTick);
             return;
         }
-        gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.clan_upgrade.header", state.clanName,
+        modTitle(gfx, Component.translatable("screen.tokyoghoulrpg.clan_upgrade.header", state.clanName,
                 state.level), this.width / 2, top + 7, 0xE0A050);
         PlayerData data = Minecraft.getInstance().player == null ? null : PlayerData.get(Minecraft.getInstance().player);
         gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.clan_upgrade.treasury", state.treasury,

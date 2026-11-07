@@ -43,6 +43,21 @@ public final class QuestManager {
         NetworkHandler.syncTo(player);
     }
 
+    /**
+     * Сюжетный босс убит: задание засчитывается всем игрокам рядом с ним (в радиусе radius), а не только
+     * тому, кто нанёс последний удар — боссов бьют группой.
+     */
+    public static void progressNear(net.minecraft.world.entity.Entity at, Quest.Trigger trigger, double radius) {
+        if (!(at.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+            return;
+        }
+        for (ServerPlayer player : level.players()) {
+            if (player.isAlive() && player.distanceToSqr(at) <= radius * radius) {
+                progress(player, trigger, 1);
+            }
+        }
+    }
+
     /** Раз в секунду: задания «по факту» (сколько открыто навыков, какой уровень). */
     public static void tick(ServerPlayer player) {
         if (player.level().getGameTime() % 20 != 0) {
@@ -90,7 +105,7 @@ public final class QuestManager {
         Quest quest = Quest.byIndex(data.getPlayerClass(), data.getQuestIndex());
         while (quest != null && data.getQuestProgress() >= quest.goal()) {
             int blood = quest.bloodReward(player.getRandom());
-            int points = data.earnSkillPoints(quest.reward());
+            int points = data.earnSkillPoints(quest.reward(player.level().getDifficulty()));
             data.addBloodPoints(blood);
             com.tokyoghoulrpg.clan.ClanBank.tax(player, blood, points);
             data.setQuestIndex(data.getQuestIndex() + 1);

@@ -17,7 +17,7 @@ import net.minecraft.network.chat.Component;
  * Банк клана: общие очки навыков и очки крови. Положить может любой; глава забирает сразу,
  * остальные просят, а глава одобряет или отклоняет просьбы здесь же.
  */
-public class ClanBankScreen extends Screen {
+public class ClanBankScreen extends ModScreen {
     private static final int WIDTH = 320;
     private static final int HEIGHT = 250;
     private static final int MAX_SHOWN = 6;
@@ -102,11 +102,10 @@ public class ClanBankScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + HEIGHT, 0xC0140808);
-        gfx.fill(left, top, left + 2, top + HEIGHT, 0xFFE0C060);
+        modPanel(gfx, left, top, WIDTH, (top + HEIGHT) - (top), 0xFFE0C060);
         ClanStateS2C state = ClanScreen.state();
         if (state == null || state.clanName.isEmpty()) {
             gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.loading"),
@@ -114,7 +113,7 @@ public class ClanBankScreen extends Screen {
             super.render(gfx, mouseX, mouseY, partialTick);
             return;
         }
-        gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.clan_bank.header", state.clanName),
+        modTitle(gfx, Component.translatable("screen.tokyoghoulrpg.clan_bank.header", state.clanName),
                 this.width / 2, top + 7, 0xE0C060);
         gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.clan_bank.total",
                 state.bankPoints, state.treasury), this.width / 2, top + 20, 0xFFFFFF);

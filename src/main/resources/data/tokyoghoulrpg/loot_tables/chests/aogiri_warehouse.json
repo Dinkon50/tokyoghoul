@@ -1,0 +1,175 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 4.0,
+        "max": 7.0
+      },
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:flesh",
+          "weight": 15,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2.0,
+                "max": 6.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:raw_rc_steel",
+          "weight": 10,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1.0,
+                "max": 4.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:rc_steel_ingot",
+          "weight": 5,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1.0,
+                "max": 2.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:smoke_bomb",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:medkit",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_ingot",
+          "weight": 5,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1.0,
+                "max": 3.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:emerald",
+          "weight": 4,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1.0,
+                "max": 3.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_ingot",
+          "weight": 8,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2.0,
+                "max": 5.0
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:coffee",
+          "weight": 5,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1.0,
+                "max": 2.0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:empty",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:mask_fang",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:mask_crow",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:mask_bone",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_coat",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_pants",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:ghoul_boots",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tokyoghoulrpg:merc_contract",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

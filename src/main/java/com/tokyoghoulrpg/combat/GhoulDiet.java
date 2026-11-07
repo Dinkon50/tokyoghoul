@@ -45,6 +45,7 @@ public final class GhoulDiet {
         boolean ghoul = data.getPlayerClass().hasKagune();
         if (ghoul && stack.is(ModItems.FLESH.get())) {
             data.setCraving(data.getCraving() + Balance.FLESH_CRAVING);
+            com.tokyoghoulrpg.quest.QuestManager.progress(player, com.tokyoghoulrpg.quest.Quest.Trigger.EAT_FLESH, 1);
             NetworkHandler.syncTo(player);
             return;
         }

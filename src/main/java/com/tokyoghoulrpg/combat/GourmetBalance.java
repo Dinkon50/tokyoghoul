@@ -21,12 +21,12 @@ public final class GourmetBalance {
     public static final int SERIES_RESET = 22;
     /** Урон рубящего удара и колющего выпада (серия ударов быстрее, чем у Канеки: 5 урона раз в 0,4 с). */
     public static final float SLASH_DAMAGE = 3.5F;
-    public static final float THRUST_DAMAGE = 6.0F;
+    public static final float THRUST_DAMAGE = 7.0F;           // выпад в конце серии бьёт сильно (было 6)
     /** Когда в ударе серии наносится урон (тиков после начала взмаха). */
     public static final int SLASH_HIT_TICK = 2;
     public static final int THRUST_HIT_TICK = 3;
     /** «Колющий удар»: +15% к урону выпада за уровень; целей, которых выпад пробивает насквозь. */
-    public static final double THRUST_PER_LEVEL = 0.15;
+    public static final double THRUST_PER_LEVEL = 0.25;       // +25% за уровень «Колющего удара»: 7 → 12,25 на III
     public static final int[] THRUST_TARGETS = {2, 2, 2, 3};
     /** Дальность и половина ширины удара: «Дальность выпада» (0-3). */
     public static final double[] REACH = {3.5, 4.2, 4.9, 5.6};
@@ -85,4 +85,17 @@ public final class GourmetBalance {
     public static final float ULT_DAMAGE = 4.0F;
     /** Игрок появляется за спиной цели на столько блоков. */
     public static final double ULT_BEHIND = 1.5;
+
+    // ---------- «Ярость гурмана» (клавиша P): своя шкала, не обычная ярость ----------
+    /** Шкала: очко за каждого съеденного (укушенного) полугуля — игрока-полугуля, NPC-полугуля или босса-полугуля. */
+    public static final int RAGE_MAX = 100;
+    public static final int RAGE_PER_BITE = 1;
+    public static final int RAGE_TICKS = 60 * 20;                 // действует 60 с
+    // Пока действует, все показатели выше:
+    public static final double RAGE_DAMAGE = 0.30;                // +30% урона (кагуне, оружие, всё)
+    public static final double RAGE_DEFENSE = 0.25;               // -25% получаемого урона
+    public static final int RAGE_SPEED_AMP = 1;                   // Скорость II (+40%)
+    public static final int RAGE_JUMP_AMP = 1;                    // Прыгучесть II
+    public static final int RAGE_REGEN_AMP = 1;                   // Регенерация II
+    public static final int RAGE_HASTE_AMP = 1;                   // Спешка II
 }

@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /** Лавка Скупщика: слева товары, справа что он покупает (продать одну штуку или все). */
-public class FenceScreen extends Screen {
+public class FenceScreen extends ModScreen {
     private static final int WIDTH = 360;
     private static final int ROW = 22;
     private final int entityId;
@@ -64,13 +64,12 @@ public class FenceScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + height(), 0xC0141008);
-        gfx.fill(left, top, left + 2, top + height(), 0xFFB08A3A);
+        modPanel(gfx, left, top, WIDTH, (top + height()) - (top), 0xFFB08A3A);
         gfx.fill(left + 176, top + 26, left + 177, top + height() - 30, 0x40FFFFFF);
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top + 7, 0xD8B060);
+        modTitle(gfx, this.title, this.width / 2, top + 7, 0xD8B060);
         Minecraft mc = Minecraft.getInstance();
         PlayerData data = mc.player == null ? null : PlayerData.get(mc.player);
         if (data != null) {

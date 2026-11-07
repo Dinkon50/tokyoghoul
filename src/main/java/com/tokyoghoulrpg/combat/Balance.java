@@ -85,7 +85,13 @@ public final class Balance {
     public static final float SKILL_REGEN_PER_LEVEL = 1.0F;         // +1 здоровья за уровень (до 5 = 2,5 сердца)
     public static final int SKILL_REGEN_INTERVAL = 5 * 20;          // [ВРЕМЕННО] ... раз в 5 секунд
     public static final double SKILL_DEFENSE_PER_LEVEL = 0.05;      // -5% получаемого урона за уровень (до -25%)
-    public static final double SKILL_SPEED_PER_LEVEL = 0.03;        // +3% скорости за уровень (до +15%)
+    public static final double SKILL_SPEED_PER_LEVEL = 0.03;        // +3% скорости за уровень (до +15%) — Канеки и крылья Тоуки
+    public static final double SKILL_SPEED_PER_LEVEL_GOURMET = 0.02; // «Гурман» медленнее: +2% за уровень (до +10%)
+    // Ветка «Прыжок»: прибавка к скорости отрыва (обычный прыжок 0,42, «Прыгучесть I» даёт +0,1)
+    public static final double SKILL_JUMP_PER_LEVEL = 0.02;         // Канеки: до +0,1 на V (как «Прыгучесть I»)
+    public static final double SKILL_JUMP_PER_LEVEL_WINGS = 0.04;   // Тоука ловкая: до +0,2 на V
+    public static final double SKILL_JUMP_PER_LEVEL_GOURMET = 0.012; // «Гурман»: до +0,06 на V
+    public static final double VANILLA_JUMP = 0.42;
     // Защита от снарядов — часть веток «Защита» (гуль, полугуль) и «Стойкость» (человек, агент CCG)
     public static final double PROJECTILE_DEFENSE_PER_LEVEL = 0.06; // ещё -6% урона от стрел, трезубцев, файерболов и т. п. за уровень (до -30%)
     public static final int SKILL_POINTS_PER_LEVEL = 2;             // [ТВОЁ] 2 очка навыков за каждый новый уровень Minecraft
@@ -94,6 +100,17 @@ public final class Balance {
     public static final int[] COSTS_3 = {1, 2, 3};                  // ветки из 3 уровней: 6 очков
     public static final int[] COSTS_2 = {2, 3};                     // ветки из 2 уровней: 5 очков
     public static final int[] COSTS_1 = {3};                        // ветки из 1 навыка: 3 очка
+
+    // Инъекции (смена класса) у торговца: цена от сложности мира, без скидок и наценок репутации
+    public static final int INJECTION_PRICE_HARD = 100_000;
+    public static final int INJECTION_PRICE_NORMAL = 80_000;
+    public static final int INJECTION_PRICE_EASY = 60_000;          // лёгкая и мирная
+    public static final int INJECTION_PRICE_MIN = 60_000;           // дешевле не бывает никогда
+    // Свои цены у веток крыльев Тоуки и «Гурмана»: главные ветки дороже, вспомогательные дешевле
+    public static final int[] COSTS_3_CHEAP = {1, 1, 2};            // 4 очка
+    public static final int[] COSTS_3_FLAT = {2, 2, 2};             // 6 очков, но первый уровень дороже
+    public static final int[] COSTS_3_DEAR = {2, 3, 4};             // 9 очков
+    public static final int[] COSTS_2_DEAR = {3, 4};                // 7 очков
 
     // Сложность мира (выбирается при создании мира, её можно менять в настройках) [СПЕКА, числа ВРЕМЕННО]
     // Лёгкая (и мирная): всё как раньше.
@@ -108,6 +125,9 @@ public final class Balance {
     /** Обычной прокачкой можно открыть не больше этой доли дерева своего класса (по очкам). Всё дерево — только командой. */
     public static final double SKILL_CAP_SHARE = 0.85;
     public static final double HARD_SKILL_COST_FACTOR = 1.5;        // навыки в 1,5 раза дороже (округление вверх)
+    // Очки навыков за задания на сложной x1,75 (округление вверх): навыки дороже в 1,5 раза, а очки за уровни те же.
+    // Посчитано tools/story_quests.py: к концу сюжета (ур. 30) хватает на лимит 85% у всех классов и кагуне.
+    public static final double HARD_QUEST_POINTS_FACTOR = 1.75;
     // Игроки на сервере (нормальная и сложная): каждый игрок сверх первого, но не больше пяти игроков всего
     public static final int PLAYER_SCALING_CAP = 5;
     // Старший следователь (второй по силе босс): квинке IXA в руках и особые атаки

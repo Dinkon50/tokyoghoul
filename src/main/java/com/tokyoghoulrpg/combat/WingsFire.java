@@ -174,7 +174,7 @@ public final class WingsFire {
             Vec3 dir = spread(player, aimDir(player, from, range), degrees);
             Shards.spawn(new Shards.Shard(level, player.getUUID(), from, dir, WingsBalance.SHARD_SPEED, range, damage,
                     AttackType.BASIC, false, WingsEffects.pierce(crystal), 0.0));
-            level.sendParticles(ParticleTypes.FLAME, from.x, from.y, from.z, 1, 0.04, 0.04, 0.04, 0.01);
+            level.sendParticles(Shards.SPIKE_DUST, from.x, from.y, from.z, 1, 0.04, 0.04, 0.04, 0.0);
         }
         gun.heat = Math.min(1.0, heat + WingsBalance.HEAT_PER_SHOT);
         gun.heatTick = now;
@@ -216,8 +216,8 @@ public final class WingsFire {
             ServerLevel level = level(player);
             Vec3 center = muzzle(player, false, true);
             if (elapsed < WingsBalance.BIG_WINDUP) {
-                level.sendParticles(ParticleTypes.FLAME, center.x, center.y, center.z, 3, 0.35, 0.3, 0.35, 0.02);
-                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x, center.y, center.z, 2, 0.4, 0.3, 0.4, 0.2);
+                level.sendParticles(Shards.SPIKE_DUST_BIG, center.x, center.y, center.z, 3, 0.35, 0.3, 0.35, 0.0);
+                level.sendParticles(ParticleTypes.CRIT, center.x, center.y, center.z, 2, 0.4, 0.3, 0.4, 0.1);
                 return false;
             }
             PlayerData data = PlayerData.get(player);
@@ -227,9 +227,9 @@ public final class WingsFire {
                 Vec3 dir = aimDir(player, center, range);
                 Shards.spawn(new Shards.Shard(level, player.getUUID(), center, dir, WingsBalance.BIG_SPEED, range,
                         WingsEffects.bigDamage(lvl), AttackType.STRONG, true, 0, WingsEffects.bigSplash(lvl)));
-                level.sendParticles(ParticleTypes.FLAME, center.x, center.y, center.z, 10, 0.2, 0.2, 0.2, 0.08);
+                level.sendParticles(Shards.SHATTER, center.x, center.y, center.z, 8, 0.2, 0.2, 0.2, 0.1);
                 Effects.sound(player, SoundEvents.TRIDENT_THROW, 1.0F, 0.6F);
-                Effects.sound(player, SoundEvents.FIRECHARGE_USE, 0.9F, 0.9F);
+                Effects.sound(player, SoundEvents.AMETHYST_CLUSTER_BREAK, 0.9F, 0.9F);
             }
             return true;
         }
@@ -248,58 +248,75 @@ public final class WingsFire {
             AbilityManager.cooldown(player, AbilityType.BARRAGE, state.barrageReady - now);
             return;
         }
-        state.actions.add(new Hail(now));
+        // Работает как барраж Канеки: те же удары по области перед собой, тот же урон, оглушение и откат,
+        // только без замаха щупалец (первый удар сразу). Шипы летят до края области и пропадают — это вид.
+        AbilitySync.Timing timing = AbilitySync.get("kagune_barrage");
+        int[] kaneki = timing.hits();
+        int shift = kaneki.length > 0 ? Math.max(0, kaneki[0] - 1) : 0;
+        int[] hits = new int[kaneki.length];
+        for (int i = 0; i < kaneki.length; i++) {
+            hits[i] = kaneki[i] - shift;
+        }
+        int lvl = level(data, SkillTree.Branch.W_HAIL);
+        double width = WingsEffects.hailWidth(lvl);
+        state.actions.add(new SpikeBarrage(new Actions.Barrage(now, hits, timing.duration() - shift,
+                WingsEffects.hailDamage(lvl), width), now, timing.duration() - shift, width));
         // отпустили K раньше: AbilityManager.setBarrage прервёт анимацию пустым именем
         NetworkHandler.playAnimation(player, "wings_hail");
     }
 
-    /** Откат града после серии. */
+    /** Откат шквала после серии (как у барража Канеки). */
     public static int hailCooldown(PlayerData data) {
         return WingsEffects.hailCooldown(level(data, SkillTree.Branch.W_HAIL));
     }
 
-    /** Короткая очередь: залп каждые 2 тика, пока держат K (не дольше 2,5 с). */
-    private static final class Hail implements BarrageAction {
+    /** Шквал шипов: урон наносит барраж Канеки внутри, а каждый тик из крыльев вылетают шипы до края области. */
+    private static final class SpikeBarrage implements BarrageAction {
+        private final Actions.Barrage barrage;
         private final long start;
+        private final int duration;
+        private final double width;
 
-        private Hail(long start) {
+        private SpikeBarrage(Actions.Barrage barrage, long start, int duration, double width) {
+            this.barrage = barrage;
             this.start = start;
+            this.duration = duration;
+            this.width = width;
         }
 
         @Override
         public boolean tick(ServerPlayer player, long now) {
-            if (!player.isAlive() || LockManager.isLocked(player)) {
-                return true;
+            boolean done = barrage.tick(player, now);
+            if (!done && now - start < duration) {
+                spikes(player, now);
             }
-            long elapsed = now - start;
-            if (elapsed < WingsBalance.HAIL_DURATION && elapsed % WingsBalance.HAIL_INTERVAL == 0) {
-                volley(player);
-            }
-            return elapsed >= WingsBalance.HAIL_DURATION;
+            return done;
         }
 
-        private static void volley(ServerPlayer player) {
-            PlayerData data = PlayerData.get(player);
-            if (data == null) {
-                return;
-            }
-            int lvl = level(data, SkillTree.Branch.W_HAIL);
-            int pellets = WingsEffects.hailPellets(lvl);
-            double range = WingsEffects.hailRange(lvl);
-            float damage = WingsEffects.hailDamage(lvl);
+        /** Шипы летят из крыльев в случайные точки на дальнем краю области барража и там пропадают. */
+        private void spikes(ServerPlayer player, long now) {
             ServerLevel level = level(player);
-            for (int i = 0; i < pellets; i++) {
+            double yaw = Math.toRadians(Aim.yaw(player));
+            Vec3 forward = new Vec3(-Math.sin(yaw), 0.0, Math.cos(yaw));
+            Vec3 side = new Vec3(Math.cos(yaw), 0.0, Math.sin(yaw));
+            double half = width / 2.0;
+            for (int i = 0; i < WingsBalance.HAIL_SPIKES_PER_TICK; i++) {
                 Vec3 from = muzzle(player, player.getRandom().nextBoolean(), false);
-                Vec3 dir = spread(player, Aim.dir(player), WingsBalance.HAIL_CONE);
-                Shards.spawn(new Shards.Shard(level, player.getUUID(), from, dir, WingsBalance.HAIL_SPEED, range, damage,
-                        AttackType.BARRAGE, false, 0, 0.0).slows());
-                level.sendParticles(ParticleTypes.FLAME, from.x, from.y, from.z, 1, 0.05, 0.05, 0.05, 0.01);
+                Vec3 to = player.position()
+                        .add(forward.scale(Balance.BARRAGE_LENGTH))
+                        .add(side.scale((player.getRandom().nextDouble() * 2.0 - 1.0) * half))
+                        .add(0.0, 0.2 + player.getRandom().nextDouble() * (player.getBbHeight() - 0.1), 0.0);
+                Vec3 delta = to.subtract(from);
+                Shards.visual(level, from, delta.normalize().scale(WingsBalance.HAIL_SPIKE_SPEED), delta.length(), Shards.SIZE_TINY);
             }
-            Effects.sound(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.45F, 1.2F + player.getRandom().nextFloat() * 0.3F);
+            if ((now & 1) == 0) {
+                Effects.sound(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.4F, 1.2F + player.getRandom().nextFloat() * 0.4F);
+            }
         }
 
         @Override
         public void cancel(ServerPlayer player) {
+            barrage.cancel(player);
         }
     }
 
@@ -359,8 +376,8 @@ public final class WingsFire {
             if (elapsed < WingsBalance.STORM_CHARGE) {
                 for (int i = 0; i < 2; i++) {
                     Vec3 p = muzzle(player, i == 0, false);
-                    level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 3, 0.25, 0.25, 0.25, 0.3);
-                    level.sendParticles(ParticleTypes.FLAME, p.x, p.y, p.z, 1, 0.1, 0.1, 0.1, 0.02);
+                    level.sendParticles(ParticleTypes.CRIT, p.x, p.y, p.z, 3, 0.25, 0.25, 0.25, 0.15);
+                    level.sendParticles(Shards.SPIKE_DUST, p.x, p.y, p.z, 1, 0.1, 0.1, 0.1, 0.0);
                 }
                 if (elapsed % 5 == 0) {
                     Effects.sound(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.7F, 0.6F + elapsed * 0.04F);
@@ -375,7 +392,7 @@ public final class WingsFire {
                             WingsBalance.STORM_RANGE, WingsBalance.STORM_DAMAGE, AttackType.ULTIMATE, false, 0, 0.0));
                 }
                 Vec3 p = muzzle(player, true, false);
-                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 2, 0.3, 0.3, 0.3, 0.2);
+                level.sendParticles(ParticleTypes.CRIT, p.x, p.y, p.z, 2, 0.3, 0.3, 0.3, 0.1);
                 if (elapsed % 2 == 0) {
                     Effects.sound(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.6F, 1.4F + player.getRandom().nextFloat() * 0.5F);
                 }
@@ -428,7 +445,7 @@ public final class WingsFire {
                 }
             }
         }
-        // «Электрический разряд»: дуга на соседнюю цель
+        // «Рикошет»: шип отскакивает в соседнюю цель
         double chance = WingsEffects.arcChance(level(data, SkillTree.Branch.W_ARC));
         if (chance > 0.0 && owner.getRandom().nextDouble() < chance) {
             arc(owner, target, shard.damage() * (float) WingsBalance.ARC_SHARE);
@@ -452,15 +469,13 @@ public final class WingsFire {
         }
         Effects.blood(best, 2);
         if (owner.level() instanceof ServerLevel level) {
+            // урон проходит сразу, а игроки видят, как маленький шип перелетает от первой цели ко второй
             Vec3 a = from.getBoundingBox().getCenter();
             Vec3 b = best.getBoundingBox().getCenter();
             Vec3 delta = b.subtract(a);
-            int steps = Math.max(1, (int) (delta.length() / 0.5));
-            for (int i = 0; i <= steps; i++) {
-                Vec3 p = a.add(delta.scale(i / (double) steps));
-                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.0);
-            }
-            Effects.sound(best, SoundEvents.LIGHTNING_BOLT_IMPACT, 0.25F, 2.0F);
+            Shards.visual(level, a, delta.normalize().scale(WingsBalance.SHARD_SPEED), delta.length(), Shards.SIZE_SMALL);
+            level.sendParticles(Shards.SPIKE_DUST, b.x, b.y, b.z, 2, 0.1, 0.1, 0.1, 0.02);
+            Effects.sound(best, SoundEvents.AMETHYST_BLOCK_HIT, 0.5F, 1.8F);
         }
     }
 }

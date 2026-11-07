@@ -73,25 +73,22 @@ public final class WingsEffects {
         return level >= WingsBalance.BIG_SPLASH_LEVEL ? WingsBalance.BIG_SPLASH_RADIUS : 0.0;
     }
 
-    // ---------- «Град осколков» ----------
+    // ---------- «Шквал шипов» ----------
 
+    // Шквал шипов: те же числа, что у барража Канеки (SkillEffects.barrage*)
     public static float hailDamage(int level) {
-        return WingsBalance.HAIL_DAMAGE + WingsBalance.HAIL_DAMAGE_PER_LEVEL * Math.min(level, 3);
+        return SkillEffects.barrageDamage(level);
     }
 
-    public static int hailPellets(int level) {
-        return WingsBalance.HAIL_PELLETS + (level >= WingsBalance.HAIL_PELLETS_LEVEL ? 1 : 0);
-    }
-
-    public static double hailRange(int level) {
-        return WingsBalance.HAIL_RANGE + (level >= 2 ? WingsBalance.HAIL_RANGE_BONUS : 0.0);
+    public static double hailWidth(int level) {
+        return SkillEffects.barrageWidth(level);
     }
 
     public static int hailCooldown(int level) {
-        return WingsBalance.HAIL_COOLDOWN - WingsBalance.HAIL_COOLDOWN_PER_LEVEL * level;
+        return SkillEffects.barrageCooldown(level);
     }
 
-    // ---------- Электричество ----------
+    // ---------- Ярость и рикошет ----------
 
     /** Сколько попаданий осколков дают очки ярости; 0 — навыка нет. */
     public static int hitsPerRage(int level) {

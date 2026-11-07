@@ -22,7 +22,7 @@ import net.minecraft.world.item.ItemStack;
  * Слева — класс, ранг, здоровье, очки, все репутации, клан, квинке в руке, Какудзя.
  * Справа — откаты способностей твоего класса (идут в реальном времени).
  */
-public class ProfileScreen extends Screen {
+public class ProfileScreen extends ModScreen {
     private static final int WIDTH = 340;
     private static final int HEIGHT = 262;
     private static final int LINE = 12;
@@ -102,11 +102,10 @@ public class ProfileScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + HEIGHT, 0xC0140808);
-        gfx.fill(left, top, left + 2, top + HEIGHT, 0xFFB01E1E);
+        modPanel(gfx, left, top, WIDTH, (top + HEIGHT) - (top), 0xFFB01E1E);
         gfx.fill(left + 178, top + 22, left + 179, top + HEIGHT - 30, 0x40FFFFFF);
 
         Minecraft mc = Minecraft.getInstance();
@@ -116,7 +115,7 @@ public class ProfileScreen extends Screen {
             return;
         }
         long now = mc.level.getGameTime();
-        gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.profile.header",
+        modTitle(gfx, Component.translatable("screen.tokyoghoulrpg.profile.header",
                 mc.player.getGameProfile().getName()), this.width / 2, top + 7, 0xC21B1B);
 
         // ---------------- слева: персонаж

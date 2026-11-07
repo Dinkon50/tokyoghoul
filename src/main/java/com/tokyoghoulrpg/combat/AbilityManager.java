@@ -93,6 +93,12 @@ public final class AbilityManager {
             }
             return;
         }
+        if (type == AbilityType.GOURMET_RAGE) {
+            if (data != null) {
+                GourmetFire.useRage(player, data);
+            }
+            return;
+        }
         if (type == AbilityType.FORTUNE) {
             if (data != null) {
                 Fortune.use(player, data);
@@ -309,6 +315,8 @@ public final class AbilityManager {
         QuestManager.progress(player, Quest.Trigger.BITE, 1);
         // укус гуля копит Какудзя
         Kakuja.onBite(player, target);
+        // «Гурман» ест полугуля: очко «Ярости гурмана»
+        GourmetFire.onBite(player, data, target);
         // Во время ярости очки не копятся: addRage сам это проверяет
         gainRage(data, SkillEffects.biteRage(level));
         NetworkHandler.syncTo(player);
@@ -677,7 +685,7 @@ public final class AbilityManager {
         int speedLevel = SkillEffects.level(data, SkillTree.Branch.SPEED);
         if (speedLevel > 0) {
             AttrUtil.set(player, Attributes.MOVEMENT_SPEED, SKILL_SPEED_ID, "tg_skill_speed",
-                    SkillEffects.speedBonus(speedLevel), AttributeModifier.Operation.MULTIPLY_TOTAL);
+                    SkillEffects.speedBonus(speedLevel, data.getKaguneVariant()), AttributeModifier.Operation.MULTIPLY_TOTAL);
         } else {
             AttrUtil.remove(player, Attributes.MOVEMENT_SPEED, SKILL_SPEED_ID);
         }

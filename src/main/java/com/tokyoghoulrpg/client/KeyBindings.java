@@ -28,6 +28,8 @@ public final class KeyBindings {
     public static final KeyMapping FORTUNE = key("fortune", GLFW.GLFW_KEY_I);
     /** Какудзя (гуль и полугуль, когда накопили очки). */
     public static final KeyMapping KAKUJA = key("kakuja", GLFW.GLFW_KEY_U);
+    /** «Ярость гурмана» (только «Гурман», когда своя шкала полная). */
+    public static final KeyMapping GOURMET_RAGE = key("gourmet_rage", GLFW.GLFW_KEY_P);
     /** Меню «Профиль»: всё о персонаже на одном экране. */
     public static final KeyMapping PROFILE = key("profile", GLFW.GLFW_KEY_O);
     /** Торговая площадка: продажа вещей между кланами и внутри клана. */

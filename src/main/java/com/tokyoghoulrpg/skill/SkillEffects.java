@@ -144,7 +144,28 @@ public final class SkillEffects {
     }
 
     public static double speedBonus(int level) {
-        return Balance.SKILL_SPEED_PER_LEVEL * level;
+        return speedBonus(level, com.tokyoghoulrpg.data.KaguneVariant.NONE);
+    }
+
+    /** «Скорость»: у Канеки и крыльев Тоуки +3% за уровень, у «Гурмана» +2%. */
+    public static double speedBonus(int level, com.tokyoghoulrpg.data.KaguneVariant variant) {
+        double per = variant == com.tokyoghoulrpg.data.KaguneVariant.GOURMET
+                ? Balance.SKILL_SPEED_PER_LEVEL_GOURMET : Balance.SKILL_SPEED_PER_LEVEL;
+        return per * level;
+    }
+
+    /** «Прыжок»: прибавка к скорости отрыва. Крылья Тоуки прыгают выше всех, «Гурман» ниже всех. */
+    public static double jumpBonus(int level, com.tokyoghoulrpg.data.KaguneVariant variant) {
+        double per = variant == com.tokyoghoulrpg.data.KaguneVariant.WINGS ? Balance.SKILL_JUMP_PER_LEVEL_WINGS
+                : variant == com.tokyoghoulrpg.data.KaguneVariant.GOURMET ? Balance.SKILL_JUMP_PER_LEVEL_GOURMET
+                : Balance.SKILL_JUMP_PER_LEVEL;
+        return per * level;
+    }
+
+    /** Прибавка к прыжку у этого игрока (0 — ветки нет). Работает и на клиенте: прыжок считает клиент. */
+    public static double jumpBonus(PlayerData data) {
+        int level = level(data, SkillTree.Branch.JUMP);
+        return level <= 0 ? 0.0 : jumpBonus(level, data.getKaguneVariant());
     }
 
     // ---------- Способности ----------

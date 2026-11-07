@@ -37,22 +37,15 @@ public final class WingsBalance {
     public static final double BIG_SPLASH_SHARE = 0.5;
     public static final int BIG_SPLASH_LEVEL = 3;
 
-    // ---------- Град осколков (барраж): K, держать ----------
-    public static final float HAIL_DAMAGE = 0.5F;
-    public static final float HAIL_DAMAGE_PER_LEVEL = 0.05F;     // I и далее: 0,55 / 0,6 / 0,65
-    public static final int HAIL_INTERVAL = 2;                   // залп раз в 2 тика
-    public static final int HAIL_DURATION = 50;                  // не дольше 2,5 с за раз
-    public static final int HAIL_PELLETS = 2;                    // осколков в залпе (III уровень: 3)
-    public static final int HAIL_PELLETS_LEVEL = 3;
-    public static final double HAIL_RANGE = 9.0;                 // «недалеко»; со II уровня +2
-    public static final double HAIL_RANGE_BONUS = 2.0;
-    public static final double HAIL_CONE = 9.0;                  // разброс, градусы
-    public static final double HAIL_SPEED = 2.2;
-    public static final int HAIL_COOLDOWN = 10 * 20;
-    public static final int HAIL_COOLDOWN_PER_LEVEL = 30;        // -1,5 с за уровень
-    public static final int HAIL_SLOW_TICKS = 12;                // цель, в которую попал град, на полсекунды замедлена
+    // ---------- Шквал шипов (барраж): K, держать ----------
+    // Работает как барраж Канеки: урон, ширина, длина области (Balance.BARRAGE_*), удары и откат те же,
+    // прокачка «Шквал шипов» даёт то же, что «Барраж» у Канеки. Шипы только для вида: каждый тик из крыльев
+    // вылетает пачка маленьких шипов и пропадает на дальнем краю области.
+    public static final int HAIL_SPIKES_PER_TICK = 4;
+    public static final double HAIL_SPIKE_SPEED = 1.3;           // блоков за тик: до края области 3-4 тика
+    public static final int HAIL_SLOW_TICKS = 12;                // осколок с пометкой slows замедляет цель на полсекунды (сейчас не используется)
 
-    // ---------- Электричество (вкладка «Ярость, электричество») ----------
+    // ---------- Ярость и рикошет (вкладка «Ярость, рикошет») ----------
     /** «Статический заряд»: сколько попаданий осколков дают очки ярости (уровни 1-3), 0 — навыка нет. */
     public static final int[] HITS_PER_RAGE = {0, 5, 3, 2};
     public static final int RAGE_PER_GROUP = 2;

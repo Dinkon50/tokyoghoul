@@ -388,6 +388,8 @@ public final class CombatEvents {
             amount *= (float) (1.0 - SkillEffects.damageReduction(SkillEffects.level(data, SkillTree.Branch.DEFENSE)));
             // «Гурман»: удар, сломавший блок, ослаблен «Плотной спиралью»
             amount *= (float) com.tokyoghoulrpg.combat.GourmetFire.brokenBlockFactor(defendingPlayer);
+            // «Ярость гурмана»: получает меньше урона
+            amount *= (float) com.tokyoghoulrpg.combat.GourmetFire.rageDefenseFactor(defendingPlayer, data);
             // Агент CCG: «Защита от кагуне» от любых гулей
             if (attacker instanceof LivingEntity livingAttacker && RcSuppress.isGhoul(livingAttacker)) {
                 amount *= (float) (1.0 - SkillEffects.kaguneGuard(SkillEffects.level(data, SkillTree.Branch.KAGUNE_GUARD)));
@@ -520,7 +522,27 @@ public final class CombatEvents {
                 QuestManager.progress(killerPlayer, Quest.Trigger.KILL_GHOUL, 1);
             }
             if (event.getEntity() instanceof GhoulBoss) {
-                QuestManager.progress(killerPlayer, Quest.Trigger.KILL_GHOUL_BOSS, 1);
+                QuestManager.progressNear(event.getEntity(), Quest.Trigger.KILL_GHOUL_BOSS, QUEST_BOSS_RADIUS);
+            }
+            // Сюжетные задания всех классов: агенты CCG, Старший следователь, Хозяин тоннелей, подопытные, Иссушитель
+            if (event.getEntity() instanceof CcgAgentNpc || (event.getEntity() instanceof ServerPlayer agent
+                    && PlayerData.get(agent) != null && PlayerData.get(agent).getPlayerClass() == PlayerClass.CCG_AGENT)) {
+                QuestManager.progress(killerPlayer, Quest.Trigger.KILL_CCG, 1);
+            }
+            if (event.getEntity() instanceof CcgBoss) {
+                QuestManager.progressNear(event.getEntity(), Quest.Trigger.KILL_CCG_BOSS, QUEST_BOSS_RADIUS);
+            }
+            if (isSubwayBoss(event.getEntity())) {
+                QuestManager.progressNear(event.getEntity(), Quest.Trigger.KILL_SUBWAY_BOSS, QUEST_BOSS_RADIUS);
+            }
+            if (event.getEntity() instanceof com.tokyoghoulrpg.entity.HalfGhoulNpc) {
+                QuestManager.progress(killerPlayer, Quest.Trigger.KILL_HALF_GHOUL, 1);
+            }
+            if (event.getEntity() instanceof com.tokyoghoulrpg.entity.TestSubjectNpc) {
+                QuestManager.progress(killerPlayer, Quest.Trigger.KILL_TEST_SUBJECT, 1);
+            }
+            if (event.getEntity() instanceof net.minecraft.world.entity.boss.wither.WitherBoss) {
+                QuestManager.progressNear(event.getEntity(), Quest.Trigger.KILL_WITHER, QUEST_BOSS_RADIUS);
             }
             if (event.getEntity() instanceof CcgBoss) {
                 QuinqueReward.onCcgBossKilled(killerPlayer);
@@ -573,6 +595,18 @@ public final class CombatEvents {
      * Очки крови за убийства. Гуль или агент CCG — немного крови, босс — много крови и очки навыков.
      * Животные, торговцы и информаторы ничего не дают.
      */
+    /** Задания за сюжетных боссов засчитываются всем игрокам в этом радиусе от босса. */
+    private static final double QUEST_BOSS_RADIUS = 64.0;
+
+    /** Хозяин тоннелей из заброшенного метро: метка постройки или (в старых мирах) его имя. */
+    private static boolean isSubwayBoss(LivingEntity entity) {
+        if (entity.getTags().contains("tgrpg_subway_boss")) {
+            return true;
+        }
+        return entity instanceof com.tokyoghoulrpg.entity.GhoulNpc && entity.hasCustomName()
+                && "Хозяин тоннелей".equals(entity.getCustomName().getString());
+    }
+
     private static void rewardKill(ServerPlayer killer, PlayerData data, LivingEntity victim) {
         double rank = 1.0 + SkillEffects.rankBloodBonus(SkillEffects.level(data, SkillTree.Branch.RANK))
                 + Ranks.bloodBonus(data)
@@ -609,7 +643,8 @@ public final class CombatEvents {
                     victim.getDisplayName(), bossBlood, points));
             Effects.sound(killer, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
             NetworkHandler.syncTo(killer);
-            QuestManager.progress(killer, Quest.Trigger.KILL_BOSS, 1);
+            // задание «Убей босса» — всем рядом, боссов бьют группой
+            QuestManager.progressNear(victim, Quest.Trigger.KILL_BOSS, QUEST_BOSS_RADIUS);
         } else if (victim instanceof GhoulNpc || victim instanceof CcgAgentNpc || victim instanceof HalfGhoulNpc
                 || victim instanceof com.tokyoghoulrpg.entity.TestSubjectNpc) {
             data.addBloodPoints(npcBlood);

@@ -45,6 +45,7 @@ public final class ClientModEvents {
         event.register(KeyBindings.CHARISMA);
         event.register(KeyBindings.FORTUNE);
         event.register(KeyBindings.KAKUJA);
+        event.register(KeyBindings.GOURMET_RAGE);
         event.register(KeyBindings.PROFILE);
         event.register(KeyBindings.GRAB);
     }

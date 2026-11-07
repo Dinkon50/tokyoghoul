@@ -11,7 +11,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Достижения: все с прогрессом и наградой; у полученных — кнопка «Титул», чтобы носить его. */
-public class AchievementsScreen extends Screen {
+public class AchievementsScreen extends ModScreen {
     private static final int WIDTH = 340;
     private static final int ROW = 15;
 
@@ -58,14 +58,13 @@ public class AchievementsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + height(), 0xC0140808);
-        gfx.fill(left, top, left + 2, top + height(), 0xFFFFD700);
+        modPanel(gfx, left, top, WIDTH, (top + height()) - (top), 0xFFFFD700);
         PlayerData data = data();
         int got = data == null ? 0 : data.achievementCount();
-        gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.achievements.header", got,
+        modTitle(gfx, Component.translatable("screen.tokyoghoulrpg.achievements.header", got,
                 Achievements.A.values().length), this.width / 2, top + 8, 0xFFD700);
         int y = top + 30;
         for (Achievements.A a : Achievements.A.values()) {

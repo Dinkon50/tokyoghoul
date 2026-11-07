@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
  * Выбор типа кагуне: четыре карточки с описанием бонуса. Первый выбор бесплатный, сменить потом
  * можно здесь же (открывается из «Профиля») за очки крови.
  */
-public class KaguneTypeScreen extends Screen {
+public class KaguneTypeScreen extends ModScreen {
     private static final int CARD_W = 200;
     private static final int CARD_H = 46;
     private static final int GAP = 6;
@@ -58,10 +58,11 @@ public class KaguneTypeScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xE0120405, 0xE0000000);
+        modBackground(gfx);
         int cx = this.width / 2;
         int top = top();
-        gfx.drawCenteredString(this.font, this.title, cx, top - 26, 0xC21B1B);
+        modPanel(gfx, cx - CARD_W - GAP / 2 - 12, top - 36, CARD_W * 2 + GAP + 24, 2 * (CARD_H + GAP) + 36 + 46, 0xFFB01E1E);
+        modTitle(gfx, this.title, cx, top - 26, 0xC21B1B);
         KaguneType current = current();
         Component sub = current == KaguneType.NONE
                 ? Component.translatable("screen.tokyoghoulrpg.kagune_type.free")
@@ -72,8 +73,7 @@ public class KaguneTypeScreen extends Screen {
             int x = cx + (i % 2 == 0 ? -CARD_W - GAP / 2 : GAP / 2);
             int y = top + (i / 2) * (CARD_H + GAP);
             boolean chosen = type == current;
-            gfx.fill(x, y, x + CARD_W, y + CARD_H, chosen ? 0xC0401010 : 0xC0181010);
-            gfx.fill(x, y, x + 2, y + CARD_H, chosen ? 0xFFFF4040 : 0xFFB01E1E);
+            modCard(gfx, x, y, CARD_W, CARD_H, modAccent(), chosen ? 1.0F : 0.0F);
             gfx.drawString(this.font, Component.translatable(type.translationKey()), x + 7, y + 5, 0xFF5A5A, false);
             gfx.drawWordWrap(this.font, Component.translatable(type.descriptionKey()), x + 7, y + 16, CARD_W - 84, 0xC9C9C9);
         }

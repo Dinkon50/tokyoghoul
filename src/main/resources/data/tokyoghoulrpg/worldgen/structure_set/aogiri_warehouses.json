@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 390022117,
+    "separation": 12,
+    "spacing": 36
+  },
+  "structures": [
+    {
+      "structure": "tokyoghoulrpg:aogiri_warehouse",
+      "weight": 1
+    }
+  ]
+}

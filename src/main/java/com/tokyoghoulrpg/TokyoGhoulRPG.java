@@ -24,6 +24,7 @@ public class TokyoGhoulRPG {
         ModBlocks.BLOCK_ENTITIES.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModEntities.ENTITIES.register(modBus);
+        com.tokyoghoulrpg.registry.ModStructures.STRUCTURE_TYPES.register(modBus);
         ModCreativeTab.TABS.register(modBus);
         modBus.addListener(ModEntities::registerAttributes);
         modBus.addListener(ModEntities::registerSpawnPlacements);

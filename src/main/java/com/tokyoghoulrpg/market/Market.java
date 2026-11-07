@@ -112,6 +112,11 @@ public final class Market {
             tell(player, "bad_price");
             return;
         }
+        // инъекцию нельзя продать дешевле 60 000 за штуку (как и у торговца)
+        if (isInjection(hand) && (long) price < (long) com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_MIN * hand.getCount()) {
+            tell(player, "injection_min_price", com.tokyoghoulrpg.combat.Balance.INJECTION_PRICE_MIN);
+            return;
+        }
         if (hand.getItem() instanceof RcCoreItem || QuinqueUpgrade.isLocked(hand, player.level().getGameTime())) {
             tell(player, "forbidden");
             return;
@@ -388,6 +393,12 @@ public final class Market {
         }
         NetworkHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new MarketStateS2C(clan != null, entries));
+    }
+
+    private static boolean isInjection(ItemStack stack) {
+        return stack.is(com.tokyoghoulrpg.registry.ModItems.HUMAN_INJECTION.get())
+                || stack.is(com.tokyoghoulrpg.registry.ModItems.GHOUL_INJECTION.get())
+                || stack.is(com.tokyoghoulrpg.registry.ModItems.CCG_INJECTION.get());
     }
 
     private static void tell(ServerPlayer player, String key, Object... args) {

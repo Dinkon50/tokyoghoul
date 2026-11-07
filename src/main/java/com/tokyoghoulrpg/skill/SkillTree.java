@@ -90,27 +90,29 @@ public final class SkillTree {
         REGEN("regen", Tab.BASE, Balance.PASSIVE_LEVELS, Balance.PASSIVE_UPGRADE_COSTS, 1, 0x4FB05A),
         DEFENSE("defense", Tab.BASE, Balance.PASSIVE_LEVELS, Balance.PASSIVE_UPGRADE_COSTS, 1, 0x5A86C9),
         SPEED("speed", Tab.BASE, Balance.PASSIVE_LEVELS, Balance.PASSIVE_UPGRADE_COSTS, 1, 0xD8D8D8),
+        // насколько выше прыжок, зависит от кагуне: крылья Тоуки выше всех, «Гурман» ниже всех
+        JUMP("jump", Tab.BASE, Balance.PASSIVE_LEVELS, Balance.PASSIVE_UPGRADE_COSTS, 1, 0x9AE6B4),
         // «Укаку Тоуки»: стрельба осколками (вкладка «Стрельба»)
-        W_RATE("w_rate", Tab.WINGS_FIRE, 3, Balance.COSTS_3, 1, 0xFF8A2A),
-        W_CRYSTAL("w_crystal", Tab.WINGS_FIRE, 3, Balance.COSTS_3, 1, 0xFFB23A),
-        W_RANGE("w_range", Tab.WINGS_FIRE, 3, Balance.COSTS_3, 1, 0xFFD07A),
-        W_AIM("w_aim", Tab.WINGS_FIRE, 3, Balance.COSTS_3, 1, 0xF2E6C8),
-        W_BIG("w_big", Tab.WINGS_FIRE, 3, Balance.COSTS_3, 1, 0xFF5A1E),
+        W_RATE("w_rate", Tab.WINGS_FIRE, 3, Balance.COSTS_3_DEAR, 1, 0xFF8A2A),
+        W_CRYSTAL("w_crystal", Tab.WINGS_FIRE, 3, Balance.COSTS_3_DEAR, 1, 0xFFB23A),
+        W_RANGE("w_range", Tab.WINGS_FIRE, 3, Balance.COSTS_3_CHEAP, 1, 0xFFD07A),
+        W_AIM("w_aim", Tab.WINGS_FIRE, 3, Balance.COSTS_3_CHEAP, 1, 0xF2E6C8),
+        W_BIG("w_big", Tab.WINGS_FIRE, 3, Balance.COSTS_3_FLAT, 1, 0xFF5A1E),
         W_HAIL("w_hail", Tab.WINGS_FIRE, 3, Balance.COSTS_3, 1, 0xE0503A),
-        // «Укаку Тоуки»: электричество (вкладка «Ярость, электричество»)
-        W_STATIC("w_static", Tab.WINGS_RAGE, 3, Balance.COSTS_3, 1, 0xFFE35A),
+        // «Укаку Тоуки»: ярость и рикошет (вкладка «Ярость, рикошет»)
+        W_STATIC("w_static", Tab.WINGS_RAGE, 3, Balance.COSTS_3_FLAT, 1, 0xFFE35A),
         W_ARC("w_arc", Tab.WINGS_RAGE, 3, Balance.COSTS_3, 1, 0x8FD8FF),
-        W_FURY("w_fury", Tab.WINGS_RAGE, 2, Balance.COSTS_2, 1, 0xFF4A2A),
+        W_FURY("w_fury", Tab.WINGS_RAGE, 2, Balance.COSTS_2_DEAR, 1, 0xFF4A2A),
         // «Гурман»: фехтование лентой (вкладка «Фехтование»)
         G_SERIES("g_series", Tab.GOURMET_FENCE, 3, Balance.COSTS_3, 1, 0xB27CF5),
-        G_REACH("g_reach", Tab.GOURMET_FENCE, 3, Balance.COSTS_3, 1, 0x9A6AE0),
-        G_THRUST("g_thrust", Tab.GOURMET_FENCE, 3, Balance.COSTS_3, 1, 0xD9B8FF),
-        G_LUNGE("g_lunge", Tab.GOURMET_FENCE, 3, Balance.COSTS_3, 1, 0x8A3AD8),
+        G_REACH("g_reach", Tab.GOURMET_FENCE, 3, Balance.COSTS_3_CHEAP, 1, 0x9A6AE0),
+        G_THRUST("g_thrust", Tab.GOURMET_FENCE, 3, Balance.COSTS_3_DEAR, 1, 0xD9B8FF),
+        G_LUNGE("g_lunge", Tab.GOURMET_FENCE, 3, Balance.COSTS_3_FLAT, 1, 0x8A3AD8),
         G_WHIRL("g_whirl", Tab.GOURMET_FENCE, 3, Balance.COSTS_3, 1, 0xC060E0),
         // «Гурман»: спираль и изящество (вкладка «Спираль, изящество»)
-        G_TIGHT("g_tight", Tab.GOURMET_SPIRAL, 3, Balance.COSTS_3, 1, 0x6A3AA8),
-        G_PARRY("g_parry", Tab.GOURMET_SPIRAL, 3, Balance.COSTS_3, 1, 0xE6E0FF),
-        G_GRACE("g_grace", Tab.GOURMET_SPIRAL, 3, Balance.COSTS_3, 1, 0xF0C8F0),
+        G_TIGHT("g_tight", Tab.GOURMET_SPIRAL, 3, Balance.COSTS_3_CHEAP, 1, 0x6A3AA8),
+        G_PARRY("g_parry", Tab.GOURMET_SPIRAL, 3, Balance.COSTS_3_DEAR, 1, 0xE6E0FF),
+        G_GRACE("g_grace", Tab.GOURMET_SPIRAL, 3, Balance.COSTS_3_FLAT, 1, 0xF0C8F0),
         G_MARK("g_mark", Tab.GOURMET_SPIRAL, 3, Balance.COSTS_3, 1, 0xA0208A),
         // Способности
         BITE("bite", Tab.ABILITIES, 3, Balance.COSTS_3, 1, 0xB01E1E, Tab.WINGS_RAGE, Tab.GOURMET_SPIRAL),
@@ -248,6 +250,11 @@ public final class SkillTree {
 
         /** Описание эффекта; класс нужен веткам, у которых число зависит от класса («Здоровье»). */
         public Component effect(int level, PlayerClass playerClass) {
+            return effect(level, playerClass, KaguneVariant.NONE);
+        }
+
+        /** То же, а вид кагуне нужен «Скорости» и «Прыжку» (у крыльев и «Гурмана» свои числа). */
+        public Component effect(int level, PlayerClass playerClass, KaguneVariant variant) {
             String key = "skill.tokyoghoulrpg." + id + ".effect";
             return switch (this) {
                 case RAGE -> Component.translatable(key,
@@ -260,7 +267,9 @@ public final class SkillTree {
                         Balance.SKILL_REGEN_INTERVAL / 20);
                 case DEFENSE -> Component.translatable(key, percent(SkillEffects.damageReduction(level)),
                         percent(SkillEffects.projectileDefense(level)));
-                case SPEED -> Component.translatable(key, percent(SkillEffects.speedBonus(level)));
+                case SPEED -> Component.translatable(key, percent(SkillEffects.speedBonus(level, variant)));
+                case JUMP -> Component.translatable(key,
+                        percent(SkillEffects.jumpBonus(level, variant) / Balance.VANILLA_JUMP));
                 case BITE -> Component.translatable(key, num(SkillEffects.biteHeal(level)),
                         SkillEffects.biteRage(level), seconds(SkillEffects.biteStun(level)),
                         seconds(SkillEffects.biteCooldown(level)));
@@ -340,9 +349,8 @@ public final class SkillTree {
                 case W_BIG -> Component.translatable(key, num(WingsEffects.bigDamage(level)),
                         seconds(WingsEffects.bigCooldown(level)),
                         WingsEffects.bigSplash(level) > 0 ? ", разлетается осколками (радиус " + num(WingsEffects.bigSplash(level)) + " бл.)" : "");
-                case W_HAIL -> Component.translatable(key, WingsEffects.hailPellets(level),
-                        num(WingsEffects.hailRange(level)), num(WingsEffects.hailDamage(level)),
-                        seconds(WingsEffects.hailCooldown(level)));
+                case W_HAIL -> Component.translatable(key, num(WingsEffects.hailDamage(level)),
+                        num(WingsEffects.hailWidth(level)), seconds(WingsEffects.hailCooldown(level)));
                 case W_STATIC -> Component.translatable(key, WingsEffects.hitsPerRage(level), WingsBalance.RAGE_PER_GROUP);
                 case W_ARC -> Component.translatable(key, percent(WingsEffects.arcChance(level)),
                         percent(WingsBalance.ARC_SHARE), num(WingsBalance.ARC_RADIUS));

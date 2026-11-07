@@ -27,7 +27,7 @@ import net.minecraft.network.chat.Component;
  * В клане: участники (кто в игре, кто глава), передача очков навыков и очков крови участникам,
  * приглашение игроков с сервера и исключение (только глава), выход из клана.
  */
-public class ClanScreen extends Screen {
+public class ClanScreen extends ModScreen {
     private static final int WIDTH = 300;
     private static final int HEIGHT = 262;
     private static final int ROW = 16;
@@ -237,14 +237,13 @@ public class ClanScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120405, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top, left + WIDTH, top + HEIGHT, 0xC0140808);
-        gfx.fill(left, top, left + 2, top + HEIGHT, 0xFFB01E1E);
+        modPanel(gfx, left, top, WIDTH, (top + HEIGHT) - (top), 0xFFB01E1E);
 
         if (state == null) {
-            gfx.drawCenteredString(this.font, this.title, this.width / 2, top + 6, 0xC21B1B);
+            modTitle(gfx, this.title, this.width / 2, top + 6, 0xC21B1B);
             gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.loading"),
                     this.width / 2, top + HEIGHT / 2, 0x9A9A9A);
             super.render(gfx, mouseX, mouseY, partialTick);
@@ -252,7 +251,7 @@ public class ClanScreen extends Screen {
         }
 
         if (!inClan()) {
-            gfx.drawCenteredString(this.font, this.title, this.width / 2, top + 6, 0xC21B1B);
+            modTitle(gfx, this.title, this.width / 2, top + 6, 0xC21B1B);
             gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.no_clan"), left + 10, top + 24, 0x9A9A9A, false);
             gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.invites"), left + 10, top + 70, 0xE6E6E6, false);
             if (state.invites.isEmpty()) {
@@ -279,7 +278,7 @@ public class ClanScreen extends Screen {
             return;
         }
 
-        gfx.drawCenteredString(this.font, Component.literal(state.clanName), this.width / 2, top + 6, 0xC21B1B);
+        modTitle(gfx, Component.literal(state.clanName), this.width / 2, top + 6, 0xC21B1B);
         PlayerData data = data();
         if (data != null) {
             gfx.drawString(this.font, Component.translatable("screen.tokyoghoulrpg.clan.balance",

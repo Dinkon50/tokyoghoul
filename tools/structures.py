@@ -7,6 +7,9 @@
   rc_lab        — заброшенная лаборатория RC: камеры, колбы, архив с добычей, подопытные.
   black_market  — чёрный рынок: Скупщик, торговец, мастерская масок.
   subway        — заброшенное метро: павильон, спуск, лабиринт с ловушками, зал мини-босса.
+  ghoul_stash   — тайник гулей: обвалившаяся хижина, костровище, бочки с плотью, один гуль.
+  ccg_van       — разбитый фургон CCG: открытые задние двери, сундук со снаряжением, гули рядом.
+  aogiri_warehouse — склад Аогири: большой амбар с ящиками, знамя, два сундука, четверо гулей.
 Запуск: python3 structures.py <папка data/tokyoghoulrpg/structures> [имена построек]
 """
 import os
@@ -813,11 +816,199 @@ def subway():
     return b
 
 
+def ghoul_stash():
+    """
+    Тайник гулей 9 x 5 x 9: обвалившаяся хижина из ели, костровище (не горит), бочки и сундук
+    с плотью и масками, следы крови. Один гуль сторожит.
+    """
+    W, H, D = 9, 5, 9
+    b = Build(W, H, D, 8301)
+    rng = b.rng
+    for x in range(W):
+        for z in range(D):
+            b.set(x, 0, z, rng.choice(["coarse_dirt", "podzol", "coarse_dirt", "spruce_planks"]))
+    # стены хижины x 1..7, z 1..7, разрушены сверху и местами
+    for x in range(1, 8):
+        for z in range(1, 8):
+            if x not in (1, 7) and z not in (1, 7):
+                continue
+            top = rng.choice([1, 2, 2, 3])
+            for y in range(1, top + 1):
+                b.set(x, y, z, rng.choice(["spruce_planks", "spruce_log", "stripped_spruce_log", "spruce_planks"]))
+    for x, z in ((1, 1), (7, 1), (1, 7), (7, 7)):
+        for y in range(1, 4):
+            b.set(x, y, z, "spruce_log", axis="y")
+    # вход с севера
+    for x in (3, 4, 5):
+        for y in (1, 2, 3):
+            b.set(x, y, 1, "air")
+    # остатки крыши
+    for x in range(1, 8):
+        for z in range(1, 8):
+            if rng.random() < 0.35:
+                b.set(x, 4, z, rng.choice(["spruce_slab", "spruce_planks"]))
+    b.set(4, 1, 4, "campfire", lit="false", facing="north", signal_fire="false", waterlogged="false")
+    for _ in range(8):
+        x, z = rng.randint(2, 6), rng.randint(2, 6)
+        if b.get(x, 1, z) == "minecraft:air":
+            b.set(x, 1, z, "red_carpet")
+    b.set(2, 1, 6, "barrel", facing="up", open="false")
+    b.set(2, 2, 6, "barrel", facing="up", open="false")
+    b.set(6, 1, 2, "bone_block", axis="y")
+    b.set(6, 2, 2, "skeleton_skull", rotation=6)
+    b.chest(6, 1, 6, "west", "ghoul_stash")
+    for x in range(3, 6):
+        for z in range(3, 6):
+            if (x, z) != (4, 4) and b.get(x, 1, z) == "minecraft:red_carpet":
+                b.set(x, 1, z, "air")
+    b.mob(3, 1, 4, "ghoul", 1, armor=(None, None, None, "tokyoghoulrpg:mask_crow"))
+    return b
+
+
+def ccg_van():
+    """
+    Разбитый фургон CCG 12 x 5 x 8: белый фургон с синей полосой, разбитое лобовое стекло,
+    задние двери распахнуты, внутри сундук со снаряжением. Рядом кровь и двое гулей.
+    """
+    W, H, D = 12, 5, 8
+    b = Build(W, H, D, 8402)
+    rng = b.rng
+    b.void_unset = True                      # вокруг фургона остаётся земля мира
+    # колёса
+    for x in (3, 8):
+        for z in (1, 6):
+            b.set(x, 0, z, "black_concrete")
+    # кузов x 2..9, z 2..5, y 1..3; кабина x 8..9
+    for x in range(2, 10):
+        for z in range(2, 6):
+            for y in range(1, 4):
+                edge = x in (2, 9) or z in (2, 5) or y in (1, 3)
+                if not edge:
+                    b.set(x, y, z, "air")
+                    continue
+                block = "white_concrete"
+                if y == 2 and z in (2, 5):
+                    block = "blue_concrete"
+                if rng.random() < 0.12:
+                    block = "light_gray_concrete"          # вмятины
+                b.set(x, y, z, block)
+    # перегородка кабины и лобовое стекло (разбито: часть пустая)
+    for z in (3, 4):
+        b.set(7, 2, z, "iron_bars", east="true", west="true", north="false", south="false", waterlogged="false")
+        b.set(9, 2, z, "air" if z == 3 else "light_blue_stained_glass_pane")
+    b.set(8, 1, 3, "black_concrete"); b.set(8, 1, 4, "black_concrete")      # сиденья
+    # фары и мигалка
+    b.set(10, 1, 2, "redstone_lamp", lit="false"); b.set(10, 1, 5, "redstone_lamp", lit="false")
+    b.set(5, 4, 3, "blue_stained_glass"); b.set(5, 4, 4, "red_stained_glass")
+    # задние двери распахнуты
+    for z in (3, 4):
+        for y in (1, 2):
+            b.set(2, y, z, "air")
+    b.set(1, 1, 2, "iron_trapdoor", facing="north", half="bottom", open="true", powered="false", waterlogged="false")
+    b.set(1, 1, 5, "iron_trapdoor", facing="south", half="bottom", open="true", powered="false", waterlogged="false")
+    # внутри: сундук и полка
+    b.chest(6, 1, 5, "north", "ccg_van")
+    b.set(4, 1, 5, "iron_trapdoor", facing="north", half="top", open="false", powered="false", waterlogged="false")
+    b.set(4, 1, 2, "barrel", facing="up", open="false")
+    # кровь вокруг
+    for _ in range(10):
+        x, z = rng.choice([0, 1, 10, 11]), rng.randint(0, D - 1)
+        b.set(x, 0, z, "red_carpet")
+    for _ in range(4):
+        b.set(rng.randint(3, 6), 1, rng.randint(3, 4), "red_carpet")
+    b.mob(0, 1, 3, "ghoul", 0, armor=(None, None, None, "tokyoghoulrpg:mask_fang"))
+    b.mob(11, 1, 4, "ghoul", 2, armor=(None, None, "tokyoghoulrpg:ghoul_coat", None))
+    return b
+
+
+def aogiri_warehouse():
+    """
+    Склад Аогири 17 x 8 x 13: амбар из тёмного дуба и булыжника, решётки на окнах, большие ворота
+    с юга. Внутри штабеля бочек, сено, красно-чёрное знамя на задней стене, два сундука с добычей
+    и четверо гулей.
+    """
+    W, H, D = 17, 8, 13
+    b = Build(W, H, D, 8503)
+    rng = b.rng
+    b.fill(0, 0, 0, W - 1, 0, D - 1, "cobblestone")
+    b.fill(1, 0, 1, W - 2, 0, D - 2, "spruce_planks")
+    for y in range(1, 7):
+        for x in range(W):
+            for z in (0, D - 1):
+                b.set(x, y, z, "cobblestone" if y <= 2 else "dark_oak_planks")
+        for z in range(D):
+            for x in (0, W - 1):
+                b.set(x, y, z, "cobblestone" if y <= 2 else "dark_oak_planks")
+    for x, z in ((0, 0), (W - 1, 0), (0, D - 1), (W - 1, D - 1), (8, 0), (8, D - 1)):
+        for y in range(1, 7):
+            b.set(x, y, z, "dark_oak_log", axis="y")
+    # окна с решётками
+    for x in (3, 4, 12, 13):
+        for z in (0, D - 1):
+            b.set(x, 4, z, "iron_bars", east="true", west="true", north="false", south="false", waterlogged="false")
+    for z in (4, 8):
+        for x in (0, W - 1):
+            b.set(x, 4, z, "iron_bars", north="true", south="true", east="false", west="false", waterlogged="false")
+    # ворота с севера (z = 0): проём 3 x 4
+    for x in (7, 8, 9):
+        for y in range(1, 5):
+            b.set(x, y, 0, "air")
+    # крыша
+    b.fill(0, 7, 0, W - 1, 7, D - 1, "dark_oak_slab", type="bottom", waterlogged="false")
+    for x in range(1, W - 1, 3):
+        b.set(x, 6, 6, "dark_oak_log", axis="z")
+    # свет
+    for x, z in ((4, 4), (12, 4), (4, 9), (12, 9), (8, 6)):
+        b.set(x, 6, z, "lantern", hanging="true", waterlogged="false")
+    # знамя Аогири на задней стене: чёрное полотно, красное «дерево»
+    for x in range(6, 11):
+        for y in range(2, 6):
+            b.set(x, y, D - 2, "black_wool")
+    for y in range(2, 6):
+        b.set(8, y, D - 2, "red_wool")
+    for x, y in ((7, 4), (9, 4), (6, 5), (10, 5), (7, 5), (9, 5)):
+        b.set(x, y, D - 2, "red_wool")
+    # штабеля бочек и сено
+    for x0, z0 in ((1, 1), (1, 8), (14, 1), (14, 8)):
+        for x in range(x0, x0 + 2):
+            for z in range(z0, z0 + 3):
+                for y in range(1, rng.randint(2, 4)):
+                    if rng.random() < 0.67:
+                        b.set(x, y, z, "barrel", facing="up", open="false")
+                    else:
+                        b.set(x, y, z, "spruce_planks")
+    for x, z in ((4, 2), (5, 2), (11, 2)):
+        b.set(x, 1, z, "hay_block", axis="y")
+    # верстак, стол, кровь
+    b.set(5, 1, 10, "crafting_table")
+    b.set(11, 1, 10, "smithing_table")
+    for _ in range(10):
+        x, z = rng.randint(3, 13), rng.randint(3, 9)
+        if b.get(x, 1, z) == "minecraft:air":
+            b.set(x, 1, z, "red_carpet")
+    b.chest(3, 1, D - 2, "north", "aogiri_warehouse")
+    b.chest(13, 1, D - 2, "north", "aogiri_warehouse")
+    # жители: места свободны
+    for mx, mz in ((5, 5), (11, 5), (8, 8), (8, 3)):
+        for x in range(mx - 1, mx + 2):
+            for z in range(mz - 1, mz + 2):
+                for y in range(1, 4):
+                    if b.get(x, y, z) in ("minecraft:red_carpet",):
+                        b.set(x, y, z, "air")
+    b.mob(5, 1, 5, "ghoul", 0, armor=(None, None, "tokyoghoulrpg:ghoul_coat", "tokyoghoulrpg:mask_bone"))
+    b.mob(11, 1, 5, "ghoul", 1, armor=(None, None, None, "tokyoghoulrpg:mask_crow"))
+    b.mob(8, 1, 8, "ghoul", 2, armor=("tokyoghoulrpg:ghoul_boots", "tokyoghoulrpg:ghoul_pants", None,
+                                       "tokyoghoulrpg:mask_fang"))
+    b.mob(8, 1, 3, "ghoul", 0, armor=(None, None, None, "tokyoghoulrpg:mask_fang"))
+    return b
+
+
 if __name__ == "__main__":
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
     only = set(sys.argv[2:])
-    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe), ("rc_lab", rc_lab), ("black_market", black_market), ("subway", subway)):
+    for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe), ("rc_lab", rc_lab), ("black_market", black_market), ("subway", subway),
+                        ("ghoul_stash", ghoul_stash), ("ccg_van", ccg_van), ("aogiri_warehouse", aogiri_warehouse)):
         if only and name not in only:
             continue
         info = build().save(os.path.join(out, name + ".nbt"))

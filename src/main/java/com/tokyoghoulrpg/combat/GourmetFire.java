@@ -96,6 +96,7 @@ public final class GourmetFire {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();
         DUELS.remove(id);
+        RAGING.remove(id);
         MARKS.values().removeIf(mark -> mark.owner().equals(id));
     }
 
@@ -103,6 +104,7 @@ public final class GourmetFire {
     public static void onServerStopped(ServerStoppedEvent event) {
         DUELS.clear();
         MARKS.clear();
+        RAGING.clear();
     }
 
     /** Запоминаем, когда дуэлянт последний раз получил урон: от этого зависит «Изящество». */
@@ -119,7 +121,11 @@ public final class GourmetFire {
     /** Метки: истёкшие убираем, на живых раз в полсекунды фиолетовые искры над головой. */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || MARKS.isEmpty()) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        tickRage(event.getServer());
+        if (MARKS.isEmpty()) {
             return;
         }
         Iterator<Mark> it = MARKS.values().iterator();
@@ -135,6 +141,113 @@ public final class GourmetFire {
                 level.sendParticles(MARK, e.getX(), e.getY() + e.getBbHeight() + 0.35, e.getZ(), 2, 0.15, 0.05, 0.15, 0.0);
             }
         }
+    }
+
+    // ------------------------------------------------------------------
+    // «Ярость гурмана»: своя шкала (не обычная ярость), клавиша P
+    // ------------------------------------------------------------------
+
+    /** У кого «Ярость гурмана» действовала на прошлом тике: чтобы сказать, когда она кончилась. */
+    private static final java.util.Set<UUID> RAGING = new java.util.HashSet<>();
+    private static final DustParticleOptions RAGE_DUST = new DustParticleOptions(new Vector3f(0.75F, 0.2F, 1.0F), 1.1F);
+
+    /** Полугуль ли это (его «Гурман» ест ради своей ярости). */
+    public static boolean isHalfGhoul(LivingEntity target) {
+        if (target instanceof com.tokyoghoulrpg.entity.HalfGhoulNpc || target instanceof com.tokyoghoulrpg.entity.HalfGhoulBoss) {
+            return true;
+        }
+        if (target instanceof ServerPlayer other) {
+            PlayerData data = PlayerData.get(other);
+            return data != null && data.getPlayerClass() == com.tokyoghoulrpg.data.PlayerClass.HALF_GHOUL;
+        }
+        return false;
+    }
+
+    /** Укус: если «Гурман» укусил (съел) полугуля, шкала «Ярости гурмана» +1. Синхронизирует укус сам. */
+    public static void onBite(ServerPlayer player, PlayerData data, LivingEntity target) {
+        if (!uses(data) || !isHalfGhoul(target)) {
+            return;
+        }
+        long now = player.level().getGameTime();
+        if (data.isGourmetRageActive(now) || data.getGourmetRage() >= GourmetBalance.RAGE_MAX) {
+            return;
+        }
+        data.setGourmetRage(data.getGourmetRage() + GourmetBalance.RAGE_PER_BITE);
+        if (data.getGourmetRage() >= GourmetBalance.RAGE_MAX) {
+            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.gourmet_rage_ready"), false);
+            Effects.sound(player, SoundEvents.PLAYER_LEVELUP, 0.8F, 0.6F);
+        } else {
+            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.gourmet_rage_gain",
+                    data.getGourmetRage(), GourmetBalance.RAGE_MAX), true);
+        }
+    }
+
+    /** Клавиша P: шкала полная — 60 секунд все показатели выше. */
+    public static void useRage(ServerPlayer player, PlayerData data) {
+        if (!uses(data)) {
+            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.gourmet_rage_only"), true);
+            return;
+        }
+        long now = player.level().getGameTime();
+        if (data.isGourmetRageActive(now)) {
+            return;
+        }
+        if (data.getGourmetRage() < GourmetBalance.RAGE_MAX) {
+            player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.gourmet_rage_not_ready",
+                    data.getGourmetRage(), GourmetBalance.RAGE_MAX), true);
+            return;
+        }
+        data.setGourmetRage(0);
+        data.setGourmetRageEndTick(now + GourmetBalance.RAGE_TICKS);
+        RAGING.add(player.getUUID());
+        applyRageEffects(player, GourmetBalance.RAGE_TICKS);
+        NetworkHandler.syncTo(player);
+        player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.gourmet_rage_on"), true);
+        Effects.sound(player, SoundEvents.WITHER_SPAWN, 0.6F, 1.5F);
+        Effects.particles(player, RAGE_DUST, 50, 0.7, 0.05);
+    }
+
+    /** Скорость, прыжок, регенерация и спешка; урон и защиту прибавляют damageFactor и rageDefenseFactor. */
+    private static void applyRageEffects(ServerPlayer player, int ticks) {
+        int t = Math.min(ticks, 60);
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, t, GourmetBalance.RAGE_SPEED_AMP, false, false, true));
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.JUMP, t, GourmetBalance.RAGE_JUMP_AMP, false, false, true));
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.REGENERATION, t, GourmetBalance.RAGE_REGEN_AMP, false, false, true));
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.DIG_SPEED, t, GourmetBalance.RAGE_HASTE_AMP, false, false, true));
+    }
+
+    /** Каждый тик: эффекты «Ярости гурмана» держим (молоко их не снимет), фиолетовая аура, конец — сообщение. */
+    private static void tickRage(net.minecraft.server.MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            PlayerData data = PlayerData.get(player);
+            long now = player.level().getGameTime();
+            boolean active = data != null && data.isGourmetRageActive(now);
+            if (active) {
+                RAGING.add(player.getUUID());
+                long left = data.getGourmetRageEndTick() - now;
+                if (now % 20 == 0) {
+                    applyRageEffects(player, (int) Math.min(left, 60L));
+                }
+                if (now % 4 == 0 && player.level() instanceof ServerLevel level) {
+                    level.sendParticles(RAGE_DUST, player.getX(), player.getY() + 1.0, player.getZ(), 2, 0.35, 0.6, 0.35, 0.0);
+                }
+            } else if (RAGING.remove(player.getUUID())) {
+                if (data != null) {
+                    data.setGourmetRageEndTick(0L);
+                    NetworkHandler.syncTo(player);
+                }
+                player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.gourmet_rage_off"), true);
+            }
+        }
+    }
+
+    /** «Ярость гурмана»: получает меньше урона. */
+    public static double rageDefenseFactor(ServerPlayer victim, PlayerData data) {
+        return data != null && data.isGourmetRageActive(victim.level().getGameTime()) ? 1.0 - GourmetBalance.RAGE_DEFENSE : 1.0;
     }
 
     // ------------------------------------------------------------------
@@ -154,6 +267,9 @@ public final class GourmetFire {
         Mark mark = MARKS.get(victim.getUUID());
         if (mark != null && mark.owner().equals(attacker.getUUID()) && now < mark.until()) {
             factor *= 1.0 + mark.bonus();
+        }
+        if (data.isGourmetRageActive(now)) {
+            factor *= 1.0 + GourmetBalance.RAGE_DAMAGE;
         }
         return factor;
     }

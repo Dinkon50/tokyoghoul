@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /** Меню хозяина кофейни: кофе, мясо (гулям раз в сутки бесплатно) и задания. */
-public class CafeScreen extends Screen {
+public class CafeScreen extends ModScreen {
     private static final int WIDTH = 260;
     private static final int HEIGHT = 128;
     private static final int ROW_H = 24;
@@ -66,12 +66,11 @@ public class CafeScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xD0120A05, 0xD0000000);
+        modBackground(gfx);
         int left = left();
         int top = top();
-        gfx.fill(left, top - 6, left + WIDTH, top + HEIGHT, 0xC0201208);
-        gfx.fill(left, top - 6, left + 2, top + HEIGHT, 0xFFB0702A);
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top, 0xE0A050);
+        modPanel(gfx, left, top - 6, WIDTH, (top + HEIGHT) - (top - 6), 0xFFB0702A);
+        modTitle(gfx, this.title, this.width / 2, top, 0xE0A050);
         PlayerData data = data();
         int blood = data == null ? 0 : data.getBloodPoints();
         gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.shop.balance", blood),

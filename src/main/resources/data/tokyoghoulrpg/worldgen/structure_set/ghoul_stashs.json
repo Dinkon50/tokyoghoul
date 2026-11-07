@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 711530293,
+    "separation": 6,
+    "spacing": 18
+  },
+  "structures": [
+    {
+      "structure": "tokyoghoulrpg:ghoul_stash",
+      "weight": 1
+    }
+  ]
+}

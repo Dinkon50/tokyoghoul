@@ -10,21 +10,34 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
 
 /**
- * Дерево навыков (клавиша B). У гуля и полугуля четыре вкладки (Основа, Способности, Выживание,
- * Ярость и кагуне), у человека одна. У агента CCG дерева пока нет.
- * На вкладке каждая ветка в своей строке, уровни слева направо. Клик по доступному навыку открывает его.
+ * Дерево навыков (клавиша B). Вкладки зависят от класса и кагуне; на вкладке каждая ветка в своей строке,
+ * уровни слева направо. Клик по доступному навыку открывает его.
+ * Оформление в цветах класса (ScreenFx.theme): фон с частицами, панель с рамкой, «чипы» очков и крови,
+ * полоса прокачки до лимита 85%, вкладки-закладки, светящиеся открытые навыки, пульсирующие доступные,
+ * карточка навыка под деревом.
  */
 public class SkillTreeScreen extends Screen {
     private static final int NODE = 18;
     private static final int LINK = 12;
     private static final int LABEL_W = 104;
-    private static final int ROW_STEP = 24;
-    private static final int TAB_H = 14;
+    private static final int TAB_H = 16;
     private static final int MAX_ROWS = 8;
-    private static final int TOTAL_H = 36 + TAB_H + 10 + ROW_STEP * (MAX_ROWS - 1) + NODE + 8 + 48;
+    private static final int HEADER_H = 54;
+    private static final int INFO_H = 54;
+    private static final int PAD = 12;
+
+    /** Шаг строк: на низком экране плотнее, чтобы всё поместилось. */
+    private int rowStep() {
+        return this.height < 340 ? 22 : 24;
+    }
+
+    private int totalH() {
+        return HEADER_H + TAB_H + 8 + rowStep() * (MAX_ROWS - 1) + NODE + 10 + INFO_H;
+    }
 
     /** Последняя открытая вкладка, чтобы при повторном открытии меню вернуться на неё. */
     private static SkillTree.Tab lastTab = SkillTree.Tab.BASE;
@@ -76,7 +89,7 @@ public class SkillTreeScreen extends Screen {
     // ------------------------------------------------------------------
 
     private int top() {
-        return Math.max(4, (this.height - TOTAL_H) / 2);
+        return Math.max(4, (this.height - totalH()) / 2);
     }
 
     private int contentWidth() {
@@ -88,7 +101,7 @@ public class SkillTreeScreen extends Screen {
     }
 
     private int tabsY() {
-        return top() + 36;
+        return top() + HEADER_H;
     }
 
     /**
@@ -114,7 +127,7 @@ public class SkillTreeScreen extends Screen {
     }
 
     private int rowY(int row) {
-        return tabsY() + TAB_H + 10 + row * ROW_STEP;
+        return tabsY() + TAB_H + 8 + row * rowStep();
     }
 
     private int nodeX(int index) {
@@ -171,34 +184,61 @@ public class SkillTreeScreen extends Screen {
     // Отрисовка
     // ------------------------------------------------------------------
 
+    private ScreenFx.Theme theme(PlayerData data) {
+        return ScreenFx.theme(data == null ? com.tokyoghoulrpg.data.PlayerClass.GHOUL : data.getPlayerClass());
+    }
+
+    private static float time() {
+        return (net.minecraft.Util.getMillis() % 1_000_000L) / 1000.0F;
+    }
+
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        gfx.fillGradient(0, 0, this.width, this.height, 0xE0120405, 0xE0000000);
-        int top = top();
-        gfx.drawCenteredString(this.font, this.title, this.width / 2, top, 0xC21B1B);
-
         PlayerData data = data();
+        ScreenFx.Theme theme = theme(data);
+        float time = time();
+        // фон в цветах класса
+        gfx.fillGradient(0, 0, this.width, this.height, theme.top(), theme.bottom());
+        ScreenFx.glow(gfx, this.width / 2, this.height / 2, (int) (this.height * 0.55F), theme.glow());
+        drawBackdrop(gfx, data, time, theme);
+        ScreenFx.particles(gfx, 0, this.width, this.height, time, 60, theme, 0.55F);
+
+        int top = top();
+        int panelW = Math.max(contentWidth() + PAD * 2, chipsWidth(data) + 16);
+        int panelX = this.width / 2 - panelW / 2;
+        int panelH = Math.min(this.height - top - 4, totalH() - INFO_H - 6 + 8);
+        ScreenFx.panel(gfx, panelX, top - 6, panelW, panelH, theme.accent(), 0.35F);
+
+        ScreenFx.bigText(gfx, this.font, this.title, this.width / 2, top, 1.5F, theme.accent(), 0xFF000000);
         if (data != null) {
+            // очки, кровь и репутация — «чипы» в ряд
             Component points = Component.translatable("screen.tokyoghoulrpg.skill_tree.points", data.getSkillPoints());
             Component blood = Component.translatable("screen.tokyoghoulrpg.skill_tree.blood", data.getBloodPoints());
             Component rep = Component.translatable("screen.tokyoghoulrpg.skill_tree.rep",
                     signed(data.getStanding()), signed(data.getRepCcg()), signed(data.getRepGhouls()));
+            int gap = 6;
+            int total = this.font.width(points) + this.font.width(blood) + this.font.width(rep) + 16 * 3 + gap * 2;
+            int x = this.width / 2 - total / 2;
+            int chipY = top + 17;
+            x += ScreenFx.chip(gfx, this.font, points, x, chipY, data.getSkillPoints() > 0 ? 0xFFD133 : 0xB0B0B0) + gap;
+            x += ScreenFx.chip(gfx, this.font, blood, x, chipY, 0xFF5A78) + gap;
+            ScreenFx.chip(gfx, this.font, rep, x, chipY, 0x9AB0C9);
             if (!tabs().isEmpty()) {
                 // сколько дерева уже открыто и сколько можно открыть всего (85%)
-                Component cap = Component.translatable("screen.tokyoghoulrpg.skill_tree.cap",
-                        SkillTree.spentCost(data.getPlayerClass(), data.getKaguneVariant(), data.getSkills(), difficulty()),
-                        SkillTree.capCost(data.getPlayerClass(), data.getKaguneVariant(), difficulty()),
-                        SkillTree.totalCost(data.getPlayerClass(), data.getKaguneVariant(), difficulty()));
-                gfx.drawCenteredString(this.font, cap, this.width / 2, top + 22, 0x9A5A7A);
+                int spent = SkillTree.spentCost(data.getPlayerClass(), data.getKaguneVariant(), data.getSkills(), difficulty());
+                int cap = SkillTree.capCost(data.getPlayerClass(), data.getKaguneVariant(), difficulty());
+                int totalCost = SkillTree.totalCost(data.getPlayerClass(), data.getKaguneVariant(), difficulty());
+                Component capLine = Component.translatable("screen.tokyoghoulrpg.skill_tree.cap", spent, cap, totalCost);
+                int barW = contentWidth();
+                int barX = left();
+                int barY = top + 42;
+                gfx.drawCenteredString(this.font, capLine, this.width / 2, top + 33, 0xFFB0A0B8);
+                gfx.fill(barX, barY, barX + barW, barY + 4, 0xFF1A0E12);
+                float fraction = cap <= 0 ? 0.0F : Mth.clamp(spent / (float) cap, 0.0F, 1.0F);
+                gfx.fillGradient(barX, barY, barX + Math.round(barW * fraction), barY + 4,
+                        0xFF000000 | (theme.accent2() & 0xFFFFFF), 0xFF000000 | (theme.accent() & 0xFFFFFF));
+                ScreenFx.frame(gfx, barX - 1, barY - 1, barW + 2, 6, 0x40FFFFFF);
             }
-            int gap = 16;
-            int total = this.font.width(points) + gap + this.font.width(blood) + gap + this.font.width(rep);
-            int x = this.width / 2 - total / 2;
-            gfx.drawString(this.font, points, x, top + 12, 0xE6E6E6, false);
-            x += this.font.width(points) + gap;
-            gfx.drawString(this.font, blood, x, top + 12, 0xFF5A78, false);
-            x += this.font.width(blood) + gap;
-            gfx.drawString(this.font, rep, x, top + 12, 0x9AB0C9, false);
         }
         if (data == null || tabs().isEmpty()) {
             gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.skill_tree.later"),
@@ -207,95 +247,200 @@ public class SkillTreeScreen extends Screen {
             return;
         }
 
-        drawTabs(gfx, mouseX, mouseY);
+        drawTabs(gfx, mouseX, mouseY, theme);
 
         List<SkillTree.Branch> branches = SkillTree.branches(currentTab());
         for (int row = 0; row < branches.size(); row++) {
-            drawBranch(gfx, data, branches.get(row), rowY(row), mouseX, mouseY);
+            drawBranch(gfx, data, branches.get(row), rowY(row), mouseX, mouseY, theme, time);
         }
 
-        int infoY = rowY(MAX_ROWS - 1) + NODE + 8;
+        int infoY = rowY(MAX_ROWS - 1) + NODE + 14;
         SkillTree.Skill hovered = skillAt(mouseX, mouseY);
         if (hovered != null) {
-            drawInfo(gfx, data, hovered, infoY);
+            drawInfo(gfx, data, hovered, infoY, theme);
         } else {
             gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.skill_tree.hint"),
-                    this.width / 2, infoY, 0x777777);
+                    this.width / 2, infoY + 6, 0xFF8A8A8A);
+            drawLegend(gfx, infoY + 22);
         }
         super.render(gfx, mouseX, mouseY, partialTick);
     }
 
-    private void drawTabs(GuiGraphics gfx, int mouseX, int mouseY) {
+    /**
+     * Кого прокачиваешь — большой персонаж за деревом: слева и зеркально справа, затемнён к низу.
+     * Гуль и полугуль — со своим кагуне (Канеки, крылья Тоуки, «Гурман»), человек — Стив, агент CCG — с квинке.
+     */
+    private void drawBackdrop(GuiGraphics gfx, PlayerData data, float time, ScreenFx.Theme theme) {
+        ScreenFx.backdrop(gfx, this.width, this.height, data, time, theme, 0.8F);
+    }
+
+    /** Ширина ряда «чипов» (очки, кровь, репутация): панель не уже его. */
+    private int chipsWidth(PlayerData data) {
+        if (data == null) {
+            return 0;
+        }
+        Component points = Component.translatable("screen.tokyoghoulrpg.skill_tree.points", data.getSkillPoints());
+        Component blood = Component.translatable("screen.tokyoghoulrpg.skill_tree.blood", data.getBloodPoints());
+        Component rep = Component.translatable("screen.tokyoghoulrpg.skill_tree.rep",
+                signed(data.getStanding()), signed(data.getRepCcg()), signed(data.getRepGhouls()));
+        return this.font.width(points) + this.font.width(blood) + this.font.width(rep) + 16 * 3 + 6 * 2;
+    }
+
+    /** Вкладки-закладки: выбранная залита цветом класса с полосой снизу, под мышью светлее. */
+    private void drawTabs(GuiGraphics gfx, int mouseX, int mouseY, ScreenFx.Theme theme) {
         List<SkillTree.Tab> tabs = tabs();
         int[] edges = tabEdges();
         int y = tabsY();
+        int accent = theme.accent() & 0xFFFFFF;
+        gfx.fill(left() - PAD + 1, y + TAB_H, left() + contentWidth() + PAD - 1, y + TAB_H + 1, ScreenFx.alpha(accent, 0x60));
         for (int i = 0; i < tabs.size(); i++) {
             int x = edges[i];
             int w = edges[i + 1] - edges[i];
             boolean selected = tabs.get(i) == currentTab();
             boolean hovered = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + TAB_H;
-            int back = selected ? 0xFF4A0E0E : (hovered ? 0xFF2A1416 : 0xFF180A0C);
-            gfx.fill(x + 1, y, x + w - 1, y + TAB_H, back);
             if (selected) {
-                gfx.fill(x + 1, y + TAB_H - 2, x + w - 1, y + TAB_H, 0xFFB01E1E);
+                gfx.fillGradient(x + 1, y, x + w - 1, y + TAB_H, ScreenFx.alpha(accent, 0x70), ScreenFx.alpha(accent, 0x20));
+                gfx.fill(x + 1, y + TAB_H - 2, x + w - 1, y + TAB_H, 0xFF000000 | accent);
+                gfx.fill(x + 1, y, x + w - 1, y + 1, ScreenFx.alpha(accent, 0xA0));
+            } else {
+                gfx.fill(x + 1, y + 2, x + w - 1, y + TAB_H, hovered ? 0x22FFFFFF : 0x50000000);
             }
-            gfx.drawCenteredString(this.font, tabs.get(i).title(), x + w / 2, y + 3,
-                    selected ? 0xFFFFFF : 0x9A9A9A);
+            gfx.drawCenteredString(this.font, tabs.get(i).title(), x + w / 2, y + 4,
+                    selected ? 0xFFFFFFFF : (hovered ? 0xFFDADADA : 0xFF8A8A8A));
         }
     }
 
-    private void drawBranch(GuiGraphics gfx, PlayerData data, SkillTree.Branch branch, int y, int mouseX, int mouseY) {
+    private void drawBranch(GuiGraphics gfx, PlayerData data, SkillTree.Branch branch, int y, int mouseX, int mouseY,
+            ScreenFx.Theme theme, float time) {
         List<SkillTree.Skill> skills = SkillTree.branch(branch);
-        gfx.fill(left(), y + 3, left() + 2, y + NODE - 3, 0xFF000000 | branch.color());
+        int color = branch.color() & 0xFFFFFF;
+        boolean rowHover = mouseY >= y - 2 && mouseY < y + NODE + 2 && mouseX >= left() - 4 && mouseX < left() + contentWidth() + 4;
+        if (rowHover) {
+            gfx.fill(left() - 4, y - 2, left() + contentWidth() + 4, y + NODE + 2, 0x14FFFFFF);
+        }
+        // полоса цвета ветки и ромбик
+        gfx.fillGradient(left() - 4, y, left() - 2, y + NODE, 0xFF000000 | color, ScreenFx.alpha(color, 0x40));
         boolean hidden = isHidden(data, branch);
-        gfx.drawString(this.font, hidden ? Component.literal("???") : branch.title(), left() + 6, y + NODE / 2 - 4,
-                hidden ? 0x9A1030 : 0xD0D0D0, false);
+        int opened = 0;
+        for (SkillTree.Skill skill : skills) {
+            if (data.hasSkill(skill.id())) {
+                opened++;
+            }
+        }
+        gfx.drawString(this.font, hidden ? Component.literal("???") : branch.title(), left() + 2, y + 2,
+                hidden ? 0xFF9A1030 : (rowHover ? 0xFFFFFFFF : 0xFFD0D0D0), false);
+        gfx.drawString(this.font, opened + "/" + skills.size(), left() + 2, y + 11,
+                opened == skills.size() ? 0xFF000000 | color : 0xFF6A6A6A, false);
 
+        float pulse = 0.5F + 0.5F * Mth.sin(time * 5.0F);
         for (int i = 0; i < skills.size(); i++) {
             SkillTree.Skill skill = skills.get(i);
             int x = nodeX(i);
 
             if (i < skills.size() - 1) {
-                boolean opened = data.hasSkill(skills.get(i + 1).id());
-                gfx.fill(x + NODE, y + NODE / 2 - 1, x + NODE + LINK, y + NODE / 2 + 1,
-                        opened ? 0xFF000000 | branch.color() : 0xFF3A3A3A);
+                boolean nextOpen = data.hasSkill(skills.get(i + 1).id());
+                boolean thisOpen = data.hasSkill(skill.id());
+                int ly = y + NODE / 2 - 1;
+                if (nextOpen) {
+                    gfx.fill(x + NODE, ly, x + NODE + LINK, ly + 2, 0xFF000000 | color);
+                } else {
+                    // пунктир: дальше ещё не открыто (ярче, если этот уже открыт)
+                    int dash = thisOpen ? ScreenFx.alpha(color, 0xA0) : 0xFF3A3A3A;
+                    for (int dx = 0; dx < LINK; dx += 4) {
+                        gfx.fill(x + NODE + dx, ly, x + NODE + Math.min(LINK, dx + 2), ly + 2, dash);
+                    }
+                }
             }
 
             State state = stateOf(data, skill);
-            int border = switch (state) {
-                case UNLOCKED -> 0xFF000000 | branch.color();
-                case LOCKED -> 0xFF3A3A3A;
-                default -> 0xFF000000 | state.color;
-            };
-            int inner = state == State.UNLOCKED ? dim(branch.color()) : 0xFF14090A;
-            if (mouseX >= x && mouseX < x + NODE && mouseY >= y && mouseY < y + NODE) {
-                gfx.fill(x - 1, y - 1, x + NODE + 1, y + NODE + 1, 0xFFFFFFFF);
+            boolean over = mouseX >= x && mouseX < x + NODE && mouseY >= y && mouseY < y + NODE;
+            switch (state) {
+                case UNLOCKED -> {
+                    gfx.fill(x - 2, y - 2, x + NODE + 2, y + NODE + 2, ScreenFx.alpha(color, 0x45));
+                    gfx.fill(x, y, x + NODE, y + NODE, 0xFF000000 | color);
+                    gfx.fillGradient(x + 2, y + 2, x + NODE - 2, y + NODE - 2,
+                            ScreenFx.mix(0xFF000000 | color, 0xFFFFFFFF, 0.25F), dim(color));
+                }
+                case AVAILABLE -> {
+                    int border = ScreenFx.mix(0xFF000000 | color, 0xFFFFFFFF, 0.35F + 0.5F * pulse);
+                    gfx.fill(x - 1, y - 1, x + NODE + 1, y + NODE + 1, ScreenFx.alpha(color, (int) (0x30 + 0x50 * pulse)));
+                    gfx.fill(x, y, x + NODE, y + NODE, border);
+                    gfx.fill(x + 2, y + 2, x + NODE - 2, y + NODE - 2, 0xFF1C1014);
+                }
+                case LOCKED -> {
+                    gfx.fill(x, y, x + NODE, y + NODE, 0xFF2A2A2A);
+                    gfx.fill(x + 2, y + 2, x + NODE - 2, y + NODE - 2, 0xFF0E0A0B);
+                }
+                default -> {
+                    gfx.fill(x, y, x + NODE, y + NODE, 0xFF000000 | state.color);
+                    gfx.fill(x + 2, y + 2, x + NODE - 2, y + NODE - 2, 0xFF140A0C);
+                }
             }
-            gfx.fill(x, y, x + NODE, y + NODE, border);
-            gfx.fill(x + 2, y + 2, x + NODE - 2, y + NODE - 2, inner);
+            if (over) {
+                ScreenFx.frame(gfx, x - 2, y - 2, NODE + 4, NODE + 4, 0xFFFFFFFF);
+            }
+            int textColor = switch (state) {
+                case LOCKED -> 0xFF666666;
+                case UNLOCKED -> 0xFFFFFFFF;
+                default -> 0xFFE6E6E6;
+            };
             gfx.drawCenteredString(this.font, hidden ? "?" : branch.shownTier(skill.tier()), x + NODE / 2, y + NODE / 2 - 4,
-                    state == State.LOCKED ? 0x777777 : 0xFFFFFF);
+                    textColor);
         }
     }
 
-    private void drawInfo(GuiGraphics gfx, PlayerData data, SkillTree.Skill skill, int y) {
+    /** Карточка навыка под деревом: название цветом ветки, цитата, эффект, цена и состояние. */
+    private void drawInfo(GuiGraphics gfx, PlayerData data, SkillTree.Skill skill, int y, ScreenFx.Theme theme) {
         int centerX = this.width / 2;
+        int x = left() - PAD;
+        int w = contentWidth() + PAD * 2;
+        int color = skill.branch().color() & 0xFFFFFF;
         State state = stateOf(data, skill);
         boolean hidden = isHidden(data, skill.branch());
-        gfx.drawCenteredString(this.font, hidden ? Component.literal("???") : skill.branch().skillName(skill.tier()),
-                centerX, y, 0xE6E6E6);
         Component flavor = hidden ? null : skill.branch().flavor();
+        int h = flavor != null ? INFO_H + 10 : INFO_H;
+        ScreenFx.panel(gfx, x, y, w, h, color, 0.6F);
+        gfx.fill(x, y, x + 3, y + h, 0xFF000000 | color);
+        ScreenFx.bigText(gfx, this.font, hidden ? Component.literal("???") : skill.branch().skillName(skill.tier()),
+                centerX, y + 5, 1.15F, 0xFF000000 | ScreenFx.mix(0xFF000000 | color, 0xFFFFFFFF, 0.35F), 0xFF000000);
+        int ty = y + 18;
         if (flavor != null) {
-            gfx.drawCenteredString(this.font, flavor.copy().withStyle(net.minecraft.ChatFormatting.ITALIC), centerX, y + 12, 0xFFD133);
-            y += 12;
+            gfx.drawCenteredString(this.font, flavor.copy().withStyle(net.minecraft.ChatFormatting.ITALIC), centerX, ty, 0xFFFFD133);
+            ty += 11;
         }
-        gfx.drawCenteredString(this.font, hidden ? Component.literal("? ? ?") : skill.branch().effect(skill.tier(), data == null ? null : data.getPlayerClass()),
-                centerX, y + 12, 0xC9C9C9);
-        Component costLine = Component.translatable(hardMode() ? "screen.tokyoghoulrpg.skill_tree.cost_hard"
-                        : "screen.tokyoghoulrpg.skill_tree.cost", cost(skill))
-                .append("   ")
-                .append(Component.translatable(state.key));
-        gfx.drawCenteredString(this.font, costLine, centerX, y + 24, state.color);
+        Component effect = hidden ? Component.literal("? ? ?") : skill.branch().effect(skill.tier(),
+                data == null ? null : data.getPlayerClass(),
+                data == null ? com.tokyoghoulrpg.data.KaguneVariant.NONE : data.getKaguneVariant());
+        for (net.minecraft.util.FormattedCharSequence line : this.font.split(effect, w - 16)) {
+            gfx.drawCenteredString(this.font, line, centerX, ty, 0xFFD6D6D6);
+            ty += 10;
+        }
+        Component cost = Component.translatable(hardMode() ? "screen.tokyoghoulrpg.skill_tree.cost_hard"
+                : "screen.tokyoghoulrpg.skill_tree.cost", cost(skill));
+        Component stateText = Component.translatable(state.key);
+        int cw = this.font.width(cost) + 16 + 6 + this.font.width(stateText) + 16;
+        int cx = centerX - cw / 2;
+        int chipY = y + h - 17;
+        cx += ScreenFx.chip(gfx, this.font, cost, cx, chipY, 0xFFD133) + 6;
+        ScreenFx.chip(gfx, this.font, stateText, cx, chipY, state == State.UNLOCKED ? color : state.color);
+    }
+
+    /** Подсказка, что значат цвета навыков. */
+    private void drawLegend(GuiGraphics gfx, int y) {
+        State[] shown = {State.UNLOCKED, State.AVAILABLE, State.NO_POINTS, State.LOCKED};
+        int[] colors = {0xE0303A, 0xFFFFFF, State.NO_POINTS.color, 0x555555};
+        int total = 0;
+        for (State st : shown) {
+            total += 12 + this.font.width(Component.translatable(st.key)) + 10;
+        }
+        int x = this.width / 2 - total / 2;
+        for (int i = 0; i < shown.length; i++) {
+            gfx.fill(x, y + 1, x + 8, y + 9, 0xFF000000 | colors[i]);
+            gfx.fill(x + 2, y + 3, x + 6, y + 7, 0xFF140A0C);
+            Component t = Component.translatable(shown[i].key);
+            gfx.drawString(this.font, t, x + 12, y + 1, 0xFF8A8A8A, false);
+            x += 12 + this.font.width(t) + 10;
+        }
     }
 
     private static String signed(int value) {
