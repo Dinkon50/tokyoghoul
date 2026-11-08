@@ -89,13 +89,13 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.CLOWN_DOUBLE.get(), context -> new NpcRenderer<>(context, "clown", 1, 1.12F));
         event.registerEntityRenderer(ModEntities.SHADOW_DECOY.get(), context -> new NpcRenderer<>(context, "shadow_decoy", 1));
         event.registerEntityRenderer(ModEntities.WHITE_REAPER.get(), context -> new NpcRenderer<>(context, "white_reaper", 1, 1.17F));
-        // Глубины 24-го района: монстры, два стража (кагуне ринкаку и укаку) и Древний гуль (кагуне гурмана)
+        // Глубины 24-го района: монстры, два стража (кагуне «Гурман» и укаку) и Древний гуль (кагуне Канеки)
         event.registerEntityRenderer(ModEntities.DEEP_GHOUL.get(), context -> new NpcRenderer<>(context, "deep_ghoul", 2));
         event.registerEntityRenderer(ModEntities.DEEP_BRUTE.get(), context -> new NpcRenderer<>(context, "deep_brute", 1, 1.35F));
         event.registerEntityRenderer(ModEntities.DEEP_SPITTER.get(), context -> new NpcRenderer<>(context, "deep_spitter", 1));
         event.registerEntityRenderer(ModEntities.DEEP_GUARDIAN_STING.get(), context -> {
             NpcRenderer<com.tokyoghoulrpg.entity.DeepGuardianSting> renderer = new NpcRenderer<>(context, "deep_guardian_sting", 1, 1.3F);
-            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.KANEKI));
+            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.GOURMET));
             return renderer;
         });
         event.registerEntityRenderer(ModEntities.DEEP_GUARDIAN_WING.get(), context -> {
@@ -105,7 +105,7 @@ public final class ClientModEvents {
         });
         event.registerEntityRenderer(ModEntities.ANCIENT_GHOUL.get(), context -> {
             NpcRenderer<com.tokyoghoulrpg.entity.AncientGhoul> renderer = new NpcRenderer<>(context, "ancient_ghoul", 1, 1.5F);
-            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.GOURMET));
+            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.KANEKI));
             return renderer;
         });
         // Кровавый полугуль: в 1.33 раза крупнее игрока, кагуне на спине (во второй стадии — с венами ярости)

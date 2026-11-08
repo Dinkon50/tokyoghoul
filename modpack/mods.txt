@@ -45,6 +45,7 @@ complementary-reimagined | Complementary Shaders - Reimagined | shader
 
 # --- Мир: рельеф и постройки
 terralith | Terralith | mod
+lithostitched | Lithostitched (нужен Tectonic и CTOV) | mod
 tectonic | Tectonic | mod
 yungs-better-dungeons | YUNG's Better Dungeons | mod
 yungs-better-mineshafts | YUNG's Better Mineshafts | mod

@@ -29,8 +29,8 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = TokyoGhoulRPG.MOD_ID, value = Dist.CLIENT)
 public final class BossBarOverlay {
-    private static final int WIDTH = 240;
-    private static final int BAR_H = 9;
+    private static final int WIDTH = 140;
+    private static final int BAR_H = 5;
 
     private BossBarOverlay() {
     }
@@ -71,7 +71,7 @@ public final class BossBarOverlay {
         event.setCanceled(true);
         if (isTimer(boss.getName())) {
             timer(gfx, font, boss, cx, y, st);
-            event.setIncrement(22);
+            event.setIncrement(16);
             return;
         }
         float progress = Mth.clamp(boss.getProgress(), 0.0F, 1.0F);
@@ -81,7 +81,7 @@ public final class BossBarOverlay {
 
         // имя: крупнее, с тенью, по бокам гаснущие линии с ромбами
         Component name = boss.getName();
-        float s = 1.1F;
+        float s = 0.8F;
         int nw = Math.round(font.width(name) * s);
         PoseStack ps = gfx.pose();
         ps.pushPose();
@@ -91,11 +91,11 @@ public final class BossBarOverlay {
         gfx.drawString(font, name, 0, 0, 0xFF000000 | ScreenFx.mix(0xFFFFFF, st.accent(), 0.3F), false);
         ps.popPose();
         int ly = y + 3;
-        int half = nw / 2 + 8;
+        int half = nw / 2 + 6;
         for (int i = 0; i < 10; i++) {
             int a = 0xB0 * (10 - i) / 10;
-            int x0 = cx + half + 40 * i / 10;
-            int x1 = cx + half + 40 * (i + 1) / 10;
+            int x0 = cx + half + 24 * i / 10;
+            int x1 = cx + half + 24 * (i + 1) / 10;
             gfx.fill(x0, ly, x1, ly + 1, ScreenFx.alpha(st.accent(), a));
             gfx.fill(2 * cx - x1, ly, 2 * cx - x0, ly + 1, ScreenFx.alpha(st.accent(), a));
         }
@@ -104,10 +104,10 @@ public final class BossBarOverlay {
 
         // плашка
         int x = cx - WIDTH / 2;
-        int by = y + 12;
-        gfx.fill(x - 3, by - 3, x + WIDTH + 3, by + BAR_H + 3, 0xC0080304);
-        ScreenFx.frame(gfx, x - 3, by - 3, WIDTH + 6, BAR_H + 6, ScreenFx.alpha(st.accent(), 0x70));
-        ScreenFx.corners(gfx, x - 3, by - 3, WIDTH + 6, BAR_H + 6, 0xFF000000 | st.accent(), 4);
+        int by = y + 10;
+        gfx.fill(x - 2, by - 2, x + WIDTH + 2, by + BAR_H + 2, 0xC0080304);
+        ScreenFx.frame(gfx, x - 2, by - 2, WIDTH + 4, BAR_H + 4, ScreenFx.alpha(st.accent(), 0x70));
+        ScreenFx.corners(gfx, x - 2, by - 2, WIDTH + 4, BAR_H + 4, 0xFF000000 | st.accent(), 3);
         // полоса
         gfx.fill(x - 1, by - 1, x + WIDTH + 1, by + BAR_H + 1, 0xFF000000);
         gfx.fillGradient(x, by, x + WIDTH, by + BAR_H, 0xFF1A0C0E, 0xFF0A0506);
@@ -131,24 +131,24 @@ public final class BossBarOverlay {
             int tx = x + WIDTH * i / notches;
             gfx.fill(tx, by + 1, tx + 1, by + BAR_H - 1, 0x50000000);
         }
-        // проценты справа внутри полосы
+        // проценты — мелко справа от плашки (полоса теперь тонкая)
         String pct = Math.round(progress * 100) + "%";
         ps.pushPose();
-        ps.translate(x + WIDTH - 4 - font.width(pct) * 0.75F, by + 1.5F, 0.0F);
-        ps.scale(0.75F, 0.75F, 1.0F);
+        ps.translate(x + WIDTH + 6, by - 0.5F, 0.0F);
+        ps.scale(0.6F, 0.6F, 1.0F);
         gfx.drawString(font, pct, 0, 0, 0xFFFFFFFF, true);
         ps.popPose();
 
-        event.setIncrement(BAR_H + 22);
+        event.setIncrement(BAR_H + 14);
     }
 
     /** Таймер мода (арена, кафе): название и тонкая полоска. */
     private static void timer(GuiGraphics gfx, Font font, LerpingBossEvent boss, int cx, int y, Style st) {
         Component name = boss.getName();
-        gfx.drawCenteredString(font, name, cx, y, 0xFF000000 | ScreenFx.mix(0xFFFFFF, st.accent(), 0.3F));
-        int w = 160;
+        gfx.drawCenteredString(font, name, cx, y - 1, 0xFF000000 | ScreenFx.mix(0xFFFFFF, st.accent(), 0.3F));
+        int w = 120;
         int x = cx - w / 2;
-        int by = y + 10;
+        int by = y + 9;
         gfx.fill(x - 1, by - 1, x + w + 1, by + 4, 0xFF000000);
         gfx.fill(x, by, x + w, by + 3, 0xFF1A0C0E);
         int fw = Math.round(w * Mth.clamp(boss.getProgress(), 0.0F, 1.0F));

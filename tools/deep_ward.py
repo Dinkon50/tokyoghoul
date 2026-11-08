@@ -811,6 +811,88 @@ def seal():
             if q not in b.blocks:
                 b.blocks[q] = ("minecraft:" + shell(*q), ())
 
+# ============================================================================= свет
+LANTERN_GRID = 8      # ярус 2: стоячий фонарь душ на каждую клетку 8 x 8, где есть куда поставить
+L1_LIGHT_GRID = 7     # ярус 1: невидимый источник света (блок light) на каждую клетку 7 x 7
+
+
+def add_light():
+    """Больше света в данже. Запускается ПОСЛЕ seal(): ничего из прежней раскладки (и rng) не меняется,
+    свет ставится только в уже существующий воздух, так что стены остаются целыми."""
+    def is_air(x, y, z):
+        key = b.blocks.get((x, y, z))
+        return key is not None and key[0] == "minecraft:air"
+
+    def solid_floor(x, y, z):
+        key = b.blocks.get((x, y, z))
+        return key is not None and key[0] not in OPEN and "lava" not in key[0] and key[0] not in (
+            "minecraft:magma_block", "minecraft:iron_bars", "minecraft:soul_lantern", "minecraft:spawner",
+            "minecraft:chest", "minecraft:barrel", "minecraft:red_candle", "minecraft:soul_campfire")
+
+    mob_cells = set()
+    for e in b.entities:
+        mx, my, mz = (int(t.value) for t in e["blockPos"].value)
+        mob_cells.add((mx, mz))
+
+    def near_mob(x, z):
+        return any((x + dx, z + dz) in mob_cells for dx in (-1, 0, 1) for dz in (-1, 0, 1))
+
+    def light(x, y, z, level):
+        if is_air(x, y, z):
+            b.set(x, y, z, "light", level=level, waterlogged="false")
+            return 1
+        return 0
+
+    acx, acz = zone_center(2, 2)
+    gx0, gz0, gx1, gz1 = zone_box(2, 1)
+
+    def in_boss_area(x, z):
+        return math.hypot(x - acx, z - acz) < 16 or (gx0 + 5 <= x <= gx1 - 4 and gz0 <= z <= gz1 + 8)
+
+    lanterns = lights = 0
+    # ярус 2: фонари на полу (кроме логова и галереи стражей: там нужен простор для боя)
+    for gx in range(0, W, LANTERN_GRID):
+        for gz in range(0, D, LANTERN_GRID):
+            best = None
+            for x in range(gx, min(gx + LANTERN_GRID, W)):
+                for z in range(gz, min(gz + LANTERN_GRID, D)):
+                    if in_boss_area(x, z) or near_mob(x, z):
+                        continue
+                    if solid_floor(x, F2, z) and is_air(x, F2 + 1, z) and is_air(x, F2 + 2, z):
+                        h = hash2(x, z, 4242)
+                        if best is None or h < best[0]:
+                            best = (h, x, z)
+            if best:
+                b.set(best[1], F2 + 1, best[2], "soul_lantern", hanging="false", waterlogged="false")
+                lanterns += 1
+    # логово Древнего гуля: невидимые источники под куполом, чтобы вся арена была видна
+    lights += light(acx, F2 + 7, acz, 12)
+    for k in range(6):
+        a = k * math.pi / 3
+        lights += light(int(round(acx + math.cos(a) * 8)), F2 + 7, int(round(acz + math.sin(a) * 8)), 12)
+    for k in range(8):
+        a = k * math.pi / 4 + math.pi / 8
+        lights += light(int(round(acx + math.cos(a) * 13)), F2 + 6, int(round(acz + math.sin(a) * 13)), 12)
+    # галерея стражей и врата в логово
+    for z in range(gz0 + 4, gz1 - 2, 7):
+        for x in (76, 84):
+            lights += light(x, F2 + 9, z, 12)
+    lights += light(80, F2 + 6, 66, 12)
+    lights += light(80, F2 + 6, 72, 12)
+    # ярус 1: невидимый мягкий свет под потолком коридоров и залов
+    for gx in range(0, W, L1_LIGHT_GRID):
+        for gz in range(0, D, L1_LIGHT_GRID):
+            best = None
+            for x in range(gx, min(gx + L1_LIGHT_GRID, W)):
+                for z in range(gz, min(gz + L1_LIGHT_GRID, D)):
+                    if all(is_air(x, F1 + dy, z) for dy in (1, 2, 3)) and solid_floor(x, F1, z):
+                        h = hash2(x, z, 4343)
+                        if best is None or h < best[0]:
+                            best = (h, x, z)
+            if best:
+                lights += light(best[1], F1 + 3, best[2], 9)
+    print(f"deep_ward: свет — фонарей {lanterns}, невидимых источников {lights}")
+
 
 def build():
     surface()
@@ -821,6 +903,7 @@ def build():
     l2_links()
     l2_dress(zones)
     seal()
+    add_light()
     return b, zones
 
 
