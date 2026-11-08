@@ -5,6 +5,15 @@
     "minecraft:plains",
     "minecraft:savanna",
     "minecraft:meadow",
-    "minecraft:sunflower_plains"
+    "minecraft:sunflower_plains",
+    {
+      "id": "#forge:is_plains",
+      "required": false
+    },
+    {
+      "id": "#c:plains",
+      "required": false
+    },
+    "#minecraft:is_savanna"
   ]
 }

@@ -85,6 +85,10 @@ public final class ClientForgeEvents {
         while (KeyBindings.GOURMET_RAGE.consumeClick()) {
             sendAbility(mc, AbilityType.GOURMET_RAGE);
         }
+        while (KeyBindings.STYLE.consumeClick()) {
+            // стиль боя: Shift + C — вторая способность
+            sendAbility(mc, mc.options.keyShift.isDown() ? AbilityType.STYLE_2 : AbilityType.STYLE_1);
+        }
         while (KeyBindings.MARKET.consumeClick()) {
             if (mc.screen == null) {
                 mc.setScreen(new com.tokyoghoulrpg.client.screen.MarketScreen());

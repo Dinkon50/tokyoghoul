@@ -1,0 +1,46 @@
+{
+  "display": {
+    "icon": {
+      "item": "tokyoghoulrpg:deep_guardian_sting_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.kill_deep_guardian_sting.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.kill_deep_guardian_sting.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kill": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "tokyoghoulrpg:deep_guardian_sting"
+            }
+          }
+        ]
+      }
+    },
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "kill",
+      "code"
+    ]
+  ],
+  "parent": "tokyoghoulrpg:enter_deep_ward",
+  "rewards": {
+    "experience": 150
+  }
+}

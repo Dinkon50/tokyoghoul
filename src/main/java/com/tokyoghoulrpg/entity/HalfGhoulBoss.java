@@ -169,7 +169,12 @@ public class HalfGhoulBoss extends Monster implements BossMob {
 
     /** Свои: полугули и сам босс. Его атаки их не задевают. */
     public static boolean ally(LivingEntity entity) {
-        return entity instanceof HalfGhoulNpc || entity instanceof HalfGhoulBoss;
+        return entity instanceof HalfGhoulNpc || entity instanceof HalfGhoulBoss || entity instanceof DeepDweller;
+    }
+
+    /** Зовёт ли свиту полугулей (стражи глубин — нет, Древний гуль зовёт своих). */
+    protected boolean summonsMinions() {
+        return true;
     }
 
     @Override
@@ -394,7 +399,7 @@ public class HalfGhoulBoss extends Monster implements BossMob {
 
     /** Позвать полугулей: двое плюс по одному за каждого игрока сверх первого, всего не больше 8. */
     private void summon() {
-        if (!(this.level() instanceof ServerLevel level)) {
+        if (!summonsMinions() || !(this.level() instanceof ServerLevel level)) {
             return;
         }
         int alive = level.getEntitiesOfClass(HalfGhoulNpc.class, this.getBoundingBox().inflate(48.0),
@@ -456,6 +461,10 @@ public class HalfGhoulBoss extends Monster implements BossMob {
     }
 
     // ------------------------------------------------------------------ арена
+
+    public boolean hasArena() {
+        return arena != null;
+    }
 
     public void setArena(BlockPos pos) {
         this.arena = pos;
@@ -563,5 +572,15 @@ public class HalfGhoulBoss extends Monster implements BossMob {
     @Override
     protected SoundEvent getDeathSound() {
         return SoundEvents.WITHER_DEATH;
+    }
+
+    /** Обычный удар босса: короткий светящийся взмах перед ним. */
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        boolean hit = super.doHurtTarget(target);
+        if (hit) {
+            com.tokyoghoulrpg.combat.BossFx.slash(this, 2.6, 150.0, 7);
+        }
+        return hit;
     }
 }

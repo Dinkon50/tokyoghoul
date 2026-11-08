@@ -84,6 +84,14 @@ public final class ClientHooks {
     }
 
     /** Окно информатора. */
+    /** Меню стилей боя (у наставника; -1 — открыто не у него, тогда только прокачка). */
+    public static void openStyles(int mentorId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            mc.setScreen(new com.tokyoghoulrpg.client.screen.StyleScreen(mentorId));
+        }
+    }
+
     public static void openContracts(int informantId, String offer, long day) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null) {

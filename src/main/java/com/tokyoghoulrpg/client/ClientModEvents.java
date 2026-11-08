@@ -48,6 +48,7 @@ public final class ClientModEvents {
         event.register(KeyBindings.GOURMET_RAGE);
         event.register(KeyBindings.PROFILE);
         event.register(KeyBindings.GRAB);
+        event.register(KeyBindings.STYLE);
     }
 
     @SubscribeEvent
@@ -77,6 +78,36 @@ public final class ClientModEvents {
                 context -> new NpcRenderer<>(context, "ccg_boss", 1, 1.23F));
         event.registerEntityRenderer(ModEntities.HALF_GHOUL.get(),
                 context -> new NpcRenderer<>(context, "half_ghoul", HalfGhoulNpc.VARIANTS));
+        // Мастер додзё: чуть крупнее игрока, в «Стойке» держит руки перед лицом
+        event.registerEntityRenderer(ModEntities.DOJO_MASTER.get(), context -> new NpcRenderer<com.tokyoghoulrpg.entity.DojoMaster>(context,
+                new FighterModel<com.tokyoghoulrpg.entity.DojoMaster>(context.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER)),
+                "dojo_master", 1, 1.15F));
+        event.registerEntityRenderer(ModEntities.STYLE_MENTOR.get(),
+                context -> new NpcRenderer<>(context, "style_mentor", 1));
+        // Клоун из Пьеро и его двойники (тот же скин), приманка «Подмены», Белый жнец
+        event.registerEntityRenderer(ModEntities.CLOWN.get(), context -> new NpcRenderer<>(context, "clown", 1, 1.12F));
+        event.registerEntityRenderer(ModEntities.CLOWN_DOUBLE.get(), context -> new NpcRenderer<>(context, "clown", 1, 1.12F));
+        event.registerEntityRenderer(ModEntities.SHADOW_DECOY.get(), context -> new NpcRenderer<>(context, "shadow_decoy", 1));
+        event.registerEntityRenderer(ModEntities.WHITE_REAPER.get(), context -> new NpcRenderer<>(context, "white_reaper", 1, 1.17F));
+        // Глубины 24-го района: монстры, два стража (кагуне ринкаку и укаку) и Древний гуль (кагуне гурмана)
+        event.registerEntityRenderer(ModEntities.DEEP_GHOUL.get(), context -> new NpcRenderer<>(context, "deep_ghoul", 2));
+        event.registerEntityRenderer(ModEntities.DEEP_BRUTE.get(), context -> new NpcRenderer<>(context, "deep_brute", 1, 1.35F));
+        event.registerEntityRenderer(ModEntities.DEEP_SPITTER.get(), context -> new NpcRenderer<>(context, "deep_spitter", 1));
+        event.registerEntityRenderer(ModEntities.DEEP_GUARDIAN_STING.get(), context -> {
+            NpcRenderer<com.tokyoghoulrpg.entity.DeepGuardianSting> renderer = new NpcRenderer<>(context, "deep_guardian_sting", 1, 1.3F);
+            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.KANEKI));
+            return renderer;
+        });
+        event.registerEntityRenderer(ModEntities.DEEP_GUARDIAN_WING.get(), context -> {
+            NpcRenderer<com.tokyoghoulrpg.entity.DeepGuardianWing> renderer = new NpcRenderer<>(context, "deep_guardian_wing", 1, 1.3F);
+            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.WINGS));
+            return renderer;
+        });
+        event.registerEntityRenderer(ModEntities.ANCIENT_GHOUL.get(), context -> {
+            NpcRenderer<com.tokyoghoulrpg.entity.AncientGhoul> renderer = new NpcRenderer<>(context, "ancient_ghoul", 1, 1.5F);
+            renderer.addLayer(new BossKaguneLayer<>(renderer, com.tokyoghoulrpg.data.KaguneVariant.GOURMET));
+            return renderer;
+        });
         // Кровавый полугуль: в 1.33 раза крупнее игрока, кагуне на спине (во второй стадии — с венами ярости)
         event.registerEntityRenderer(ModEntities.HALF_GHOUL_BOSS.get(), context -> {
             NpcRenderer<com.tokyoghoulrpg.entity.HalfGhoulBoss> renderer = new NpcRenderer<>(context, "half_ghoul_boss", 1, 1.33F);

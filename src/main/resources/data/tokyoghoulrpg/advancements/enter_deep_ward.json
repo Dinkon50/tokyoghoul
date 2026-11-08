@@ -1,0 +1,39 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:sculk"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.enter_deep_ward.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.enter_deep_ward.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "visit": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "structure": "tokyoghoulrpg:deep_ward"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "parent": "tokyoghoulrpg:root",
+  "rewards": {
+    "experience": 20
+  }
+}

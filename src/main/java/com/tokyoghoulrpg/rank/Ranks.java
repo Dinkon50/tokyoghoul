@@ -158,6 +158,7 @@ public final class Ranks {
         data.addBloodPoints(blood);
         data.addSkillPoints(Balance.PRESTIGE_REWARD_POINTS);
         com.tokyoghoulrpg.rep.Achievements.atLeast(player, "prestige", level);
+        com.tokyoghoulrpg.rep.ModAdvancements.grant(player, "prestige");
         NetworkHandler.syncTo(player);
         Effects.sound(player, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 0.8F);
         Effects.sound(player, SoundEvents.TOTEM_USE, 0.6F, 1.2F);

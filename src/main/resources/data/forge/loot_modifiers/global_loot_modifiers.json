@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "entries": [
+    "tokyoghoulrpg:foreign_deep_common",
+    "tokyoghoulrpg:foreign_deep_vault",
+    "tokyoghoulrpg:foreign_deep_boss",
+    "tokyoghoulrpg:foreign_mod_chests"
+  ]
+}

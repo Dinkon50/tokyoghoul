@@ -1,0 +1,12 @@
+{
+  "type": "tokyoghoulrpg:foreign_loot",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "tokyoghoulrpg:chests/deep_boss"
+    }
+  ],
+  "rolls": 3,
+  "chance": 1.0,
+  "luck": 4.0
+}

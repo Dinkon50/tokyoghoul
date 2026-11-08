@@ -29,7 +29,12 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
 
     /** size: во сколько раз NPC крупнее игрока (боссы ~1.25). */
     public NpcRenderer(EntityRendererProvider.Context context, String skin, int variants, float size) {
-        super(context, new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false), 0.5F * size);
+        this(context, new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false), skin, variants, size);
+    }
+
+    /** Со своей моделью (например, FighterModel: стойка рук у Мастера додзё). */
+    public NpcRenderer(EntityRendererProvider.Context context, PlayerModel<T> model, String skin, int variants, float size) {
+        super(context, model, 0.5F * size);
         this.size = size;
         this.textures = new ResourceLocation[Math.max(1, variants)];
         for (int i = 0; i < this.textures.length; i++) {

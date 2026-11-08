@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.function.Predicate;
@@ -49,8 +50,8 @@ public class KaguneSpearGoal extends BossSkillGoal {
         }
         Vec3 end = BossCombat.clipToBlocks(mob, from, from.add(dir.scale(Balance.HG_SPEAR_RANGE)));
         if (ticks < STRIKE) {
-            if (ticks % 2 == 0) {
-                BossCombat.line(mob, ParticleTypes.CRIMSON_SPORE, from, end, 0.6);   // знак: здесь сейчас ударит
+            if (ticks == AIM + 1) {
+                BossFx.line(mob, from, end, 1.3, STRIKE - AIM - 1);   // знак: здесь сейчас ударит
             }
             return;
         }
@@ -58,8 +59,10 @@ public class KaguneSpearGoal extends BossSkillGoal {
             for (LivingEntity victim : BossCombat.onLine(mob, from, end, 0.6, ally)) {
                 BossCombat.strongHit(mob, victim, Balance.HG_SPEAR_DAMAGE * BossCombat.mult(mob), 1.4);
             }
-            BossCombat.line(mob, Effects.RAGE, from, end, 0.25);
-            BossCombat.line(mob, Effects.BLOOD, from, end, 0.5);
+            BossFx.spear(mob, from, end, 0.55, 12);
+            BossFx.shockwave(mob, end, 2.5, 10);
+            BossFx.shake(mob, from, 14.0, 1.3F, 10);
+            BossCombat.line(mob, Effects.BLOOD, from, end, 0.7);
             Effects.sound(mob, SoundEvents.TRIDENT_RIPTIDE_3, 1.5F, 0.7F);
         }
     }

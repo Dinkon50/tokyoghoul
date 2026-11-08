@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.ArrayList;
@@ -46,6 +47,9 @@ public class ThunderStrikeGoal extends BossSkillGoal {
             }
         }
         Effects.sound(mob, SoundEvents.BEACON_POWER_SELECT, 1.5F, 0.6F);
+        for (Vec3 spot : spots) {
+            BossFx.circle(mob, spot, Balance.CCG_BOSS_THUNDER_RADIUS, WINDUP);
+        }
     }
 
     @Override
@@ -69,6 +73,9 @@ public class ThunderStrikeGoal extends BossSkillGoal {
                 bolt.setVisualOnly(true);           // видно и слышно, но огонь не поджигает
                 level.addFreshEntity(bolt);
             }
+            BossFx.bolt(mob, spot, 16.0);
+            BossFx.shockwave(mob, spot, Balance.CCG_BOSS_THUNDER_RADIUS * 1.5, 10);
+            BossFx.shake(mob, spot, 12.0, 1.2F, 8);
             for (LivingEntity victim : BossCombat.around(mob, 30.0, ally)) {
                 double dx = victim.getX() - spot.x;
                 double dz = victim.getZ() - spot.z;

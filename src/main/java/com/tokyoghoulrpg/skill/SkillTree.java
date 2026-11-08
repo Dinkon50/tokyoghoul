@@ -32,6 +32,7 @@ public final class SkillTree {
         GOURMET_SPIRAL("gourmet_spiral", Style.GOURMET, PlayerClass.GHOUL, PlayerClass.HALF_GHOUL),
         // Человек
         HUMAN("human", PlayerClass.HUMAN),
+        HUMAN_LIFE("human_life", PlayerClass.HUMAN),
         // Агент CCG: четыре вкладки, похоже на гуля, но про квинке
         CCG_TRAINING("ccg_training", PlayerClass.CCG_AGENT),
         CCG_QUINQUE("ccg_quinque", PlayerClass.CCG_AGENT),
@@ -145,6 +146,13 @@ public final class SkillTree {
         MINING("mining", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x9A9A9A, Tab.CCG_SURVIVAL),
         WEAPON_DAMAGE("weapon_damage", Tab.HUMAN, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xE0503A, Tab.CCG_TRAINING),
         HUMAN_DASH("human_dash", Tab.HUMAN, 2, Balance.COSTS_2, 1, 0x9ED0E6, Tab.CCG_QUINQUE),
+        // Человек: «Тело и ремесло» — только у человека (у гулей и агентов этого нет)
+        RUNNER("runner", Tab.HUMAN_LIFE, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0xD8D8D8),
+        STAMINA("stamina", Tab.HUMAN_LIFE, 3, Balance.COSTS_3, 1, 0xA0703A),
+        SWIMMER("swimmer", Tab.HUMAN_LIFE, 3, Balance.COSTS_3, 1, 0x3A8AD8),
+        PROSPECTOR("prospector", Tab.HUMAN_LIFE, Balance.HUMAN_LEVELS, Balance.HUMAN_COSTS, 1, 0x5AD8E0),
+        HARVESTER("harvester", Tab.HUMAN_LIFE, 3, Balance.COSTS_3, 1, 0x6AB04A),
+        TROPHY("trophy", Tab.HUMAN_LIFE, 3, Balance.COSTS_3, 1, 0xC04050),
         // Агент CCG: прокачка способностей квинке
         Q_COMBO("q_combo", Tab.CCG_QUINQUE, 3, Balance.COSTS_3, 1, 0xE6E6E6),
         Q_STRONG("q_strong", Tab.CCG_QUINQUE, 3, Balance.COSTS_3, 1, 0xC9822B),
@@ -304,6 +312,15 @@ public final class SkillTree {
                 case ATTACK_SPEED -> Component.translatable(key, percent(SkillEffects.humanAttackSpeed(level)));
                 case MINING -> Component.translatable(key, percent(SkillEffects.humanMining(level)));
                 case WEAPON_DAMAGE -> Component.translatable(key, percent(SkillEffects.humanWeaponDamage(level)));
+                case RUNNER -> Component.translatable(key, percent(Balance.HUMAN_RUNNER * level));
+                case STAMINA -> Component.translatable(key, percent(Balance.HUMAN_STAMINA * level));
+                case SWIMMER -> Component.translatable(key, percent(Balance.HUMAN_SWIMMER * level),
+                        level >= 3 ? Component.translatable("skill.tokyoghoulrpg.swimmer.air", Balance.HUMAN_SWIMMER_AIR)
+                                : Component.empty());
+                case PROSPECTOR -> Component.translatable(key, percent(Balance.HUMAN_PROSPECTOR * level));
+                case HARVESTER -> Component.translatable(key, percent(Balance.HUMAN_HARVESTER * level));
+                case TROPHY -> Component.translatable(key, percent(Balance.HUMAN_TROPHY * level),
+                        percent(Balance.HUMAN_TROPHY_XP * level));
                 case HUMAN_DASH -> Component.translatable(key, SkillEffects.otherDashCharges(level),
                         seconds(SkillEffects.otherDashCooldown(level)));
                 case RELEASE -> Component.translatable(key, SkillEffects.releaseTicks(level) / 20,

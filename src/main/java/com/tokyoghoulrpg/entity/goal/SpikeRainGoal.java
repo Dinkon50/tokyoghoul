@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import com.tokyoghoulrpg.entity.HalfGhoulBoss;
@@ -53,6 +54,9 @@ public class SpikeRainGoal extends BossSkillGoal {
             }
         }
         Effects.sound(mob, SoundEvents.EVOKER_PREPARE_ATTACK, 1.5F, 0.6F);
+        for (Vec3 spot : spots) {
+            BossFx.circle(mob, spot, Balance.HG_SPIKE_RADIUS, WINDUP);
+        }
     }
 
     @Override
@@ -83,7 +87,13 @@ public class SpikeRainGoal extends BossSkillGoal {
             for (int i = 0; i < 6; i++) {
                 level.sendParticles(Effects.BLOOD, spot.x, spot.y + i * 0.4, spot.z, 6, 0.3, 0.1, 0.3, 0.02);
             }
+            BossFx.spikes(mob, spot, Balance.HG_SPIKE_RADIUS, 7, 22);
+            BossFx.shockwave(mob, spot, Balance.HG_SPIKE_RADIUS * 1.3, 10);
+            BossFx.debris(mob, BossFx.ground(mob, spot), Balance.HG_SPIKE_RADIUS, 25);
         }
         Effects.sound(mob, SoundEvents.EVOKER_FANGS_ATTACK, 1.5F, 0.7F);
+        if (!spots.isEmpty()) {
+            BossFx.shake(mob, spots.get(0), 20.0, 1.4F, 10);
+        }
     }
 }

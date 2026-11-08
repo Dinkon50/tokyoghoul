@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
@@ -62,6 +63,8 @@ public class LeapSlamGoal extends Goal {
         mob.getNavigation().stop();
         mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
         Effects.sound(mob, SoundEvents.RAVAGER_ROAR, 1.2F, 1.3F);
+        // зона приземления: заполняется, пока босс в воздухе
+        BossFx.circle(mob, target.position(), Balance.BOSS_LEAP_RADIUS, 20);
         airTicks = 0;
         slammed = false;
     }
@@ -89,6 +92,14 @@ public class LeapSlamGoal extends Goal {
         Effects.sound(mob, SoundEvents.GENERIC_EXPLODE, 0.8F, 1.3F);
         Effects.particles(mob, ParticleTypes.EXPLOSION, 3, 1.2, 0.0);
         Effects.particles(mob, ParticleTypes.CLOUD, 30, 1.5, 0.08);
+        Vec3 at = mob.position();
+        BossFx.shockwave(mob, at, Balance.BOSS_LEAP_RADIUS * 1.7, 14);
+        BossFx.debris(mob, at, Balance.BOSS_LEAP_RADIUS, 60);
+        BossFx.shake(mob, at, 16.0, 1.8F, 12);
+        if (!(mob instanceof com.tokyoghoulrpg.entity.CcgBoss)) {
+            // гули бьют кагуне в землю: из-под ног вырываются шипы
+            BossFx.spikes(mob, at, Balance.BOSS_LEAP_RADIUS * 0.8, 8, 14);
+        }
         for (LivingEntity victim : BossCombat.around(mob, Balance.BOSS_LEAP_RADIUS, ally)) {
             BossCombat.strongHit(mob, victim, Balance.BOSS_LEAP_DAMAGE * BossCombat.mult(mob), 1.2);
         }

@@ -1,0 +1,8 @@
+{
+  "type": "tokyoghoulrpg:foreign_loot",
+  "conditions": [],
+  "rolls": 1,
+  "chance": 0.6,
+  "all_mod_chests": true,
+  "luck": 1.0
+}

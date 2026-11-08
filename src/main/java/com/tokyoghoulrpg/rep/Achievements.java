@@ -30,7 +30,12 @@ public final class Achievements {
         FOUNDER("founder", "clan_founded", 1, 200, 0, false),
         COMBO_MASTER("combo_master", "combos", 50, 600, 2, false),
         PRESTIGE("prestige", "prestige", 1, 0, 0, true),
-        LEGEND("legend", "prestige", 5, 5000, 10, true);
+        LEGEND("legend", "prestige", 5, 5000, 10, true),
+        STYLE_FIRST("style_first", "styles_unlocked", 1, 500, 1, false),
+        STYLE_ALL("style_all", "styles_unlocked", 3, 3000, 5, true),
+        STYLE_MASTER("style_master", "style_mastered", 1, 2000, 3, true),
+        DEEP_GUARDIANS("deep_guardians", "deep_guardians", 2, 1500, 3, false),
+        ANCIENT("ancient", "ancient_kills", 1, 5000, 10, true);
 
         public final String id;
         public final String stat;

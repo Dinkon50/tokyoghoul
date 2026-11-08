@@ -32,7 +32,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL = "29";
+    private static final String PROTOCOL = "32";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TokyoGhoulRPG.MOD_ID, "main"),
@@ -143,6 +143,15 @@ public final class NetworkHandler {
         CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.ShardFxS2C.class,
                 com.tokyoghoulrpg.network.packet.ShardFxS2C::encode, com.tokyoghoulrpg.network.packet.ShardFxS2C::decode,
                 com.tokyoghoulrpg.network.packet.ShardFxS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.BossFxS2C.class,
+                com.tokyoghoulrpg.network.packet.BossFxS2C::encode, com.tokyoghoulrpg.network.packet.BossFxS2C::decode,
+                com.tokyoghoulrpg.network.packet.BossFxS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.OpenStylesS2C.class,
+                com.tokyoghoulrpg.network.packet.OpenStylesS2C::encode, com.tokyoghoulrpg.network.packet.OpenStylesS2C::decode,
+                com.tokyoghoulrpg.network.packet.OpenStylesS2C::handle);
+        CHANNEL.registerMessage(id++, com.tokyoghoulrpg.network.packet.StyleActionC2S.class,
+                com.tokyoghoulrpg.network.packet.StyleActionC2S::encode, com.tokyoghoulrpg.network.packet.StyleActionC2S::decode,
+                com.tokyoghoulrpg.network.packet.StyleActionC2S::handle);
     }
 
     /** Отправляет игроку актуальные данные его персонажа (с текущим состоянием ярости, блока и оглушения). */
@@ -230,6 +239,11 @@ public final class NetworkHandler {
         Contract offer = data == null ? null : ContractManager.todayOffer(player, data);
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new OpenContractsS2C(informantId, offer == null ? "" : offer.id(), ContractManager.day(player)));
+    }
+
+    /** Открыть игроку меню стилей боя у наставника. */
+    public static void openStyles(ServerPlayer player, int mentorId) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new com.tokyoghoulrpg.network.packet.OpenStylesS2C(mentorId));
     }
 
     /** Открыть игроку меню хозяина кофейни. */

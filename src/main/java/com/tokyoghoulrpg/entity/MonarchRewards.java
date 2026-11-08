@@ -45,6 +45,7 @@ public final class MonarchRewards {
             // финал сюжета
             com.tokyoghoulrpg.quest.QuestManager.progress(player, com.tokyoghoulrpg.quest.Quest.Trigger.KILL_MONARCH, 1);
             com.tokyoghoulrpg.rep.Achievements.add(player, "boss_kills", 1);
+            com.tokyoghoulrpg.rep.ModAdvancements.grantKill(player, boss);
             NetworkHandler.syncTo(player);
             player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.crimson_monarch.reward", Balance.MONARCH_BLOOD));
             player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.crimson_monarch.all_bosses"));

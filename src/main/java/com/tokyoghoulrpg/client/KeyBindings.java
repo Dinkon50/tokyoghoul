@@ -40,6 +40,9 @@ public final class KeyBindings {
      */
     public static final KeyMapping GRAB = key("grab", Minecraft.ON_OSX ? GLFW.GLFW_KEY_LEFT_ALT : GLFW.GLFW_KEY_LEFT_CONTROL);
 
+    /** Способности стиля боя: C — первая, Shift + C — вторая. */
+    public static final KeyMapping STYLE = key("style", GLFW.GLFW_KEY_C);
+
     private KeyBindings() {
     }
 

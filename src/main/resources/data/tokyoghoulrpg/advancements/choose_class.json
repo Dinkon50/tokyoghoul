@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "tokyoghoulrpg:ghoul_injection"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.choose_class.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.choose_class.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tokyoghoulrpg:root",
+  "rewards": {
+    "experience": 10
+  }
+}

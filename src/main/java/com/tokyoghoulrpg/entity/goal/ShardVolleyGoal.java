@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.List;
@@ -59,7 +60,10 @@ public class ShardVolleyGoal extends BossSkillGoal {
             end = victim.getBoundingBox().getCenter();
             BossCombat.hit(mob, victim, Balance.HG_SHARD_DAMAGE * BossCombat.mult(mob));
         }
-        BossCombat.line(mob, Effects.RAGE, from, end, 0.4);
+        // летящий кристаллический шип (как у крыльев Тоуки)
+        if (mob.level() instanceof net.minecraft.server.level.ServerLevel level) {
+            com.tokyoghoulrpg.combat.Shards.visual(level, from, dir.scale(2.6), from.distanceTo(end), 2);
+        }
         Effects.sound(mob, SoundEvents.TRIDENT_THROW, 1.0F, 1.4F);
     }
 }

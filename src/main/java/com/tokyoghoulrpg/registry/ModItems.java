@@ -123,6 +123,28 @@ public final class ModItems {
     public static final RegistryObject<Item> FENCE_SPAWN_EGG = ITEMS.register("fence_spawn_egg",
             () -> new ForgeSpawnEggItem(ModEntities.FENCE, 0x2B2622, 0xB08A3A, new Item.Properties()));
 
+    public static final RegistryObject<Item> DOJO_MASTER_SPAWN_EGG = ITEMS.register("dojo_master_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.DOJO_MASTER, 0x1C1A18, 0xD8903A, new Item.Properties()));
+    public static final RegistryObject<Item> CLOWN_SPAWN_EGG = ITEMS.register("clown_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.CLOWN, 0xE8E4F0, 0x8A6AD0, new Item.Properties()));
+    public static final RegistryObject<Item> WHITE_REAPER_SPAWN_EGG = ITEMS.register("white_reaper_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.WHITE_REAPER, 0xD8DCE0, 0x5A6470, new Item.Properties()));
+    public static final RegistryObject<Item> STYLE_MENTOR_SPAWN_EGG = ITEMS.register("style_mentor_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.STYLE_MENTOR, 0xE8E2D4, 0x3A2A1E, new Item.Properties()));
+
+    public static final RegistryObject<Item> DEEP_GHOUL_SPAWN_EGG = ITEMS.register("deep_ghoul_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.DEEP_GHOUL, 0xC8C4BC, 0x1A1418, new Item.Properties()));
+    public static final RegistryObject<Item> DEEP_BRUTE_SPAWN_EGG = ITEMS.register("deep_brute_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.DEEP_BRUTE, 0x8A6E64, 0x6A0A12, new Item.Properties()));
+    public static final RegistryObject<Item> DEEP_SPITTER_SPAWN_EGG = ITEMS.register("deep_spitter_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.DEEP_SPITTER, 0xB0ACA4, 0x3A6A8A, new Item.Properties()));
+    public static final RegistryObject<Item> DEEP_GUARDIAN_STING_SPAWN_EGG = ITEMS.register("deep_guardian_sting_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.DEEP_GUARDIAN_STING, 0x1A1416, 0xB01A26, new Item.Properties()));
+    public static final RegistryObject<Item> DEEP_GUARDIAN_WING_SPAWN_EGG = ITEMS.register("deep_guardian_wing_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.DEEP_GUARDIAN_WING, 0x1A1416, 0xE06A3A, new Item.Properties()));
+    public static final RegistryObject<Item> ANCIENT_GHOUL_SPAWN_EGG = ITEMS.register("ancient_ghoul_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.ANCIENT_GHOUL, 0x0E0A0C, 0x7A0410, new Item.Properties()));
+
     // Аптечка, дымовая шашка, записи лаборатории
     public static final RegistryObject<Item> MEDKIT = ITEMS.register("medkit",
             () -> new com.tokyoghoulrpg.item.MedkitItem(new Item.Properties().stacksTo(16)));

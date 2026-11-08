@@ -139,10 +139,16 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
 
     // Только сервер
     private final CombatState combat = new CombatState();
+    /** Дополнительные стили боя (Боец и другие): своё дерево, очки мастерства, способности на C. */
+    private final com.tokyoghoulrpg.style.StyleData style = new com.tokyoghoulrpg.style.StyleData();
 
     /** Данные игрока или null, если их нет. */
     public static PlayerData get(Player player) {
         return player.getCapability(CAP).resolve().orElse(null);
+    }
+
+    public com.tokyoghoulrpg.style.StyleData style() {
+        return style;
     }
 
     public CombatState combat() {
@@ -888,6 +894,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
         bondPower = 0.0;
         bondCooldownEnd = 0L;
         combat.reset();
+        style.reset();
     }
 
     /** Переносит только то, что сохраняется в мире (смерть, возвращение из Энда). */
@@ -971,12 +978,14 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
             paid.putInt(entry.getKey(), entry.getValue());
         }
         tag.put("skill_paid", paid);
+        tag.put("style", style.save());
         return tag;
     }
 
     /** То, что сохраняется, плюс текущее состояние боя: его сервер отправляет клиенту. */
     public CompoundTag toSyncTag() {
         CompoundTag tag = serializeNBT();
+        tag.put("style", style.saveSync());
         tag.putBoolean("rage_active", rageActive);
         tag.putLong("rage_start", rageStartTick);
         tag.putLong("rage_end", rageEndTick);
@@ -1107,6 +1116,7 @@ public class PlayerData implements INBTSerializable<CompoundTag> {
                 skillPaid.put(key, paid.getInt(key));
             }
         }
+        style.load(tag.getCompound("style"));
         rageActive = tag.getBoolean("rage_active");
         rageStartTick = tag.getLong("rage_start");
         rageEndTick = tag.getLong("rage_end");

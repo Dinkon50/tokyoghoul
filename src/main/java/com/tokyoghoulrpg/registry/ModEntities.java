@@ -89,6 +89,50 @@ public final class ModEntities {
             () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.GuardNpc::new, MobCategory.MISC)
                     .sized(0.6F, 1.95F).clientTrackingRange(10).build("guard"));
 
+    /** Мастер додзё: босс стиля «Боец», его зовёт наставник по вызову игрока. */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.DojoMaster>> DOJO_MASTER = ENTITIES.register("dojo_master",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.DojoMaster::new, MobCategory.MONSTER)
+                    .sized(0.7F, 2.25F).clientTrackingRange(12).build("dojo_master"));
+    /** Наставник додзё: меню стилей боя. */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.StyleMentorNpc>> STYLE_MENTOR = ENTITIES.register("style_mentor",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.StyleMentorNpc::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("style_mentor"));
+
+    /** Клоун из Пьеро: босс стиля «Тень», двойники и приманка «Подмены». */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.ClownBoss>> CLOWN = ENTITIES.register("clown",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.ClownBoss::new, MobCategory.MONSTER)
+                    .sized(0.7F, 2.2F).clientTrackingRange(12).build("clown"));
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.ClownDouble>> CLOWN_DOUBLE = ENTITIES.register("clown_double",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.ClownDouble::new, MobCategory.MONSTER)
+                    .sized(0.7F, 2.2F).clientTrackingRange(10).noSave().build("clown_double"));
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.ShadowDecoy>> SHADOW_DECOY = ENTITIES.register("shadow_decoy",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.ShadowDecoy::new, MobCategory.MISC)
+                    .sized(0.6F, 1.8F).clientTrackingRange(10).noSave().noSummon().build("shadow_decoy"));
+    /** Белый жнец: босс стиля «Жнец». */
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.WhiteReaper>> WHITE_REAPER = ENTITIES.register("white_reaper",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.WhiteReaper::new, MobCategory.MONSTER)
+                    .sized(0.7F, 2.3F).clientTrackingRange(12).build("white_reaper"));
+
+    // ---------- Глубины 24-го района (данж)
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.DeepGhoulNpc>> DEEP_GHOUL = ENTITIES.register("deep_ghoul",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.DeepGhoulNpc::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F).clientTrackingRange(8).build("deep_ghoul"));
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.DeepBrute>> DEEP_BRUTE = ENTITIES.register("deep_brute",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.DeepBrute::new, MobCategory.MONSTER)
+                    .sized(0.85F, 2.6F).clientTrackingRange(8).build("deep_brute"));
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.DeepSpitter>> DEEP_SPITTER = ENTITIES.register("deep_spitter",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.DeepSpitter::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F).clientTrackingRange(8).build("deep_spitter"));
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.DeepGuardianSting>> DEEP_GUARDIAN_STING =
+            ENTITIES.register("deep_guardian_sting", () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.DeepGuardianSting::new,
+                    MobCategory.MONSTER).sized(0.8F, 2.55F).fireImmune().clientTrackingRange(12).build("deep_guardian_sting"));
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.DeepGuardianWing>> DEEP_GUARDIAN_WING =
+            ENTITIES.register("deep_guardian_wing", () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.DeepGuardianWing::new,
+                    MobCategory.MONSTER).sized(0.8F, 2.55F).fireImmune().clientTrackingRange(12).build("deep_guardian_wing"));
+    public static final RegistryObject<EntityType<com.tokyoghoulrpg.entity.AncientGhoul>> ANCIENT_GHOUL = ENTITIES.register("ancient_ghoul",
+            () -> EntityType.Builder.of(com.tokyoghoulrpg.entity.AncientGhoul::new, MobCategory.MONSTER)
+                    .sized(1.0F, 2.95F).fireImmune().clientTrackingRange(14).build("ancient_ghoul"));
+
     private ModEntities() {
     }
 
@@ -107,6 +151,18 @@ public final class ModEntities {
         event.put(FENCE.get(), InformantNpc.createAttributes().build());
         event.put(MERCENARY.get(), com.tokyoghoulrpg.entity.MercenaryNpc.createAttributes().build());
         event.put(GUARD.get(), com.tokyoghoulrpg.entity.GuardNpc.createAttributes().build());
+        event.put(DOJO_MASTER.get(), com.tokyoghoulrpg.entity.DojoMaster.createAttributes().build());
+        event.put(STYLE_MENTOR.get(), InformantNpc.createAttributes().build());
+        event.put(CLOWN.get(), com.tokyoghoulrpg.entity.ClownBoss.createAttributes().build());
+        event.put(CLOWN_DOUBLE.get(), com.tokyoghoulrpg.entity.ClownDouble.createAttributes().build());
+        event.put(SHADOW_DECOY.get(), com.tokyoghoulrpg.entity.ShadowDecoy.createAttributes().build());
+        event.put(WHITE_REAPER.get(), com.tokyoghoulrpg.entity.WhiteReaper.createAttributes().build());
+        event.put(DEEP_GHOUL.get(), com.tokyoghoulrpg.entity.DeepGhoulNpc.createAttributes().build());
+        event.put(DEEP_BRUTE.get(), com.tokyoghoulrpg.entity.DeepBrute.createAttributes().build());
+        event.put(DEEP_SPITTER.get(), com.tokyoghoulrpg.entity.DeepSpitter.createAttributes().build());
+        event.put(DEEP_GUARDIAN_STING.get(), com.tokyoghoulrpg.entity.DeepGuardianSting.createStingAttributes().build());
+        event.put(DEEP_GUARDIAN_WING.get(), com.tokyoghoulrpg.entity.DeepGuardianWing.createWingAttributes().build());
+        event.put(ANCIENT_GHOUL.get(), com.tokyoghoulrpg.entity.AncientGhoul.createAncientAttributes().build());
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {
@@ -114,6 +170,13 @@ public final class ModEntities {
                 Monster::checkMonsterSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
         // подопытные появляются только в лабораториях (поверх их поселяет постройка), при любом свете
         event.register(TEST_SUBJECT.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkAnyLightMonsterSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        // монстры глубин: только в данже (спавнеры и подземелье), при любом свете
+        event.register(DEEP_GHOUL.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkAnyLightMonsterSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DEEP_BRUTE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkAnyLightMonsterSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DEEP_SPITTER.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Monster::checkAnyLightMonsterSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(CCG_AGENT.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Mob::checkMobSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);

@@ -1,0 +1,12 @@
+{
+  "type": "tokyoghoulrpg:foreign_loot",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "tokyoghoulrpg:chests/deep_common"
+    }
+  ],
+  "rolls": 1,
+  "chance": 0.35,
+  "luck": 1.0
+}

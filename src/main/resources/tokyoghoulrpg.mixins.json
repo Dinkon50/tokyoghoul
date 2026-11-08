@@ -6,7 +6,8 @@
   "refmap": "tokyoghoulrpg.refmap.json",
   "mixins": [],
   "client": [
-    "GuiGraphicsMixin"
+    "GuiGraphicsMixin",
+    "PlayerModelMixin"
   ],
   "injectors": {
     "defaultRequire": 0

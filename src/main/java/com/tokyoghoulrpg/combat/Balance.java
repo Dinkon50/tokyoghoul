@@ -307,6 +307,21 @@ public final class Balance {
     public static final double GHOUL_VITALITY = 11.2;               // гуль: 44 -> 100 (5 строк) на V (полугуль 48 -> 104)
     public static final double HUMAN_ATTACK_SPEED = 0.10;           // +10% скорости ударов любым предметом за уровень (до +50%)
     public static final double HUMAN_MINING = 0.15;                 // +15% скорости копания любым предметом за уровень (до +75%)
+    // Смена класса инъекцией: какая доля очков за навыки, которых нет у нового класса, возвращается
+    // (зависит от того, кем ты был; навыки, которые есть у обоих классов, остаются как были)
+    public static final double REFUND_FROM_HUMAN = 1.00;           // из человека в любой класс — всё
+    public static final double REFUND_FROM_HALF_GHOUL = 0.90;      // из полугуля — 90%
+    public static final double REFUND_FROM_CCG = 0.80;             // из агента CCG — 80%
+    public static final double REFUND_FROM_GHOUL = 0.75;           // из гуля — 75%
+    // Человек, вкладка «Тело и ремесло»
+    public static final double HUMAN_RUNNER = 0.04;                 // «Бегун»: +4% скорости за уровень (до +20%)
+    public static final double HUMAN_STAMINA = 0.15;                // «Выносливость»: голод тратится на 15% медленнее за уровень (до 45%)
+    public static final double HUMAN_SWIMMER = 0.25;                // «Пловец»: +25% скорости плавания за уровень (до +75%)
+    public static final int HUMAN_SWIMMER_AIR = 3;                  //   на III уровне воздух под водой кончается в 3 раза медленнее
+    public static final double HUMAN_PROSPECTOR = 0.06;             // «Старатель»: шанс двойной добычи из руды 6% за уровень (до 30%)
+    public static final double HUMAN_HARVESTER = 0.10;              // «Лесоруб и фермер»: шанс двойной добычи брёвен и спелых растений (до 30%)
+    public static final double HUMAN_TROPHY = 0.08;                 // «Охотник»: шанс двойной добычи с мобов 8% за уровень (до 24%)
+    public static final double HUMAN_TROPHY_XP = 0.10;              //   и опыта с них +10% за уровень (до +30%)
     public static final double HUMAN_WEAPON_DAMAGE = 0.06;          // +6% урона оружием за уровень (до +30%): мечи, топоры, луки, арбалеты, трезубцы
 
     // ---------- Рывок у человека и агента CCG ----------

@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
@@ -28,6 +29,7 @@ public class ChargeStrikeGoal extends Goal {
     private long readyAt = -1L;
     private int ticks;
     private Vec3 dir = Vec3.ZERO;
+    private Vec3 last = Vec3.ZERO;
 
     public ChargeStrikeGoal(Mob mob, Predicate<LivingEntity> ally) {
         this.mob = mob;
@@ -83,7 +85,13 @@ public class ChargeStrikeGoal extends Goal {
                 dir = flat.lengthSqr() > 0.01 ? flat.normalize() : Vec3.ZERO;
             }
             mob.setDeltaMovement(0.0, mob.getDeltaMovement().y, 0.0);
+            if (ticks == 2 && dir != Vec3.ZERO) {
+                // полоса, по которой сейчас пронесётся босс
+                Vec3 from = mob.position().add(0.0, 0.1, 0.0);
+                BossFx.line(mob, from, from.add(dir.scale(RUSH * 1.3 + 1.0)), 1.8, WINDUP - 1);
+            }
             if (ticks == WINDUP) {
+                last = mob.position().add(0.0, 1.0, 0.0);
                 Effects.sound(mob, SoundEvents.PLAYER_ATTACK_SWEEP, 1.2F, 0.7F);
             }
             return;
@@ -91,10 +99,16 @@ public class ChargeStrikeGoal extends Goal {
         mob.setDeltaMovement(dir.x * 1.3, mob.getDeltaMovement().y, dir.z * 1.3);
         mob.hasImpulse = true;
         Effects.particles(mob, ParticleTypes.CLOUD, 3, 0.3, 0.02);
+        // след рывка: светящаяся полоса за спиной
+        Vec3 now = mob.position().add(0.0, 1.0, 0.0);
+        BossFx.beam(mob, last, now, 1.4, 8);
+        last = now;
         for (LivingEntity victim : BossCombat.around(mob, 1.6, ally)) {
             if (hit.add(victim)) {
                 BossCombat.strongHit(mob, victim, Balance.BOSS_CHARGE_DAMAGE * BossCombat.mult(mob), 1.0);
                 Effects.sound(victim, SoundEvents.PLAYER_ATTACK_CRIT, 1.0F, 0.8F);
+                BossFx.shockwave(mob, victim.position(), 2.2, 8);
+                BossFx.shake(mob, victim.position(), 6.0, 1.2F, 8);
             }
         }
     }

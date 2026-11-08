@@ -15,6 +15,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 @Mod(TokyoGhoulRPG.MOD_ID)
 public class TokyoGhoulRPG {
     public static final String MOD_ID = "tokyoghoulrpg";
+    public static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
 
     public TokyoGhoulRPG() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -24,7 +25,10 @@ public class TokyoGhoulRPG {
         ModBlocks.BLOCK_ENTITIES.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModEntities.ENTITIES.register(modBus);
+        com.tokyoghoulrpg.registry.ModSounds.SOUNDS.register(modBus);
         com.tokyoghoulrpg.registry.ModStructures.STRUCTURE_TYPES.register(modBus);
+        com.tokyoghoulrpg.deep.DeepLoot.LOOT_MODIFIERS.register(modBus);
+        com.tokyoghoulrpg.compat.ModCompat.BIOME_MODIFIERS.register(modBus);
         ModCreativeTab.TABS.register(modBus);
         modBus.addListener(ModEntities::registerAttributes);
         modBus.addListener(ModEntities::registerSpawnPlacements);

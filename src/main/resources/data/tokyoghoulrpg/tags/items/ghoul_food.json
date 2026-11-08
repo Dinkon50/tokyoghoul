@@ -1,0 +1,35 @@
+{
+  "replace": false,
+  "values": [
+    "tokyoghoulrpg:flesh",
+    "tokyoghoulrpg:coffee",
+    {
+      "id": "#forge:coffee",
+      "required": false
+    },
+    {
+      "id": "#forge:drinks/coffee",
+      "required": false
+    },
+    {
+      "id": "#c:coffee",
+      "required": false
+    },
+    {
+      "id": "farmersrespite:coffee",
+      "required": false
+    },
+    {
+      "id": "farmersrespite:long_coffee",
+      "required": false
+    },
+    {
+      "id": "farmersrespite:strong_coffee",
+      "required": false
+    },
+    {
+      "id": "respiteful:coffee",
+      "required": false
+    }
+  ]
+}

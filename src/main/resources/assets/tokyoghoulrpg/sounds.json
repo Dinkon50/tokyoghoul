@@ -1,0 +1,10 @@
+{
+  "music.boss_battle": {"category": "music", "sounds": [{"name": "tokyoghoulrpg:music/boss_battle", "stream": true}]},
+  "music.style_duel": {"category": "music", "sounds": [{"name": "tokyoghoulrpg:music/style_duel", "stream": true}]},
+  "music.ancient_ghoul": {"category": "music", "sounds": [{"name": "tokyoghoulrpg:music/ancient_ghoul", "stream": true}]},
+  "music.deep_ward": {"category": "music", "sounds": [{"name": "tokyoghoulrpg:music/deep_ward", "stream": true}]},
+  "sfx.smoke": {"subtitle": "subtitles.tokyoghoulrpg.smoke", "sounds": ["tokyoghoulrpg:sfx/smoke"]},
+  "sfx.death_mark": {"subtitle": "subtitles.tokyoghoulrpg.death_mark", "sounds": ["tokyoghoulrpg:sfx/death_mark"]},
+  "sfx.execution": {"subtitle": "subtitles.tokyoghoulrpg.execution", "sounds": ["tokyoghoulrpg:sfx/execution"]},
+  "sfx.clown_laugh": {"subtitle": "subtitles.tokyoghoulrpg.clown_laugh", "sounds": [{"name": "tokyoghoulrpg:sfx/clown_laugh", "volume": 1.0}, {"name": "tokyoghoulrpg:sfx/clown_laugh", "pitch": 1.15}]}
+}

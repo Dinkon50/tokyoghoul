@@ -5,6 +5,32 @@
     "minecraft:savanna",
     "minecraft:desert",
     "minecraft:snowy_plains",
-    "minecraft:badlands"
+    "minecraft:badlands",
+    {
+      "id": "#forge:is_plains",
+      "required": false
+    },
+    {
+      "id": "#c:plains",
+      "required": false
+    },
+    "#minecraft:is_savanna",
+    {
+      "id": "#forge:is_desert",
+      "required": false
+    },
+    {
+      "id": "#c:desert",
+      "required": false
+    },
+    {
+      "id": "#forge:is_snowy_plains",
+      "required": false
+    },
+    {
+      "id": "#c:snowy_plains",
+      "required": false
+    },
+    "#minecraft:is_badlands"
   ]
 }

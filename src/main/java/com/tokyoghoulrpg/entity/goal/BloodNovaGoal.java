@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.function.Predicate;
@@ -41,6 +42,7 @@ public class BloodNovaGoal extends BossSkillGoal {
             }
             if (ticks == 1) {
                 Effects.sound(mob, SoundEvents.WARDEN_SONIC_CHARGE, 1.5F, 0.8F);
+                BossFx.circle(mob, center, Balance.HG_NOVA_RADIUS, WINDUP);
             }
             return;
         }
@@ -51,6 +53,11 @@ public class BloodNovaGoal extends BossSkillGoal {
             for (double r = 1.0; r <= Balance.HG_NOVA_RADIUS; r += 1.5) {
                 BossCombat.ring(mob, Effects.BLOOD, center, r, (int) (r * 8));
             }
+            BossFx.burst(mob, center.add(0.0, 1.1, 0.0), Balance.HG_NOVA_RADIUS, 18, 16);
+            BossFx.shockwave(mob, center, Balance.HG_NOVA_RADIUS * 1.3, 18);
+            BossFx.debris(mob, center, Balance.HG_NOVA_RADIUS * 0.6, 80);
+            BossFx.shake(mob, center, Balance.HG_NOVA_RADIUS * 3.0, 2.4F, 16);
+            Effects.particles(mob, ParticleTypes.SONIC_BOOM, 1, 0.0, 0.0);
             Effects.particles(mob, ParticleTypes.EXPLOSION, 4, 1.5, 0.0);
             Effects.sound(mob, SoundEvents.WARDEN_SONIC_BOOM, 1.5F, 0.9F);
         }

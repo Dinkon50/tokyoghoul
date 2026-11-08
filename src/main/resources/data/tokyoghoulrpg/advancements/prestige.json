@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "tokyoghoulrpg:rc_core_3"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.prestige.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.prestige.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tokyoghoulrpg:choose_class",
+  "rewards": {
+    "experience": 100
+  }
+}

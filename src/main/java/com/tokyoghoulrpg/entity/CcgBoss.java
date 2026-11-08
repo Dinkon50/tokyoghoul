@@ -188,4 +188,14 @@ public class CcgBoss extends PathfinderMob implements BossMob {
     protected SoundEvent getDeathSound() {
         return SoundEvents.PLAYER_DEATH;
     }
+
+    /** Обычный удар босса: короткий светящийся взмах перед ним. */
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        boolean hit = super.doHurtTarget(target);
+        if (hit) {
+            com.tokyoghoulrpg.combat.BossFx.slash(this, 2.6, 150.0, 7);
+        }
+        return hit;
+    }
 }

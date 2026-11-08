@@ -1,0 +1,5 @@
+# Настроено для сборки Tokyo Ghoul RPG: у мода своя панель здоровья и сытости, а обычные полоски
+# Minecraft скрыты — подсветка Farmer's Delight рисовалась бы поверх пустого места.
+enableNourishmentHungerOverlay = false
+enableComfortHealthOverlay = false
+enableFoodEffectTooltip = true

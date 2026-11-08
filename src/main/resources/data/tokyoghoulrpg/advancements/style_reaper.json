@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "tokyoghoulrpg:white_reaper_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.style_reaper.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.style_reaper.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tokyoghoulrpg:find_dojo",
+  "rewards": {
+    "experience": 100
+  }
+}

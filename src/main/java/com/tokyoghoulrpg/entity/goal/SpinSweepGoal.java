@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.EnumSet;
@@ -46,6 +47,7 @@ public class SpinSweepGoal extends Goal {
     public void start() {
         ticks = 0;
         mob.getNavigation().stop();
+        BossFx.circle(mob, mob.position(), Balance.BOSS_SWEEP_RADIUS, WINDUP);
     }
 
     @Override
@@ -66,6 +68,9 @@ public class SpinSweepGoal extends Goal {
         if (ticks == WINDUP) {
             Effects.sound(mob, SoundEvents.PLAYER_ATTACK_SWEEP, 1.4F, 0.6F);
             Effects.particles(mob, ParticleTypes.SWEEP_ATTACK, 8, 1.8, 0.0);
+            BossFx.arc(mob, mob.position(), Balance.BOSS_SWEEP_RADIUS, mob.getYRot() + 90.0F, 12);
+            BossFx.shockwave(mob, mob.position(), Balance.BOSS_SWEEP_RADIUS * 1.15, 10);
+            BossFx.shake(mob, mob.position(), 10.0, 1.0F, 8);
             for (LivingEntity victim : BossCombat.around(mob, Balance.BOSS_SWEEP_RADIUS, ally)) {
                 BossCombat.strongHit(mob, victim, Balance.BOSS_SWEEP_DAMAGE * BossCombat.mult(mob), 0.9);
             }

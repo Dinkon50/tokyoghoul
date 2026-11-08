@@ -254,16 +254,15 @@ public class SkillTreeScreen extends Screen {
             drawBranch(gfx, data, branches.get(row), rowY(row), mouseX, mouseY, theme, time);
         }
 
-        int infoY = rowY(MAX_ROWS - 1) + NODE + 14;
+        int infoY = Math.min(rowY(MAX_ROWS - 1) + NODE + 14, this.height - 34);
+        gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.skill_tree.hint"),
+                this.width / 2, infoY + 6, 0xFF8A8A8A);
+        drawLegend(gfx, infoY + 22);
+        super.render(gfx, mouseX, mouseY, partialTick);
         SkillTree.Skill hovered = skillAt(mouseX, mouseY);
         if (hovered != null) {
-            drawInfo(gfx, data, hovered, infoY, theme);
-        } else {
-            gfx.drawCenteredString(this.font, Component.translatable("screen.tokyoghoulrpg.skill_tree.hint"),
-                    this.width / 2, infoY + 6, 0xFF8A8A8A);
-            drawLegend(gfx, infoY + 22);
+            drawTooltip(gfx, data, hovered, mouseX, mouseY);
         }
-        super.render(gfx, mouseX, mouseY, partialTick);
     }
 
     /**
@@ -389,40 +388,123 @@ public class SkillTreeScreen extends Screen {
         }
     }
 
-    /** Карточка навыка под деревом: название цветом ветки, цитата, эффект, цена и состояние. */
-    private void drawInfo(GuiGraphics gfx, PlayerData data, SkillTree.Skill skill, int y, ScreenFx.Theme theme) {
-        int centerX = this.width / 2;
-        int x = left() - PAD;
-        int w = contentWidth() + PAD * 2;
+    /**
+     * Подсказка к навыку рядом с курсором (поверх дерева): название цветом ветки и уровень, цитата,
+     * что даёт этот уровень и что сейчас (если предыдущий уже открыт), цена и состояние. Всё переносится по
+     * словам, размер — по тексту, подсказка не выходит за экран.
+     */
+    private void drawTooltip(GuiGraphics gfx, PlayerData data, SkillTree.Skill skill, int mouseX, int mouseY) {
         int color = skill.branch().color() & 0xFFFFFF;
+        int light = ScreenFx.mix(color, 0xFFFFFF, 0.35F);
         State state = stateOf(data, skill);
         boolean hidden = isHidden(data, skill.branch());
-        Component flavor = hidden ? null : skill.branch().flavor();
-        int h = flavor != null ? INFO_H + 10 : INFO_H;
-        ScreenFx.panel(gfx, x, y, w, h, color, 0.6F);
-        gfx.fill(x, y, x + 3, y + h, 0xFF000000 | color);
-        ScreenFx.bigText(gfx, this.font, hidden ? Component.literal("???") : skill.branch().skillName(skill.tier()),
-                centerX, y + 5, 1.15F, 0xFF000000 | ScreenFx.mix(0xFF000000 | color, 0xFFFFFFFF, 0.35F), 0xFF000000);
-        int ty = y + 18;
-        if (flavor != null) {
-            gfx.drawCenteredString(this.font, flavor.copy().withStyle(net.minecraft.ChatFormatting.ITALIC), centerX, ty, 0xFFFFD133);
-            ty += 11;
+        com.tokyoghoulrpg.data.PlayerClass cls = data == null ? null : data.getPlayerClass();
+        com.tokyoghoulrpg.data.KaguneVariant variant = data == null
+                ? com.tokyoghoulrpg.data.KaguneVariant.NONE : data.getKaguneVariant();
+        int w = Math.min(220, this.width - 16);
+        int textW = w - 16;
+        net.minecraft.client.gui.Font f = this.font;
+
+        Component name = hidden ? Component.literal("???") : skill.branch().skillName(skill.tier());
+        Component level = Component.translatable("screen.tokyoghoulrpg.skill_tree.level", skill.tier(),
+                skill.branch().levels());
+        List<net.minecraft.util.FormattedCharSequence> flavor = hidden || skill.branch().flavor() == null ? List.of()
+                : f.split(skill.branch().flavor().copy().withStyle(net.minecraft.ChatFormatting.ITALIC), textW);
+        List<net.minecraft.util.FormattedCharSequence> gives = f.split(hidden ? Component.literal("? ? ?")
+                : skill.branch().effect(skill.tier(), cls, variant), textW - 6);
+        boolean showNow = !hidden && skill.tier() > 1
+                && (state == State.AVAILABLE || state == State.NO_POINTS || state == State.CAP);
+        List<net.minecraft.util.FormattedCharSequence> now = showNow
+                ? f.split(skill.branch().effect(skill.tier() - 1, cls, variant), textW - 6) : List.of();
+        Component cost = Component.translatable("screen.tokyoghoulrpg.skill_tree.cost", cost(skill));
+        List<net.minecraft.util.FormattedCharSequence> stateLines = f.split(Component.translatable(state.key), textW - 70);
+
+        int h = 8 + 13 + 4;                       // название и уровень
+        h += flavor.size() * 10 + (flavor.isEmpty() ? 0 : 4);
+        h += 6 + 10 + gives.size() * 10;          // разделитель, «Этот уровень», текст
+        if (!now.isEmpty()) {
+            h += 4 + 10 + now.size() * 10;
         }
-        Component effect = hidden ? Component.literal("? ? ?") : skill.branch().effect(skill.tier(),
-                data == null ? null : data.getPlayerClass(),
-                data == null ? com.tokyoghoulrpg.data.KaguneVariant.NONE : data.getKaguneVariant());
-        for (net.minecraft.util.FormattedCharSequence line : this.font.split(effect, w - 16)) {
-            gfx.drawCenteredString(this.font, line, centerX, ty, 0xFFD6D6D6);
+        h += 8 + Math.max(1, stateLines.size()) * 10 + (hardMode() ? 10 : 0) + 6;
+
+        int x = mouseX + 14;
+        if (x + w > this.width - 4) {
+            x = mouseX - 14 - w;
+        }
+        x = Math.max(4, x);
+        int y = Mth.clamp(mouseY - 12, 4, Math.max(4, this.height - h - 4));
+
+        com.mojang.blaze3d.vertex.PoseStack ps = gfx.pose();
+        ps.pushPose();
+        ps.translate(0.0F, 0.0F, 500.0F);
+        // тень, фон, рамка цвета ветки, полоса слева и уголки
+        gfx.fill(x + 3, y + 4, x + w + 3, y + h + 4, 0x70000000);
+        gfx.fillGradient(x, y, x + w, y + h, 0xF6180B0E, 0xF6070304);
+        ScreenFx.frame(gfx, x, y, w, h, 0xC0000000 | color);
+        gfx.fillGradient(x, y, x + 3, y + h, 0xFF000000 | color, ScreenFx.alpha(color, 0x50));
+        ScreenFx.corners(gfx, x, y, w, h, 0xFF000000 | light, 6);
+        gfx.fillGradient(x + 1, y + 1, x + w - 1, y + 24, ScreenFx.alpha(color, 0x40), 0x00000000);
+
+        int tx = x + 9;
+        int ty = y + 7;
+        // название (крупнее) и уровень справа
+        ps.pushPose();
+        ps.translate(tx, ty, 0.0F);
+        ps.scale(1.2F, 1.2F, 1.0F);
+        gfx.drawString(f, name, 0, 0, 0xFF000000 | light, true);
+        ps.popPose();
+        int lw = f.width(level);
+        gfx.drawString(f, level, x + w - 8 - lw, ty + 2, 0xFF9A8A90, true);
+        ty += 13;
+        gfx.fill(tx, ty + 1, x + w - 8, ty + 2, ScreenFx.alpha(color, 0x90));
+        ty += 6;
+        for (net.minecraft.util.FormattedCharSequence line : flavor) {
+            gfx.drawString(f, line, tx, ty, 0xFFFFD27A, true);
             ty += 10;
         }
-        Component cost = Component.translatable(hardMode() ? "screen.tokyoghoulrpg.skill_tree.cost_hard"
-                : "screen.tokyoghoulrpg.skill_tree.cost", cost(skill));
-        Component stateText = Component.translatable(state.key);
-        int cw = this.font.width(cost) + 16 + 6 + this.font.width(stateText) + 16;
-        int cx = centerX - cw / 2;
-        int chipY = y + h - 17;
-        cx += ScreenFx.chip(gfx, this.font, cost, cx, chipY, 0xFFD133) + 6;
-        ScreenFx.chip(gfx, this.font, stateText, cx, chipY, state == State.UNLOCKED ? color : state.color);
+        if (!flavor.isEmpty()) {
+            ty += 4;
+        }
+        // что даёт этот уровень
+        gfx.drawString(f, Component.translatable("screen.tokyoghoulrpg.skill_tree.gives"), tx, ty, 0xFF000000 | light, true);
+        ty += 10;
+        for (net.minecraft.util.FormattedCharSequence line : gives) {
+            gfx.fill(tx + 1, ty + 3, tx + 3, ty + 5, 0xFF000000 | color);
+            gfx.drawString(f, line, tx + 6, ty, 0xFFF0ECEC, true);
+            ty += 10;
+        }
+        if (!now.isEmpty()) {
+            ty += 4;
+            gfx.drawString(f, Component.translatable("screen.tokyoghoulrpg.skill_tree.now"), tx, ty, 0xFF8A8A8A, true);
+            ty += 10;
+            for (net.minecraft.util.FormattedCharSequence line : now) {
+                gfx.fill(tx + 1, ty + 3, tx + 3, ty + 5, 0xFF6A6A6A);
+                gfx.drawString(f, line, tx + 6, ty, 0xFFB0A8AA, true);
+                ty += 10;
+            }
+        }
+        // цена и состояние
+        ty += 4;
+        gfx.fill(tx, ty, x + w - 8, ty + 1, 0x30FFFFFF);
+        ty += 4;
+        gfx.drawString(f, cost, tx, ty, 0xFFFFD133, true);
+        int sx = x + w - 8;
+        int stateColor = 0xFF000000 | (state == State.UNLOCKED ? light : state.color);
+        for (net.minecraft.util.FormattedCharSequence line : stateLines) {
+            gfx.drawString(f, line, sx - f.width(line), ty, stateColor, true);
+            ty += 10;
+        }
+        if (stateLines.isEmpty()) {
+            ty += 10;
+        }
+        if (hardMode()) {
+            ps.pushPose();
+            ps.translate(tx, ty, 0.0F);
+            ps.scale(0.75F, 0.75F, 1.0F);
+            gfx.drawString(f, Component.translatable("screen.tokyoghoulrpg.skill_tree.hard_note"), 0, 0, 0xFF9A8A90, true);
+            ps.popPose();
+        }
+        ps.popPose();
     }
 
     /** Подсказка, что значат цвета навыков. */

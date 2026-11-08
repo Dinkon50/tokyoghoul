@@ -1,0 +1,46 @@
+{
+  "display": {
+    "icon": {
+      "item": "tokyoghoulrpg:crimson_crown"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.kill_crimson_monarch.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.kill_crimson_monarch.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kill": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "tokyoghoulrpg:crimson_monarch"
+            }
+          }
+        ]
+      }
+    },
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "kill",
+      "code"
+    ]
+  ],
+  "parent": "tokyoghoulrpg:kill_half_ghoul_boss",
+  "rewards": {
+    "experience": 300
+  }
+}

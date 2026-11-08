@@ -218,6 +218,23 @@ public final class HudOverlay {
             }
             ty = chipBar(gfx, font, label, ty, fill, color, 0xC48AF0);
         }
+        // стиль боя: откаты способностей на C и Shift + C, стойка «Контратаки»
+        com.tokyoghoulrpg.style.StyleData styleData = data.style();
+        if (styleData.active() != null) {
+            com.tokyoghoulrpg.style.FightStyle style = styleData.active();
+            ty = chip(gfx, font, Component.translatable("hud.tokyoghoulrpg.style",
+                    Component.translatable(style.key("name")), styleCooldown(styleData.ability1Ready(), now),
+                    styleCooldown(styleData.ability2Ready(), now)), ty, style.accent());
+            if (styleData.stanceUntil > now) {
+                ty = chip(gfx, font, Component.translatable("hud.tokyoghoulrpg.style.stance"), ty,
+                        scale(0xFFD070, 0.8F + 0.2F * Mth.sin(t * 0.6F)) & 0xFFFFFF);
+            }
+            if (styleData.smokeUntil > now) {
+                ty = chip(gfx, font, Component.translatable("hud.tokyoghoulrpg.style.smoke",
+                        secondsLeft(styleData.smokeUntil, now)), ty,
+                        scale(0xA88AE8, 0.8F + 0.2F * Mth.sin(t * 0.4F)) & 0xFFFFFF);
+            }
+        }
         if (com.tokyoghoulrpg.item.MaskEffects.fullSet(player, data)) {
             ty = chip(gfx, font, Component.translatable("hud.tokyoghoulrpg.ghoul_set"), ty, 0xD04050);
         }
@@ -327,6 +344,11 @@ public final class HudOverlay {
         int a = (int) (0x50 * pulse);
         ScreenFx.frame(gfx, x - 2, y - 2, w + 4, h + 4, ScreenFx.alpha(rgb, a));
         ScreenFx.frame(gfx, x - 3, y - 3, w + 6, h + 6, ScreenFx.alpha(rgb, a / 2));
+    }
+
+    private static Component styleCooldown(long ready, long now) {
+        return ready <= now ? Component.translatable("hud.tokyoghoulrpg.style.ready")
+                : Component.translatable("hud.tokyoghoulrpg.style.seconds", (ready - now + 19) / 20);
     }
 
     /** Плашка под панелью: тёмный фон, цветная полоса слева, текст. Возвращает y следующей плашки. */

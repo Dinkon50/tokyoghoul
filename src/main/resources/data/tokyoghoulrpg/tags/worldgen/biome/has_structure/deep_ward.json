@@ -1,0 +1,44 @@
+{
+  "values": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:forest",
+    "minecraft:birch_forest",
+    "minecraft:dark_forest",
+    "minecraft:taiga",
+    "minecraft:snowy_plains",
+    "minecraft:savanna",
+    "minecraft:meadow",
+    "minecraft:cherry_grove",
+    "minecraft:desert",
+    "minecraft:badlands",
+    {
+      "id": "#forge:is_plains",
+      "required": false
+    },
+    {
+      "id": "#c:plains",
+      "required": false
+    },
+    "#minecraft:is_forest",
+    "#minecraft:is_taiga",
+    {
+      "id": "#forge:is_snowy_plains",
+      "required": false
+    },
+    {
+      "id": "#c:snowy_plains",
+      "required": false
+    },
+    "#minecraft:is_savanna",
+    {
+      "id": "#forge:is_desert",
+      "required": false
+    },
+    {
+      "id": "#c:desert",
+      "required": false
+    },
+    "#minecraft:is_badlands"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "display": {
+    "icon": {
+      "item": "tokyoghoulrpg:flesh"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.kill_ghoul_boss.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.kill_ghoul_boss.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kill": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "tokyoghoulrpg:ghoul_boss"
+            }
+          }
+        ]
+      }
+    },
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "kill",
+      "code"
+    ]
+  ],
+  "parent": "tokyoghoulrpg:root",
+  "rewards": {
+    "experience": 50
+  }
+}

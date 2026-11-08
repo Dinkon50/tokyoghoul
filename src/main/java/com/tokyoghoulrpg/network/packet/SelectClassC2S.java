@@ -67,6 +67,7 @@ public class SelectClassC2S {
                     variant = msg.variant;
                 }
                 data.setPlayerClass(msg.playerClass);
+                com.tokyoghoulrpg.rep.ModAdvancements.grant(player, "choose_class");
                 data.setKaguneVariant(variant);
                 data.setSkinChoice(PlayerData.hasModSkin(msg.playerClass) && msg.skin > 0
                         && msg.skin < PlayerData.skinCount(msg.playerClass) ? msg.skin : 0);

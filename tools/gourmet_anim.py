@@ -94,7 +94,8 @@ A['kagune_rage'] = anim(0.8, merge(
                 scale=[(0.0, [1, 1, 1]), (0.2, [1.09, 1.03, 1.09]), (0.4, [1, 1, 1]), (0.6, [1.09, 1.03, 1.09]), (0.8, [1, 1, 1])])},
     tip_wave(0.8, 12.0, 2, cycles=2.0, delay=0.04)), True)
 A['kagune_break_blocks'] = anim(0.5, tip_pose([(0.0, 0), (0.15, -22), (0.5, 0)], 0), True)
-# block: the coil closes (turns pressed together, a bit tighter around the arm) and the tip curls up over the fist
+# block: both arms come up in front of the face like a boxer's guard (PlayerModelMixin); the coil closes on the arm
+# (turns pressed together, a bit tighter) and the tip curls up over the fist
 TIGHT = [0.93, 0.88, 0.93]
 A['kagune_block_start'] = anim(0.25, merge(
     {ROOT: bone(scale=[(0.0, [1, 1, 1]), (0.15, [0.9, 0.86, 0.9]), (0.25, TIGHT)],

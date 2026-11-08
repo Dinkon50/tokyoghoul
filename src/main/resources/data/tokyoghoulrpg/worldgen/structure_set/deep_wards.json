@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 240240241,
+    "separation": 28,
+    "spacing": 64
+  },
+  "structures": [
+    {
+      "structure": "tokyoghoulrpg:deep_ward",
+      "weight": 1
+    }
+  ]
+}

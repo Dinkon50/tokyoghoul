@@ -66,21 +66,39 @@ public final class ClassChange {
             player.displayClientMessage(Component.translatable("message.tokyoghoulrpg.injection_no_effect"), true);
             return false;
         }
-        change(player, data, target);
+        change(player, data, target, refundShare(data.getPlayerClass()));
         effects(player, injection);
         return true;
+    }
+
+    /** Какая доля очков возвращается при смене класса инъекцией (по прошлому классу). */
+    public static double refundShare(PlayerClass from) {
+        return switch (from) {
+            case GHOUL -> com.tokyoghoulrpg.combat.Balance.REFUND_FROM_GHOUL;
+            case HALF_GHOUL -> com.tokyoghoulrpg.combat.Balance.REFUND_FROM_HALF_GHOUL;
+            case CCG_AGENT -> com.tokyoghoulrpg.combat.Balance.REFUND_FROM_CCG;
+            default -> com.tokyoghoulrpg.combat.Balance.REFUND_FROM_HUMAN;
+        };
+    }
+
+    /** Смена класса без потерь (команда администратора /tgrpg class). */
+    public static void change(ServerPlayer player, PlayerData data, PlayerClass target) {
+        change(player, data, target, 1.0);
     }
 
     /**
      * Смена класса. Что происходит:
      * - способности, ярость и блок прерываются, кагуне убирается;
-     * - навыки, которых нет в дереве нового класса, снимаются, а их очки возвращаются;
+     * - навыки, которых нет в дереве нового класса, снимаются, а их очки возвращаются — доля refundShare
+     *   (инъекция: из человека 100%, из полугуля 90%, из агента 80%, из гуля 75%);
      *   гуль и полугуль делят одно дерево, поэтому между ними навыки сохраняются;
+ * - кагуне убирается с анимацией именно твоего вида (крылья, «Гурман», Канеки) — см. KaguneAnimatable;
+ *   ярость гурмана и Какудзя прекращаются, если кагуне больше нет;
      * - прогресс заданий запоминается для каждой цепочки отдельно: вернувшись в класс,
      *   продолжишь с того же места, а за уже выполненные задания награду не получишь снова;
      * - став полугулем из человека, выбираешь вариант кагуне; полугуль, ставший гулем, свой сохраняет.
      */
-    public static void change(ServerPlayer player, PlayerData data, PlayerClass target) {
+    public static void change(ServerPlayer player, PlayerData data, PlayerClass target, double refundShare) {
         PlayerClass old = data.getPlayerClass();
         AbilityManager.resetAll(player);
 
@@ -101,6 +119,8 @@ public final class ClassChange {
                 data.removeSkill(id);
             }
         }
+        int spent = refund;
+        refund = (int) Math.round(spent * Math.max(0.0, Math.min(1.0, refundShare)));
         data.addSkillPoints(refund);
         if (!SkillTree.isAvailable(target, keptVariant, SkillTree.Branch.RAGE)) {
             data.setRageLevel(0);
@@ -119,6 +139,13 @@ public final class ClassChange {
             chooseVariant = true;
         }
 
+        if (!target.hasKagune() || chooseVariant) {
+            // без своего кагуне не остаётся и его состояний: ярость гурмана и Какудзя прекращаются
+            data.setGourmetRage(0);
+            data.setGourmetRageEndTick(0L);
+            data.setKakujaEndTick(0L);
+        }
+
         AbilityManager.applyClassStats(player, data, false);
         NetworkHandler.syncTo(player);
 
@@ -126,8 +153,13 @@ public final class ClassChange {
             player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.class_changed",
                     Component.translatable(target.translationKey())));
         }
-        if (refund > 0 && !ModCommands.isSilent()) {
-            player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.skills_refunded", refund));
+        if (spent > 0 && !ModCommands.isSilent()) {
+            if (refund < spent) {
+                player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.skills_refunded_part", refund,
+                        spent, Math.round(refundShare * 100)));
+            } else {
+                player.sendSystemMessage(Component.translatable("message.tokyoghoulrpg.skills_refunded", refund));
+            }
         }
         if (chooseVariant) {
             NetworkHandler.openVariantSelection(player);

@@ -47,6 +47,8 @@ public class ProfileScreen extends ModScreen {
         int by = top() + HEIGHT - 24;
         addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.profile.achievements"),
                 b -> Minecraft.getInstance().setScreen(new AchievementsScreen())).bounds(left() + WIDTH - 94, top() + 4, 88, 14).build());
+        addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.profile.styles"),
+                b -> Minecraft.getInstance().setScreen(new StyleScreen(-1))).bounds(left() + 188, top() + HEIGHT - 48, WIDTH - 198, 18).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.tokyoghoulrpg.close"), b -> onClose())
                 .bounds(left() + WIDTH / 2 - 50, by, 100, 18).build());
         Minecraft mc = Minecraft.getInstance();

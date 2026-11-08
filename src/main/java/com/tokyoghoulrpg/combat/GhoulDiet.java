@@ -31,8 +31,15 @@ public final class GhoulDiet {
     private GhoulDiet() {
     }
 
+    /**
+     * Что гулю можно: плоть и кофе (наш и кофе из других модов). Список — тег tokyoghoulrpg:ghoul_food,
+     * его можно дополнить датапаком; кофе Farmer's Respite и подобных модов там уже есть.
+     */
+    public static final net.minecraft.tags.TagKey<net.minecraft.world.item.Item> GHOUL_FOOD = net.minecraft.tags.ItemTags.create(
+            new net.minecraft.resources.ResourceLocation("tokyoghoulrpg", "ghoul_food"));
+
     public static boolean isGhoulFood(ItemStack stack) {
-        return stack.is(ModItems.FLESH.get()) || stack.is(ModItems.COFFEE.get());
+        return stack.is(ModItems.FLESH.get()) || stack.is(ModItems.COFFEE.get()) || stack.is(GHOUL_FOOD);
     }
 
     /** Съедено (уже прибавлено к сытости): разбираемся, можно ли было. */

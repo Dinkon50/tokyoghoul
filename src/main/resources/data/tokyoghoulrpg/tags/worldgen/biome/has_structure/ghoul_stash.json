@@ -8,6 +8,24 @@
     "minecraft:savanna",
     "minecraft:snowy_plains",
     "minecraft:dark_forest",
-    "minecraft:windswept_hills"
+    "minecraft:windswept_hills",
+    {
+      "id": "#forge:is_plains",
+      "required": false
+    },
+    {
+      "id": "#c:plains",
+      "required": false
+    },
+    "#minecraft:is_savanna",
+    {
+      "id": "#forge:is_snowy_plains",
+      "required": false
+    },
+    {
+      "id": "#c:snowy_plains",
+      "required": false
+    },
+    "#minecraft:is_hill"
   ]
 }

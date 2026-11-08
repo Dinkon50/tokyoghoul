@@ -28,7 +28,10 @@ public enum AbilityType {
     // «Ярость гурмана»: только «Гурман», когда своя шкала полная (100)
     GOURMET_RAGE("gourmet_rage", false),
     // Ульта гуля и полугуля: H J K L быстро подряд (нужно кагуне)
-    ULTIMATE("ultimate", true);
+    ULTIMATE("ultimate", true),
+    // Стиль боя (Боец и другие): C — первая способность стиля, Shift + C — вторая
+    STYLE_1("style_1", false),
+    STYLE_2("style_2", false);
 
     private final String id;
     private final boolean needsKagune;

@@ -1,0 +1,90 @@
+# Сборка «Tokyo Ghoul RPG» для Forge 1.20.1. Формат: адрес на Modrinth | название | тип (mod или shader)
+# Библиотеки (Balm, Cloth Config, Architectury, YUNG's API и другие) скачиваются сами как зависимости.
+# Строку можно убрать (поставить # в начале) — мод не скачается.
+
+# --- Нужен нашему моду
+geckolib | GeckoLib | mod
+
+# --- Производительность (больше FPS, меньше памяти, быстрее загрузка)
+embeddium | Embeddium | mod
+oculus | Oculus | mod
+ferrite-core | FerriteCore | mod
+modernfix | ModernFix | mod
+entityculling | Entity Culling | mod
+immediatelyfast | ImmediatelyFast | mod
+memoryleakfix | Memory Leak Fix | mod
+clumps | Clumps | mod
+dynamic-fps | Dynamic FPS | mod
+badoptimizations | BadOptimizations | mod
+
+# --- Удобство
+jei | Just Enough Items | mod
+jade | Jade | mod
+controlling | Controlling | mod
+mouse-tweaks | Mouse Tweaks | mod
+catalogue | Catalogue | mod
+configured | Configured | mod
+journeymap | JourneyMap | mod
+waystones | Waystones | mod
+corpse | Corpse | mod
+enchantment-descriptions | Enchantment Descriptions | mod
+chat-heads | Chat Heads | mod
+betterf3 | BetterF3 | mod
+travelersbackpack | Traveler's Backpack | mod
+inventory-profiles-next | Inventory Profiles Next | mod
+toms-storage | Tom's Simple Storage Mod | mod
+comforts | Comforts | mod
+
+# --- Атмосфера: звук, графика, погода
+sound-physics-remastered | Sound Physics Remastered | mod
+ambientsounds | AmbientSounds | mod
+visuality | Visuality | mod
+fallingleaves | Falling Leaves | mod
+3dskinlayers | 3D Skin Layers | mod
+complementary-reimagined | Complementary Shaders - Reimagined | shader
+
+# --- Мир: рельеф и постройки
+terralith | Terralith | mod
+tectonic | Tectonic | mod
+yungs-better-dungeons | YUNG's Better Dungeons | mod
+yungs-better-mineshafts | YUNG's Better Mineshafts | mod
+yungs-better-strongholds | YUNG's Better Strongholds | mod
+yungs-better-ocean-monuments | YUNG's Better Ocean Monuments | mod
+yungs-better-desert-temples | YUNG's Better Desert Temples | mod
+yungs-better-jungle-temples | YUNG's Better Jungle Temples | mod
+yungs-better-witch-huts | YUNG's Better Witch Huts | mod
+yungs-better-nether-fortresses | YUNG's Better Nether Fortresses | mod
+yungs-bridges | YUNG's Bridges | mod
+yungs-extras | YUNG's Extras | mod
+when-dungeons-arise | When Dungeons Arise | mod
+repurposed-structures | Repurposed Structures | mod
+towns-and-towers | Towns and Towers | mod
+ct-overhaul-village | ChoiceTheorem's Overhauled Village | mod
+explorify | Explorify | mod
+
+# --- Мрачные монстры и боссы (дополняют гулей)
+borninchaos | Born in Chaos | mod
+the-graveyard | The Graveyard | mod
+mowzies-mobs | Mowzie's Mobs | mod
+enhanced-celestials | Enhanced Celestials | mod
+
+# --- Оружие и еда
+simply-swords | Simply Swords | mod
+farmers-delight | Farmer's Delight | mod
+
+# --- Город: техника, мебель, стройка (чтобы строить свой Токио)
+create | Create | mod
+supplementaries | Supplementaries | mod
+chipped | Chipped | mod
+handcrafted | Handcrafted | mod
+another-furniture | Another Furniture | mod
+macaws-furniture | Macaw's Furniture | mod
+macaws-roofs | Macaw's Roofs | mod
+macaws-windows | Macaw's Windows | mod
+macaws-doors | Macaw's Doors | mod
+macaws-lights-and-lamps | Macaw's Lights and Lamps | mod
+macaws-fences-and-walls | Macaw's Fences and Walls | mod
+macaws-bridges | Macaw's Bridges | mod
+macaws-paths-and-pavings | Macaw's Paths and Pavings | mod
+macaws-trapdoors | Macaw's Trapdoors | mod
+macaws-paintings | Macaw's Paintings | mod

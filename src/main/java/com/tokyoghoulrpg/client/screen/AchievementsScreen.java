@@ -10,17 +10,44 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/** Достижения: все с прогрессом и наградой; у полученных — кнопка «Титул», чтобы носить его. */
+/**
+ * Достижения: все с прогрессом и наградой; у полученных — кнопка «Титул», чтобы носить его.
+ * Если все не помещаются на экран, список прокручивается колесом мыши.
+ */
 public class AchievementsScreen extends ModScreen {
     private static final int WIDTH = 340;
     private static final int ROW = 15;
+    private static int scroll = 0;
 
     public AchievementsScreen() {
         super(Component.translatable("screen.tokyoghoulrpg.achievements.title"));
     }
 
+    private static int total() {
+        return Achievements.A.values().length;
+    }
+
+    /** Сколько строк помещается на экран. */
+    private int rows() {
+        return Math.max(4, Math.min(total(), (this.height - 8 - 70) / ROW));
+    }
+
     private int height() {
-        return 40 + Achievements.A.values().length * ROW + 30;
+        return 40 + rows() * ROW + 30;
+    }
+
+    private int maxScroll() {
+        return Math.max(0, total() - rows());
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        int next = Math.max(0, Math.min(maxScroll(), scroll + (delta > 0 ? -1 : 1)));
+        if (next != scroll) {
+            scroll = next;
+            rebuildWidgets();
+        }
+        return true;
     }
 
     private int left() {
@@ -39,8 +66,11 @@ public class AchievementsScreen extends ModScreen {
     @Override
     protected void init() {
         PlayerData data = data();
+        scroll = Math.max(0, Math.min(maxScroll(), scroll));
         int y = top() + 30;
-        for (Achievements.A a : Achievements.A.values()) {
+        Achievements.A[] all = Achievements.A.values();
+        for (int i = scroll; i < Math.min(all.length, scroll + rows()); i++) {
+            Achievements.A a = all[i];
             if (data != null && data.hasAchievement(a.id)) {
                 boolean worn = a.id.equals(data.getTitle());
                 Button b = Button.builder(Component.translatable(worn ? "screen.tokyoghoulrpg.achievements.worn"
@@ -67,7 +97,9 @@ public class AchievementsScreen extends ModScreen {
         modTitle(gfx, Component.translatable("screen.tokyoghoulrpg.achievements.header", got,
                 Achievements.A.values().length), this.width / 2, top + 8, 0xFFD700);
         int y = top + 30;
-        for (Achievements.A a : Achievements.A.values()) {
+        Achievements.A[] all = Achievements.A.values();
+        for (int i = scroll; i < Math.min(all.length, scroll + rows()); i++) {
+            Achievements.A a = all[i];
             boolean has = data != null && data.hasAchievement(a.id);
             int progress = data == null ? 0 : Math.min(a.goal, data.getStat(a.stat));
             gfx.drawString(this.font, Component.translatable(a.titleKey()), left + 10, y, has ? 0xFFD700 : 0xB0B0B0, false);
@@ -78,6 +110,15 @@ public class AchievementsScreen extends ModScreen {
                 gfx.drawString(this.font, p, left + WIDTH - 10 - this.font.width(p), y, 0x7A7A7A, false);
             }
             y += ROW;
+        }
+        if (maxScroll() > 0) {
+            // полоса прокрутки справа
+            int barTop = top + 30;
+            int barH = rows() * ROW;
+            int knob = Math.max(10, barH * rows() / total());
+            int knobY = barTop + (barH - knob) * scroll / maxScroll();
+            gfx.fill(left + WIDTH - 5, barTop, left + WIDTH - 3, barTop + barH, 0x40FFFFFF);
+            gfx.fill(left + WIDTH - 5, knobY, left + WIDTH - 3, knobY + knob, 0xC0FFD700);
         }
         super.render(gfx, mouseX, mouseY, partialTick);
     }

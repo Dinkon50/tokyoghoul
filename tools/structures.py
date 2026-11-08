@@ -10,6 +10,7 @@
   ghoul_stash   — тайник гулей: обвалившаяся хижина, костровище, бочки с плотью, один гуль.
   ccg_van       — разбитый фургон CCG: открытые задние двери, сундук со снаряжением, гули рядом.
   aogiri_warehouse — склад Аогири: большой амбар с ящиками, знамя, два сундука, четверо гулей.
+  dojo          — додзё: зал для поединков, наставник стилей боя на помосте, тренировочные мишени.
 Запуск: python3 structures.py <папка data/tokyoghoulrpg/structures> [имена построек]
 """
 import os
@@ -1003,12 +1004,103 @@ def aogiri_warehouse():
     return b
 
 
+def dojo():
+    """
+    Додзё 17 x 9 x 17. Вход с севера (z = 1), в центре — свободный зал для поединка с боссом стиля,
+    у южной стены помост с наставником (8, 2, 13). По бокам тренировочные столбы и мишени, фонари под потолком,
+    черепичная крыша с выступающим карнизом (внешнее кольцо).
+    """
+    W, H, D = 17, 9, 17
+    b = Build(W, H, D, 2026)
+    # пол: светлые «татами» в тёмной раме
+    b.fill(1, 0, 1, W - 2, 0, D - 2, "spruce_planks")
+    for x in range(3, W - 3):
+        for z in range(3, D - 3):
+            b.set(x, 0, z, "bamboo_mosaic" if (x // 2 + z // 3) % 2 == 0 else "birch_planks")
+    # стены: низ тёмное дерево, выше белые панели, столбы-брёвна через каждые 4 блока
+    for y in range(1, 5):
+        for x in range(1, W - 1):
+            for z in (1, D - 2):
+                b.set(x, y, z, "dark_oak_planks" if y == 1 else "white_terracotta")
+        for z in range(1, D - 1):
+            for x in (1, W - 2):
+                b.set(x, y, z, "dark_oak_planks" if y == 1 else "white_terracotta")
+    for x in range(1, W - 1, 4):
+        for z in (1, D - 2):
+            for y in range(1, 5):
+                b.set(x, y, z, "stripped_dark_oak_log", axis="y")
+    for z in range(1, D - 1, 4):
+        for x in (1, W - 2):
+            for y in range(1, 5):
+                b.set(x, y, z, "stripped_dark_oak_log", axis="y")
+    for x in range(1, W - 1):                       # балка над стенами
+        b.set(x, 4, 1, "stripped_spruce_log", axis="x"); b.set(x, 4, D - 2, "stripped_spruce_log", axis="x")
+    for z in range(1, D - 1):
+        b.set(1, 4, z, "stripped_spruce_log", axis="z"); b.set(W - 2, 4, z, "stripped_spruce_log", axis="z")
+    # окна-сёдзи по бокам
+    for z in (3, 4, 7, 8, 11, 12):
+        for y in (2, 3):
+            b.set(1, y, z, "white_stained_glass")
+            b.set(W - 2, y, z, "white_stained_glass")
+    # вход: широкий проём, по бокам фонари
+    for x in (7, 8, 9):
+        for y in (1, 2, 3):
+            b.set(x, y, 1, "air")
+    b.set(6, 3, 0, "lantern", hanging="false", waterlogged="false")
+    b.set(10, 3, 0, "lantern", hanging="false", waterlogged="false")
+    b.set(6, 2, 0, "spruce_fence", north="false", east="false", south="false", west="false", waterlogged="false")
+    b.set(10, 2, 0, "spruce_fence", north="false", east="false", south="false", west="false", waterlogged="false")
+    b.set(6, 1, 0, "spruce_fence", north="false", east="false", south="false", west="false", waterlogged="false")
+    b.set(10, 1, 0, "spruce_fence", north="false", east="false", south="false", west="false", waterlogged="false")
+    # потолок и крыша: плоская черепица, карниз по внешнему кольцу, конёк по центру
+    b.fill(1, 5, 1, W - 2, 5, D - 2, "spruce_planks")
+    for x in range(W):
+        for z in range(D):
+            if x in (0, W - 1) or z in (0, D - 1):
+                if not (z == 0 and x in (6, 10)):
+                    b.set(x, 5, z, "deepslate_tile_slab", type="top", waterlogged="false")
+            else:
+                b.set(x, 6, z, "deepslate_tiles")
+    for x in range(1, W - 1):
+        b.set(x, 7, D // 2, "deepslate_tile_slab", type="bottom", waterlogged="false")
+    for z in range(2, D - 2):
+        b.set(1, 7, z, "deepslate_tile_slab", type="bottom", waterlogged="false")
+        b.set(W - 2, 7, z, "deepslate_tile_slab", type="bottom", waterlogged="false")
+    # помост наставника у южной стены
+    for x in range(4, 13):
+        for z in (12, 13, 14):
+            b.set(x, 1, z, "spruce_planks")
+        b.set(x, 1, 11, "spruce_stairs", facing="south", half="bottom", shape="straight", waterlogged="false")
+    for x in (4, 12):
+        b.set(x, 2, 14, "lantern", hanging="false", waterlogged="false")
+    b.set(6, 2, 14, "potted_bamboo")
+    b.set(10, 2, 14, "potted_bamboo")
+    b.set(8, 3, 14, "red_wall_banner", facing="north")
+    b.set(6, 3, 14, "black_wall_banner", facing="north")
+    b.set(10, 3, 14, "black_wall_banner", facing="north")
+    # тренировочные столбы и мишени вдоль боковых стен
+    for z in (4, 8):
+        for x in (3, W - 4):
+            b.set(x, 1, z, "hay_block", axis="y")
+            b.set(x, 2, z, "spruce_fence", north="false", east="false", south="false", west="false", waterlogged="false")
+            b.set(x, 3, z, "target", power="0")
+    b.set(2, 1, 13, "barrel", facing="up", open="false")
+    b.set(W - 3, 1, 13, "barrel", facing="up", open="false")
+    b.set(2, 1, 12, "grindstone", face="floor", facing="east")
+    b.set(W - 3, 1, 12, "smithing_table")
+    # свет: фонари под потолком над залом
+    for x, z in ((4, 4), (12, 4), (4, 9), (12, 9), (8, 6)):
+        b.set(x, 4, z, "lantern", hanging="true", waterlogged="false")
+    b.mob(8, 2, 13, "style_mentor")
+    return b
+
+
 if __name__ == "__main__":
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
     only = set(sys.argv[2:])
     for name, build in (("ccg_office", ccg_office), ("ghoul_hideout", ghoul_hideout), ("half_ghoul_arena", half_ghoul_arena), ("cafe", cafe), ("rc_lab", rc_lab), ("black_market", black_market), ("subway", subway),
-                        ("ghoul_stash", ghoul_stash), ("ccg_van", ccg_van), ("aogiri_warehouse", aogiri_warehouse)):
+                        ("ghoul_stash", ghoul_stash), ("ccg_van", ccg_van), ("aogiri_warehouse", aogiri_warehouse), ("dojo", dojo)):
         if only and name not in only:
             continue
         info = build().save(os.path.join(out, name + ".nbt"))

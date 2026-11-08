@@ -1,6 +1,7 @@
 package com.tokyoghoulrpg.entity.goal;
 
 import com.tokyoghoulrpg.combat.Balance;
+import com.tokyoghoulrpg.combat.BossFx;
 import com.tokyoghoulrpg.combat.Effects;
 import com.tokyoghoulrpg.entity.BossCombat;
 import java.util.function.Predicate;
@@ -44,8 +45,11 @@ public class QuinqueThrustGoal extends BossSkillGoal {
         }
         Vec3 end = BossCombat.clipToBlocks(mob, from, from.add(dir.scale(Balance.CCG_BOSS_THRUST_RANGE)));
         if (ticks < STRIKE) {
-            if (ticks % 2 == 0) {
-                BossCombat.line(mob, ParticleTypes.ELECTRIC_SPARK, from, end, 0.5);   // знак: здесь сейчас ударит
+            if (ticks == AIM + 1) {
+                BossFx.line(mob, from, end, 1.2, STRIKE - AIM - 1);   // знак: здесь сейчас ударит
+            }
+            if (ticks % 3 == 0) {
+                BossCombat.line(mob, ParticleTypes.ELECTRIC_SPARK, from, end, 1.2);
             }
             return;
         }
@@ -53,8 +57,10 @@ public class QuinqueThrustGoal extends BossSkillGoal {
             for (LivingEntity victim : BossCombat.onLine(mob, from, end, 0.7, ally)) {
                 BossCombat.strongHit(mob, victim, Balance.CCG_BOSS_THRUST_DAMAGE * BossCombat.mult(mob), 1.2);
             }
-            BossCombat.line(mob, ParticleTypes.END_ROD, from, end, 0.3);
-            BossCombat.line(mob, ParticleTypes.ELECTRIC_SPARK, from, end, 0.2);
+            BossFx.beam(mob, from, end, 0.5, 8);
+            BossFx.shockwave(mob, end, 2.2, 10);
+            BossFx.shake(mob, from, 12.0, 1.0F, 8);
+            BossCombat.line(mob, ParticleTypes.ELECTRIC_SPARK, from, end, 0.35);
             Effects.sound(mob, SoundEvents.TRIDENT_THUNDER, 0.8F, 1.4F);
         }
     }

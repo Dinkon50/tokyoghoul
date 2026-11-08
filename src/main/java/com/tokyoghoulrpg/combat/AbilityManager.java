@@ -99,6 +99,11 @@ public final class AbilityManager {
             }
             return;
         }
+        // Способности стиля боя: с любым основным классом
+        if (type == AbilityType.STYLE_1 || type == AbilityType.STYLE_2) {
+            com.tokyoghoulrpg.style.StyleAbilities.use(player, data, type == AbilityType.STYLE_2);
+            return;
+        }
         if (type == AbilityType.FORTUNE) {
             if (data != null) {
                 Fortune.use(player, data);
@@ -386,9 +391,11 @@ public final class AbilityManager {
     }
 
     private static int dashCooldown(PlayerData data) {
-        return data.getPlayerClass().hasKagune()
+        int base = data.getPlayerClass().hasKagune()
                 ? Balance.DASH_COOLDOWN
                 : SkillEffects.otherDashCooldown(lvl(data, SkillTree.Branch.HUMAN_DASH));
+        // стиль «Боец», ветка «Подвижность»
+        return (int) Math.round(base * com.tokyoghoulrpg.style.FighterStyle.cooldownFactor(data));
     }
 
     private static int dashTicks(PlayerData data) {

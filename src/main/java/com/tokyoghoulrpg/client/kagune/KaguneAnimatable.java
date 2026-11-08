@@ -75,6 +75,8 @@ public class KaguneAnimatable implements GeoAnimatable {
     private long rageStart = 0L;
     /** Пока идёт убирание, модель ещё видна. */
     private long visibleUntil = 0L;
+    /** Вид кагуне, который станет текущим, когда закончится убирание (см. updateState). */
+    private KaguneVariant pendingVariant = null;
     /** До этого тика модель скрыта: её щупальца сейчас рисует ульта (KaguneUltimateFx). */
     private long hiddenUntil = 0L;
     /** До этого тика у модели нет одного щупальца (upper_left): оно сейчас тянется к цели захвата (KaguneReach). */
@@ -117,7 +119,14 @@ public class KaguneAnimatable implements GeoAnimatable {
         if (gameTime() < hiddenUntil) {
             return false;
         }
-        return active || gameTime() < visibleUntil;
+        if (active || gameTime() < visibleUntil) {
+            return true;
+        }
+        if (pendingVariant != null) {
+            variant = pendingVariant;
+            pendingVariant = null;
+        }
+        return false;
     }
 
     /** Убрать с модели щупальце захвата до этого тика (вместо него тянется длинное щупальце). */
@@ -161,7 +170,16 @@ public class KaguneAnimatable implements GeoAnimatable {
     /** Новое состояние с сервера. Первое сообщение не проигрывает появление: кагуне просто уже включено. */
     public void updateState(boolean newActive, KaguneVariant newVariant, boolean newRage, boolean newBlocking,
                             long now) {
-        variant = newVariant;
+        // Кагуне убирают и тут же меняется вид (инъекция: класс без кагуне, вид «нет»): пока идёт убирание,
+        // играет анимация твоего кагуне, а не обычного. Новый вид — после того как модель скрылась.
+        boolean retractingNow = initialized && active && !newActive;
+        boolean stillRetracting = initialized && !active && !newActive && now < visibleUntil;
+        if (newVariant != variant && (retractingNow || stillRetracting) && variant != KaguneVariant.NONE) {
+            pendingVariant = newVariant;
+        } else {
+            variant = newVariant;
+            pendingVariant = null;
+        }
         // Блок отпущен: щупальца опускаются (разовая анимация), если кагуне не убирают
         if (initialized && blocking && !newBlocking && newActive && active) {
             startOneShot("kagune_block_end", now);

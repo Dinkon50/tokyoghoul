@@ -574,6 +574,10 @@ public final class CombatEvents {
         if (event.getEntity() instanceof com.tokyoghoulrpg.entity.CrimsonMonarch monarch) {
             // финальный босс: только очки крови, и весь сервер узнаёт о победе
             com.tokyoghoulrpg.entity.MonarchRewards.give(monarch);
+        } else if (event.getEntity() instanceof com.tokyoghoulrpg.entity.DeepDweller
+                && event.getEntity() instanceof HalfGhoulBoss deepBoss) {
+            // стражи глубин и Древний гуль: свои награды
+            com.tokyoghoulrpg.deep.DeepRewards.give(deepBoss);
         } else if (event.getEntity() instanceof HalfGhoulBoss defeated) {
             BossRewards.give(defeated);
             defeated.onDefeated();

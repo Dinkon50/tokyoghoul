@@ -1,0 +1,46 @@
+{
+  "display": {
+    "icon": {
+      "item": "tokyoghoulrpg:quinque_kura"
+    },
+    "title": {
+      "translate": "advancements.tokyoghoulrpg.kill_ccg_boss.title"
+    },
+    "description": {
+      "translate": "advancements.tokyoghoulrpg.kill_ccg_boss.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kill": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "tokyoghoulrpg:ccg_boss"
+            }
+          }
+        ]
+      }
+    },
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "kill",
+      "code"
+    ]
+  ],
+  "parent": "tokyoghoulrpg:root",
+  "rewards": {
+    "experience": 50
+  }
+}
