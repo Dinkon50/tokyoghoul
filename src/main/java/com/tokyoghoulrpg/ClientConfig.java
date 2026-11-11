@@ -35,8 +35,8 @@ public final class ClientConfig {
         b.pop();
 
         b.comment("Вид от первого лица и VR").push("view");
-        KAGUNE_FIRST_PERSON_ALWAYS = b.comment("Своё кагуне от первого лица видно всегда. false — только в действии "
-                        + "(удары, барраж, захваты, рывок, блок), чтобы не отвлекало")
+        KAGUNE_FIRST_PERSON_ALWAYS = b.comment("Своё кагуне от первого лица видно. false — не видно совсем "
+                        + "(кагуне других игроков и мобов видно всегда)")
                 .define("kaguneFirstPersonAlways", false);
         VR_QUINQUE_SCALE = b.comment("Размер квинке в руке в VR (1.0 — настоящий размер, как у модели игрока)")
                 .defineInRange("vrQuinqueScale", 1.0, 0.3, 3.0);

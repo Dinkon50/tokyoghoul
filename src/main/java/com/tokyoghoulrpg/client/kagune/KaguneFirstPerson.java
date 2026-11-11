@@ -24,8 +24,8 @@ import net.minecraftforge.fml.common.Mod;
  * основание на спине, поворот по телу (а не по голове), при приседании наклон вместе с телом.
  * Поэтому оно всегда растёт из спины.
  * <p>
- * Чтобы не отвлекать, от первого лица кагуне видно только в действии (удары, барраж, захваты, рывок, блок,
- * копание, появление и убирание). Показывать всегда можно в настройках (kaguneFirstPersonAlways).
+ * Чтобы не мешать обзору, своё кагуне от первого лица по умолчанию не видно совсем (чужие видны как обычно). «Гурман» обвивает руку и виден всегда.
+ * Показывать можно в настройках (kaguneFirstPersonAlways).
  * <p>
  * Если модель своего игрока всё же нарисована в этом проходе (третье лицо, зеркало или камера Vivecraft),
  * второй раз не рисуем.
@@ -44,7 +44,7 @@ public final class KaguneFirstPerson {
     private KaguneFirstPerson() {
     }
 
-    private static boolean alwaysVisible() {
+    static boolean alwaysVisible() {
         try {
             return com.tokyoghoulrpg.ClientConfig.KAGUNE_FIRST_PERSON_ALWAYS.get();
         } catch (IllegalStateException e) {
@@ -95,9 +95,8 @@ public final class KaguneFirstPerson {
         float partial = event.getPartialTick();
         boolean breaking = mc.gameMode != null && mc.gameMode.isDestroying();
         kagune.setMotion(player.walkAnimation.speed(partial) > 0.15F, breaking);
-        // Пока кагуне просто включено (стоишь, идёшь, ярость), от первого лица его не видно, чтобы не отвлекало.
-        // Видно только в действии: удары, барраж, захваты, рывок, блок, копание, появление и убирание.
-        if (!alwaysVisible() && !kagune.visibleInFirstPerson()) {
+        // Своё кагуне от первого лица не рисуем совсем (мешает обзору). Включить: kaguneFirstPersonAlways = true.
+        if (!alwaysVisible()) {
             return;
         }
 
